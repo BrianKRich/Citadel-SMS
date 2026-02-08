@@ -75,9 +75,9 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
-                            title="SMS Management"
-                            description="Send and manage SMS messages to users"
-                            icon="💬"
+                            title="Student Management"
+                            description="Manage student records and enrollment"
+                            icon="📚"
                             href="#"
                             color="blue"
                         />
@@ -91,9 +91,9 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
-                            title="Contact Management"
-                            description="Manage contacts and contact groups"
-                            icon="📇"
+                            title="Course Management"
+                            description="Manage courses and class schedules"
+                            icon="📖"
                             href="#"
                             color="indigo"
                         />

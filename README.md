@@ -1,10 +1,10 @@
 # Citadel SMS
 
-A modern SMS management application built with Laravel, Vue.js, and PostgreSQL.
+A modern Student Management System built with Laravel, Vue.js, and PostgreSQL.
 
 ## Overview
 
-Citadel SMS is a full-stack web application designed for managing SMS communications with a focus on user management, theme customization, and extensibility. Built with modern technologies and a component-based architecture.
+Citadel SMS is a full-stack web application designed for managing student information, academic records, and educational administration with a focus on user management, theme customization, and extensibility. Built with modern technologies and a component-based architecture.
 
 ## Features
 
@@ -40,12 +40,16 @@ Citadel SMS is a full-stack web application designed for managing SMS communicat
 
 ### 🚧 Planned Features
 
-- SMS sending and receiving
-- Contact management
-- Message templates
-- Bulk SMS operations
-- Analytics dashboard
-- API integration
+- Student records management
+- Course and class management
+- Teacher/Instructor management
+- Grade and assessment tracking
+- Attendance management
+- Enrollment and registration
+- Academic reporting and analytics
+- Parent/Guardian portal
+- Academic calendar
+- Document management
 
 ## Tech Stack
 

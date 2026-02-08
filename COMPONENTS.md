@@ -65,12 +65,12 @@ General-purpose interface components.
 </Card>
 ```
 
-### 3. **Feature Components** (`/Theme`, `/SMS`, etc.)
+### 3. **Feature Components** (`/Theme`, `/Students`, etc.)
 Domain-specific components for features.
 
 **Examples:**
 - `Theme/ThemePreview.vue` - Live theme preview
-- Future: `SMS/MessageList.vue`, `SMS/MessageComposer.vue`
+- Future: `Students/StudentList.vue`, `Students/StudentProfile.vue`
 
 ### 4. **Base Components** (Root `/Components`)
 Foundational components from Laravel Breeze.
@@ -197,12 +197,12 @@ When creating a new component:
 
 ## 🚀 Future Component Ideas
 
-### SMS Feature Components:
-- `SMS/MessageList.vue` - Display list of messages
-- `SMS/MessageCard.vue` - Individual message display
-- `SMS/MessageComposer.vue` - Compose new messages
-- `SMS/ContactPicker.vue` - Select recipients
-- `SMS/ConversationThread.vue` - Message thread view
+### Student Feature Components:
+- `Students/StudentList.vue` - Display list of students
+- `Students/StudentCard.vue` - Individual student profile card
+- `Students/StudentProfile.vue` - Detailed student profile
+- `Students/EnrollmentForm.vue` - Student enrollment
+- `Students/AttendanceTracker.vue` - Attendance management
 
 ### General UI Components:
 - `UI/Badge.vue` - Status badges
