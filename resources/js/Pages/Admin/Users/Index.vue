@@ -60,21 +60,21 @@ const getRoleBadgeClass = (role) => {
                 </div>
 
                 <Card>
-                    <div class="flex items-center justify-between mb-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                         <PageHeader
                             title="Users"
                             :description="`Manage all ${users.total} registered users`"
                         />
 
-                        <Link :href="route('admin.users.create')">
-                            <PrimaryButton>
+                        <Link :href="route('admin.users.create')" class="sm:ml-auto">
+                            <PrimaryButton class="w-full sm:w-auto">
                                 + Add New User
                             </PrimaryButton>
                         </Link>
                     </div>
 
-                    <!-- Users Table -->
-                    <div class="overflow-x-auto">
+                    <!-- Desktop Table View -->
+                    <div class="hidden md:block overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -136,6 +136,52 @@ const getRoleBadgeClass = (role) => {
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Mobile Card View -->
+                    <div class="md:hidden space-y-4">
+                        <div
+                            v-for="user in users.data"
+                            :key="user.id"
+                            class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                        >
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="text-base font-semibold text-gray-900 truncate">
+                                        {{ user.name }}
+                                    </h3>
+                                    <p class="text-sm text-gray-500 truncate">
+                                        {{ user.email }}
+                                    </p>
+                                </div>
+                                <span
+                                    :class="getRoleBadgeClass(user.role)"
+                                    class="ml-2 inline-flex flex-shrink-0 rounded-full px-2 py-1 text-xs font-semibold"
+                                >
+                                    {{ user.role }}
+                                </span>
+                            </div>
+
+                            <div class="text-xs text-gray-500 mb-3">
+                                Joined {{ new Date(user.created_at).toLocaleDateString() }}
+                            </div>
+
+                            <div class="flex gap-2">
+                                <Link
+                                    :href="route('admin.users.edit', user.id)"
+                                    class="flex-1 text-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 min-h-[44px] flex items-center justify-center"
+                                >
+                                    Edit
+                                </Link>
+                                <button
+                                    @click="deleteUser(user.id)"
+                                    :disabled="user.id === $page.props.auth.user.id"
+                                    class="flex-1 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed min-h-[44px]"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Pagination -->
