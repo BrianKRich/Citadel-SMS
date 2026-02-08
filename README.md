@@ -1,59 +1,426 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Citadel SMS
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A modern SMS management application built with Laravel, Vue.js, and PostgreSQL.
 
-## About Laravel
+## Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Citadel SMS is a full-stack web application designed for managing SMS communications with a focus on user management, theme customization, and extensibility. Built with modern technologies and a component-based architecture.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### ✅ Current Features
 
-## Learning Laravel
+- **User Management**
+  - Create, read, update, and delete users
+  - Role-based permissions (Admin/User)
+  - Secure password management with bcrypt encryption
+  - Pagination and sorting
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **Admin Dashboard**
+  - Real-time user statistics
+  - Quick access to all admin features
+  - Clean, intuitive interface
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Theme Customization**
+  - Live color customization
+  - Real-time preview
+  - Persistent theme settings
+  - 5 customizable color schemes
 
-## Laravel Sponsors
+- **Authentication System**
+  - User registration and login
+  - Password reset functionality
+  - Email verification ready
+  - Session management
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- **Component-Based Architecture**
+  - Reusable Vue components
+  - Organized component library
+  - Consistent UI/UX patterns
 
-### Premium Partners
+### 🚧 Planned Features
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- SMS sending and receiving
+- Contact management
+- Message templates
+- Bulk SMS operations
+- Analytics dashboard
+- API integration
+
+## Tech Stack
+
+### Backend
+- **Framework:** Laravel 12
+- **Database:** PostgreSQL
+- **Authentication:** Laravel Breeze
+- **API:** Inertia.js
+
+### Frontend
+- **Framework:** Vue 3 (Composition API)
+- **Styling:** Tailwind CSS
+- **Build Tool:** Vite
+- **State Management:** Inertia.js
+
+### Development Tools
+- PHP 8.3
+- Node.js 24.13.0
+- Composer 2.7.1
+- npm 11.8.0
+
+## Requirements
+
+- PHP >= 8.3
+- Composer >= 2.7
+- Node.js >= 18.x
+- PostgreSQL >= 13
+- npm >= 8.x
+
+## Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd citadel-sms
+```
+
+### 2. Install PHP Dependencies
+
+```bash
+composer install
+```
+
+### 3. Install Node Dependencies
+
+```bash
+npm install --legacy-peer-deps
+```
+
+### 4. Environment Setup
+
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Generate application key
+php artisan key:generate
+```
+
+### 5. Configure Database
+
+Edit `.env` file with your PostgreSQL credentials:
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=citadel_sms
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+```
+
+### 6. Create Database
+
+```bash
+# Using PostgreSQL command line
+createdb citadel_sms
+
+# Or via psql
+psql -U postgres
+CREATE DATABASE citadel_sms;
+```
+
+### 7. Run Migrations
+
+```bash
+php artisan migrate
+```
+
+### 8. Seed Database (Optional)
+
+```bash
+# Seed theme settings
+php artisan db:seed --class=ThemeSeeder
+
+# Make first user an admin
+php artisan tinker
+User::first()->update(['role' => 'admin']);
+```
+
+## Running the Application
+
+### Development Mode
+
+Start both servers in separate terminals:
+
+**Terminal 1 - Laravel Backend:**
+```bash
+php artisan serve
+```
+
+**Terminal 2 - Vite Frontend:**
+```bash
+npm run dev
+```
+
+Access the application at: **http://localhost:8000**
+
+### Production Build
+
+```bash
+# Build frontend assets
+npm run build
+
+# Configure web server to point to /public directory
+```
+
+## Project Structure
+
+```
+citadel-sms/
+├── app/
+│   ├── Http/Controllers/     # Backend controllers
+│   ├── Models/                # Database models
+│   └── Providers/             # Service providers
+├── database/
+│   ├── migrations/            # Database migrations
+│   └── seeders/               # Database seeders
+├── resources/
+│   ├── js/
+│   │   ├── Components/        # Vue components
+│   │   │   ├── Admin/         # Admin-specific components
+│   │   │   ├── Form/          # Form components
+│   │   │   ├── UI/            # UI components
+│   │   │   ├── Theme/         # Theme components
+│   │   │   └── Users/         # User components
+│   │   ├── Layouts/           # Page layouts
+│   │   ├── Pages/             # Vue pages
+│   │   │   ├── Admin/         # Admin pages
+│   │   │   └── Auth/          # Authentication pages
+│   │   └── composables/       # Vue composables
+│   └── css/                   # Stylesheets
+├── routes/
+│   ├── web.php                # Web routes
+│   └── auth.php               # Authentication routes
+├── public/                    # Public assets
+└── storage/                   # File storage
+```
+
+## Key URLs
+
+- **Homepage:** http://localhost:8000
+- **Admin Dashboard:** http://localhost:8000/admin
+- **User Management:** http://localhost:8000/admin/users
+- **Theme Settings:** http://localhost:8000/admin/theme
+- **Login:** http://localhost:8000/login
+- **Register:** http://localhost:8000/register
+
+## Default Credentials
+
+After registration, promote your user to admin:
+
+```bash
+php artisan tinker
+User::where('email', 'your@email.com')->first()->update(['role' => 'admin']);
+```
+
+## Available Commands
+
+### Development
+
+```bash
+# Start Laravel server
+php artisan serve
+
+# Start Vite dev server
+npm run dev
+
+# Run migrations
+php artisan migrate
+
+# Rollback migrations
+php artisan migrate:rollback
+
+# Seed database
+php artisan db:seed
+
+# Clear cache
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+```
+
+### Production
+
+```bash
+# Build frontend assets
+npm run build
+
+# Optimize autoloader
+composer install --optimize-autoloader --no-dev
+
+# Cache configuration
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+## Component Library
+
+### Admin Components
+- `StatCard` - Statistics display cards
+- `AdminActionCard` - Feature navigation cards
+
+### Form Components
+- `ColorPicker` - Color input with hex preview
+- `UserForm` - Reusable user create/edit form
+
+### UI Components
+- `Card` - Content container
+- `PageHeader` - Page title sections
+- `Alert` - Success/error messages
+
+### Theme Components
+- `ThemePreview` - Live theme preview
+
+See `COMPONENTS.md` for detailed component documentation.
+
+## Documentation
+
+- [Component Guide](COMPONENTS.md) - Vue component architecture
+- [Admin Dashboard](ADMIN_DASHBOARD.md) - Admin dashboard features
+- [User Management](USER_MANAGEMENT.md) - User management system
+- [Security](SECURITY.md) - Security features and best practices
+
+## User Roles
+
+### Administrator
+- Full access to all features
+- User management capabilities
+- Theme customization
+- System configuration
+
+### User
+- Standard user access
+- Limited permissions
+- Profile management
+
+## Security Features
+
+- ✅ Bcrypt password hashing
+- ✅ CSRF protection
+- ✅ SQL injection protection (Eloquent ORM)
+- ✅ XSS protection (Vue escaping)
+- ✅ Rate limiting on authentication
+- ✅ Secure session management
+- ✅ Password reset functionality
+
+## Testing
+
+```bash
+# Run all tests
+php artisan test
+
+# Run specific test
+php artisan test --filter UserTest
+```
+
+## Troubleshooting
+
+### Database Connection Issues
+
+```bash
+# Check PostgreSQL is running
+sudo service postgresql status
+
+# Verify database exists
+psql -U postgres -l
+
+# Test connection
+php artisan tinker
+DB::connection()->getPdo();
+```
+
+### Permission Errors
+
+```bash
+# Fix storage permissions
+sudo chmod -R 775 storage bootstrap/cache
+sudo chown -R $USER:www-data storage bootstrap/cache
+```
+
+### Asset Build Failures
+
+```bash
+# Clear npm cache
+npm cache clean --force
+
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install --legacy-peer-deps
+```
+
+## Development Workflow
+
+1. **Feature Development**
+   ```bash
+   # Create feature branch
+   git checkout -b feature/feature-name
+
+   # Make changes and commit
+   git add .
+   git commit -m "Add feature description"
+   ```
+
+2. **Database Changes**
+   ```bash
+   # Create migration
+   php artisan make:migration create_table_name
+
+   # Run migration
+   php artisan migrate
+   ```
+
+3. **Adding Components**
+   - Place in appropriate `resources/js/Components/` subdirectory
+   - Follow naming conventions (PascalCase)
+   - Document props and usage
 
 ## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. Follow the existing code structure
+2. Use component-based architecture for Vue features
+3. Write descriptive commit messages
+4. Test changes before committing
+5. Update documentation as needed
 
-## Code of Conduct
+## Performance Tips
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Production Optimization
 
-## Security Vulnerabilities
+```bash
+# Optimize Composer autoloader
+composer install --optimize-autoloader --no-dev
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Cache routes and config
+php artisan config:cache
+php artisan route:cache
+
+# Build optimized assets
+npm run build
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is proprietary software. All rights reserved.
+
+## Support
+
+For issues or questions, please contact the development team.
+
+---
+
+**Version:** 1.0.0
+**Last Updated:** February 2026
+**Status:** Active Development
