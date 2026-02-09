@@ -15,7 +15,7 @@ const props = defineProps({
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
+            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                 Admin Dashboard
             </h2>
         </template>
@@ -32,7 +32,7 @@ const props = defineProps({
 
                 <!-- Statistics Grid -->
                 <div class="mb-8">
-                    <h3 class="mb-4 text-lg font-medium text-gray-900">User Statistics</h3>
+                    <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">User Statistics</h3>
                     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                         <StatCard
                             title="Total Users"
@@ -64,7 +64,7 @@ const props = defineProps({
 
                 <!-- Admin Actions -->
                 <div>
-                    <h3 class="mb-4 text-lg font-medium text-gray-900">Quick Actions</h3>
+                    <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Quick Actions</h3>
                     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                         <AdminActionCard
                             title="Theme Settings"
@@ -118,11 +118,11 @@ const props = defineProps({
 
                 <!-- Recent Activity (Placeholder) -->
                 <div class="mt-8">
-                    <h3 class="mb-4 text-lg font-medium text-gray-900">Recent Activity</h3>
-                    <div class="overflow-hidden rounded-lg bg-white shadow">
-                        <div class="p-6 text-center text-gray-500">
+                    <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Recent Activity</h3>
+                    <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                        <div class="p-6 text-center text-gray-500 dark:text-gray-400">
                             <p class="text-sm">Activity feed will appear here</p>
-                            <p class="mt-1 text-xs">Track user registrations, SMS sent, and other events</p>
+                            <p class="mt-1 text-xs">Track user registrations, student enrollment, and other events</p>
                         </div>
                     </div>
                 </div>

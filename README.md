@@ -26,6 +26,7 @@ Citadel SMS is a full-stack web application designed for managing student inform
   - Real-time preview
   - Persistent theme settings
   - 5 customizable color schemes
+  - Dark mode support with system preference detection
 
 - **Authentication System**
   - User registration and login
@@ -296,6 +297,7 @@ See `COMPONENTS.md` for detailed component documentation.
 - [Admin Dashboard](ADMIN_DASHBOARD.md) - Admin dashboard features
 - [User Management](USER_MANAGEMENT.md) - User management system
 - [Security](SECURITY.md) - Security features and best practices
+- [Dark Mode](DARK_MODE.md) - Dark mode implementation and usage
 
 ## User Roles
 

@@ -52,6 +52,7 @@ General-purpose interface components.
 **Examples:**
 - `Card.vue` - Container with shadow and padding
 - `PageHeader.vue` - Consistent page titles
+- `Footer.vue` - Copyright footer for all pages
 - Future: `Badge.vue`, `Alert.vue`, `Tooltip.vue`, `Table.vue`
 
 **Usage:**
