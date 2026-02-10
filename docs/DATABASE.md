@@ -832,7 +832,7 @@ $table->index(['student_id', 'date']);
 **Daily backups:**
 ```bash
 # PostgreSQL backup
-pg_dump student_management_system > backup_$(date +%Y%m%d).sql
+pg_dump sms > backup_$(date +%Y%m%d).sql
 
 # Compress backup
 gzip backup_$(date +%Y%m%d).sql
@@ -844,7 +844,7 @@ gzip backup_$(date +%Y%m%d).sql
 gunzip backup_20260209.sql.gz
 
 # Restore
-psql student_management_system < backup_20260209.sql
+psql sms < backup_20260209.sql
 ```
 
 ### Data Retention
@@ -903,7 +903,7 @@ protected $fillable = [
 
 **Enable PostgreSQL slow query logging:**
 ```sql
-ALTER DATABASE student_management_system SET log_min_duration_statement = 1000; -- Log queries > 1 second
+ALTER DATABASE sms SET log_min_duration_statement = 1000; -- Log queries > 1 second
 ```
 
 ### Query Analysis
