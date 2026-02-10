@@ -38,19 +38,74 @@ Citadel SMS is a full-stack web application designed for managing student inform
   - Reusable Vue components
   - Organized component library
   - Consistent UI/UX patterns
+  - Responsive design (desktop and mobile)
 
-### 🚧 Planned Features
+- **Student Management** ✨ New
+  - Complete student records with demographics
+  - Student ID auto-generation (STU-YYYY-###)
+  - Status tracking (active, inactive, graduated, withdrawn, suspended)
+  - Guardian relationships and contact information
+  - Photo upload support
+  - Search and filtering capabilities
 
-- Student records management
-- Course and class management
-- Teacher/Instructor management
-- Grade and assessment tracking
-- Attendance management
-- Enrollment and registration
-- Academic reporting and analytics
-- Parent/Guardian portal
-- Academic calendar
-- Document management
+- **Teacher Management** ✨ New
+  - Teacher profiles with qualifications
+  - Teacher ID auto-generation (TCH-YYYY-###)
+  - Department and specialization tracking
+  - Status management (active, inactive, on_leave)
+  - Assignment tracking
+
+- **Course Catalog** ✨ New
+  - Course offerings with unique codes
+  - Department and level organization
+  - Credit tracking
+  - Active/inactive status
+
+- **Class Scheduling** ✨ New
+  - Class sections with schedules
+  - Teacher assignment
+  - Room allocation
+  - Capacity management (max students)
+  - Schedule conflict detection
+  - Status tracking (open, closed, in_progress, completed)
+
+- **Enrollment Management** ✨ New
+  - Student class enrollment
+  - Enrollment status tracking
+  - Capacity enforcement
+  - Schedule conflict prevention
+  - Drop/withdraw functionality
+  - Student schedule viewing
+
+- **Academic Year & Term Management** ✨ New
+  - Academic year definition
+  - Term/semester organization
+  - Current year/term designation
+  - Date range management
+
+### 🚧 Planned Features (Phase 3+)
+
+- Grade and assessment tracking (Phase 3)
+  - Assessment types and weights
+  - Grade entry and calculation
+  - Report cards and transcripts
+- Attendance management (Phase 4)
+  - Daily attendance tracking
+  - Absence alerts
+  - Attendance reports
+- Parent/Guardian portal (Phase 5)
+  - View student grades and attendance
+  - Communication features
+- Academic calendar (Phase 6)
+  - Events and holidays
+  - Exam schedules
+- Document management (Phase 7)
+  - File uploads and storage
+  - Student documents
+- Academic reporting and analytics (Phase 8)
+  - Performance dashboards
+  - Data exports
+  - Custom reports
 
 ## Tech Stack
 
@@ -144,13 +199,30 @@ php artisan migrate
 ### 8. Seed Database (Optional)
 
 ```bash
-# Seed theme settings
+# Seed all data (recommended for development)
+php artisan db:seed
+
+# Or seed specific tables:
 php artisan db:seed --class=ThemeSeeder
+php artisan db:seed --class=AcademicYearSeeder
+php artisan db:seed --class=CourseSeeder
+php artisan db:seed --class=TeacherSeeder
+php artisan db:seed --class=StudentSeeder
+php artisan db:seed --class=ClassSeeder
+php artisan db:seed --class=EnrollmentSeeder
 
 # Make first user an admin
 php artisan tinker
 User::first()->update(['role' => 'admin']);
 ```
+
+**Sample Data Included:**
+- Academic year 2025-2026 with Fall/Spring terms
+- 10 courses across different departments
+- 5 teachers with assignments
+- 20 students with guardians
+- 12 class sections with schedules
+- Sample enrollments
 
 ## Running the Application
 
@@ -215,10 +287,19 @@ citadel-sms/
 
 - **Homepage:** http://localhost:8000
 - **Admin Dashboard:** http://localhost:8000/admin
-- **User Management:** http://localhost:8000/admin/users
-- **Theme Settings:** http://localhost:8000/admin/theme
 - **Login:** http://localhost:8000/login
 - **Register:** http://localhost:8000/register
+
+### Admin Features
+
+- **User Management:** http://localhost:8000/admin/users
+- **Theme Settings:** http://localhost:8000/admin/theme
+- **Student Management:** http://localhost:8000/admin/students
+- **Teacher Management:** http://localhost:8000/admin/teachers
+- **Course Catalog:** http://localhost:8000/admin/courses
+- **Class Management:** http://localhost:8000/admin/classes
+- **Enrollment:** http://localhost:8000/admin/enrollment
+- **Academic Years:** http://localhost:8000/admin/academic-years
 
 ## Default Credentials
 
@@ -293,11 +374,20 @@ See `COMPONENTS.md` for detailed component documentation.
 
 ## Documentation
 
-- [Component Guide](COMPONENTS.md) - Vue component architecture
-- [Admin Dashboard](ADMIN_DASHBOARD.md) - Admin dashboard features
-- [User Management](USER_MANAGEMENT.md) - User management system
-- [Security](SECURITY.md) - Security features and best practices
-- [Dark Mode](DARK_MODE.md) - Dark mode implementation and usage
+Comprehensive documentation is available in the `docs/` directory:
+
+### Architecture & Design
+- [Architecture Overview](docs/ARCHITECTURE.md) - System architecture and design patterns
+- [Database Schema](docs/DATABASE.md) - Complete database documentation
+- [Backend Documentation](docs/BACKEND.md) - Controllers, models, and business logic
+- [Frontend Documentation](docs/FRONTEND.md) - Vue components and pages
+- [API Documentation](docs/API.md) - API endpoints and usage
+
+### Features & Guides
+- [Component Guide](docs/COMPONENTS.md) - Vue component library
+- [User Management](docs/USER_MANAGEMENT.md) - User and role management
+- [Dark Mode](docs/DARK_MODE.md) - Dark mode implementation
+- [Security](docs/SECURITY.md) - Security features and best practices
 
 ## User Roles
 
@@ -427,6 +517,13 @@ For issues or questions, please contact the development team.
 
 ---
 
-**Version:** 1.0.0
-**Last Updated:** February 2026
+**Version:** 2.0.0 (Phase 0-2 Complete)
+**Last Updated:** February 9, 2026
 **Status:** Active Development
+
+**Completed Phases:**
+- ✅ Phase 0: Theme System Integration
+- ✅ Phase 1: Student & Course Foundation (Backend + Frontend)
+- ✅ Phase 2: Class Scheduling & Enrollment (Backend + Frontend)
+
+**Next Phase:** Phase 3 - Grading & Assessments
