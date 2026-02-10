@@ -1,6 +1,6 @@
 # Vue Component Architecture Guide
 
-This document outlines the component organization and best practices for the Citadel SMS project.
+This document outlines the component organization and best practices for the Student Management System project.
 
 ## 📁 Component Directory Structure
 

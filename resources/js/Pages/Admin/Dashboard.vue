@@ -26,7 +26,7 @@ const props = defineProps({
                 <div class="mb-8">
                     <PageHeader
                         title="Welcome to Admin"
-                        description="Manage your Citadel SMS application from this central dashboard."
+                        description="Manage your Student Management System application from this central dashboard."
                     />
                 </div>
 

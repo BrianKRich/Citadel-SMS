@@ -1,4 +1,4 @@
-# Citadel SMS - Frontend Architecture
+# Student Management System - Frontend Architecture
 
 **Version:** 2.0 (Phase 0-2 Complete)
 **Last Updated:** February 9, 2026
@@ -27,7 +27,7 @@
 
 ## Overview
 
-Citadel SMS frontend is built with **Vue 3** using the **Composition API** and **Inertia.js** for seamless SPA functionality. The application emphasizes:
+Student Management System frontend is built with **Vue 3** using the **Composition API** and **Inertia.js** for seamless SPA functionality. The application emphasizes:
 
 - **Component-based architecture** - Reusable, modular components
 - **Tailwind CSS** - Utility-first styling with custom theming

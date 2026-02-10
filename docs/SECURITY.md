@@ -103,7 +103,7 @@ MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=noreply@citadelsms.com
-MAIL_FROM_NAME="Citadel SMS"
+MAIL_FROM_NAME="Student Management System"
 ```
 
 **Option 2: Mailgun**

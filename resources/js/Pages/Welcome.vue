@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useTheme } from '@/composables/useTheme';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import TextInput from '@/Components/TextInput.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import InputError from '@/Components/InputError.vue';
@@ -36,24 +37,18 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Welcome to Citadel SMS" />
+    <Head title="Welcome to Student Management System" />
 
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <!-- Header -->
         <header class="bg-white/80 backdrop-blur-sm shadow-sm dark:bg-gray-800/80">
             <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between">
-                    <!-- Left: Citadel SMS Title -->
+                    <!-- Left: App Title -->
                     <div class="flex items-center space-x-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-600">
-                            <img
-                                src="/images/icons/tower-icon.png"
-                                alt="Citadel Icon"
-                                class="h-6 w-6"
-                            />
-                        </div>
+                        <ApplicationLogo class="h-10 w-10 fill-current text-primary-600 dark:text-primary-400" />
                         <h1 class="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
-                            Citadel SMS
+                            Student Management System
                         </h1>
                     </div>
 
@@ -82,30 +77,12 @@ const submit = () => {
         <!-- Main Content -->
         <main class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
             <div class="grid gap-12 lg:grid-cols-2 lg:gap-16">
-                <!-- Left Column: Logos and Welcome Message -->
+                <!-- Left Column: Welcome Message -->
                 <div class="flex flex-col justify-center space-y-8">
-                    <!-- Logos -->
-                    <div class="flex flex-col items-center space-y-6 sm:flex-row sm:items-center sm:justify-center sm:space-x-8 sm:space-y-0">
-                        <div class="flex h-32 w-auto items-center justify-center">
-                            <img
-                                src="/images/logos/georgia-youth-challenge-logo.png"
-                                alt="Georgia Job Challenge Academy"
-                                class="h-full w-auto object-contain"
-                            />
-                        </div>
-                        <div class="flex h-32 w-auto items-center justify-center">
-                            <img
-                                src="/images/logos/gjca-logo.png"
-                                alt="GJCA"
-                                class="h-full w-auto object-contain"
-                            />
-                        </div>
-                    </div>
-
                     <!-- Welcome Message -->
                     <div class="text-center lg:text-left">
                         <h2 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
-                            Welcome to Citadel SMS
+                            Welcome to Student Management System
                         </h2>
                         <p class="mt-4 text-lg text-gray-600 dark:text-gray-300">
                             Student Management System for Georgia Job Challenge Academy
@@ -265,7 +242,7 @@ const submit = () => {
 
                         <!-- Additional Info -->
                         <p class="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                            Secure login powered by Citadel SMS
+                            Secure login powered by Student Management System
                         </p>
                     </div>
                 </div>
@@ -305,7 +282,7 @@ const submit = () => {
                     &copy; {{ new Date().getFullYear() }} Brian K. Rich. All rights reserved.
                 </p>
                 <p class="mt-2 text-center text-xs text-gray-500 dark:text-gray-500">
-                    Powered by Citadel SMS
+                    Powered by Student Management System
                 </p>
             </div>
         </footer>

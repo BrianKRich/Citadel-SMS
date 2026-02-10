@@ -2,6 +2,9 @@
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Footer from '@/Components/UI/Footer.vue';
 import { Link } from '@inertiajs/vue3';
+import { useTheme } from '@/composables/useTheme';
+
+useTheme();
 </script>
 
 <template>

@@ -1,4 +1,4 @@
-# Citadel SMS - System Architecture Overview
+# Student Management System - System Architecture Overview
 
 **Version:** 1.0
 **Last Updated:** February 2026
@@ -19,7 +19,7 @@
 
 ## Overview
 
-Citadel SMS is a comprehensive Student Management System. The system manages student records, courses, grades, attendance, and academic operations with a focus on scalability, security, and user experience.
+Student Management System is a comprehensive Student Management System. The system manages student records, courses, grades, attendance, and academic operations with a focus on scalability, security, and user experience.
 
 ### Key Features
 
@@ -221,7 +221,7 @@ citadel-sms/
 
 ### MVC Pattern (Backend)
 
-Citadel SMS follows the Model-View-Controller pattern on the backend:
+Student Management System follows the Model-View-Controller pattern on the backend:
 
 - **Models** - Eloquent ORM models representing database tables
 - **Views** - Inertia.js responses (Vue components)

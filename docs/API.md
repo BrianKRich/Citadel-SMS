@@ -1,4 +1,4 @@
-# Citadel SMS - API Documentation
+# Student Management System - API Documentation
 
 **Version:** 1.0
 **Last Updated:** February 2026
@@ -19,7 +19,7 @@
 
 ## Overview
 
-Citadel SMS uses **Inertia.js**, which means it does NOT have a traditional RESTful JSON API. Instead, Inertia provides a seamless SPA experience using server-side routing with Laravel.
+Student Management System uses **Inertia.js**, which means it does NOT have a traditional RESTful JSON API. Instead, Inertia provides a seamless SPA experience using server-side routing with Laravel.
 
 ### Key Concepts
 
@@ -96,7 +96,7 @@ Citadel SMS uses **Inertia.js**, which means it does NOT have a traditional REST
 
 ## API Endpoints
 
-Citadel SMS currently has **one** traditional API endpoint for theme data. All other functionality uses Inertia.js.
+Student Management System currently has **one** traditional API endpoint for theme data. All other functionality uses Inertia.js.
 
 ### Theme API
 
@@ -165,7 +165,7 @@ public function show()
 
 ### Session-Based Authentication
 
-Citadel SMS uses Laravel's built-in session-based authentication (Laravel Breeze).
+Student Management System uses Laravel's built-in session-based authentication (Laravel Breeze).
 
 **How It Works:**
 1. User submits login form to `/login`

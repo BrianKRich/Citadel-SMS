@@ -1,4 +1,4 @@
-# Citadel SMS - Database Architecture
+# Student Management System - Database Architecture
 
 **Version:** 2.0 (Phase 0-2 Complete)
 **Last Updated:** February 9, 2026
@@ -21,7 +21,7 @@
 
 ## Overview
 
-Citadel SMS uses PostgreSQL as its primary database. The schema is designed to support comprehensive student management including:
+Student Management System uses PostgreSQL as its primary database. The schema is designed to support comprehensive student management including:
 
 - Student records and demographics
 - Guardian relationships

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Citadel SMS is built with Tailwind CSS which provides mobile-first responsive design utilities. This guide covers responsive implementation and testing.
+Student Management System is built with Tailwind CSS which provides mobile-first responsive design utilities. This guide covers responsive implementation and testing.
 
 ## Current Responsive Status
 

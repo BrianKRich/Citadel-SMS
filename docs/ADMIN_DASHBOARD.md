@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Admin Dashboard is a centralized control panel for managing the Citadel SMS application.
+The Admin Dashboard is a centralized control panel for managing the Student Management System application.
 
 ## Access
 

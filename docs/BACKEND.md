@@ -1,4 +1,4 @@
-# Citadel SMS - Backend Architecture
+# Student Management System - Backend Architecture
 
 **Version:** 2.0 (Phase 0-2 Complete)
 **Last Updated:** February 9, 2026
@@ -25,7 +25,7 @@
 
 ## Overview
 
-Citadel SMS backend is built with Laravel 12, following modern Laravel conventions and best practices. The architecture emphasizes:
+Student Management System backend is built with Laravel 12, following modern Laravel conventions and best practices. The architecture emphasizes:
 
 - **MVC Pattern** - Separation of concerns
 - **Eloquent ORM** - Database abstraction and relationships
