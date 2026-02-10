@@ -54,7 +54,7 @@ const inputId = computed(() => props.id || `color-picker-${props.label.toLowerCa
                 type="text"
                 v-model="value"
                 placeholder="#000000"
-                class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:border-primary-600 dark:focus:ring-primary-600"
                 pattern="^#[0-9A-Fa-f]{6}$"
             />
         </div>

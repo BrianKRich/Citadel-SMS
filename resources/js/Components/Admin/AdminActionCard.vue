@@ -20,7 +20,8 @@ defineProps({
     },
     color: {
         type: String,
-        default: 'indigo',
+        default: 'primary',
+        validator: (value) => ['primary', 'secondary', 'accent'].includes(value),
     },
 });
 </script>
@@ -34,24 +35,36 @@ defineProps({
             <div
                 :class="[
                     'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg text-2xl',
-                    color === 'indigo' ? 'bg-indigo-100 dark:bg-indigo-900' : '',
-                    color === 'blue' ? 'bg-blue-100 dark:bg-blue-900' : '',
-                    color === 'green' ? 'bg-green-100 dark:bg-green-900' : '',
-                    color === 'purple' ? 'bg-purple-100 dark:bg-purple-900' : '',
-                    color === 'pink' ? 'bg-pink-100 dark:bg-pink-900' : '',
+                    color === 'primary' ? 'bg-primary-100 dark:bg-primary-900' : '',
+                    color === 'secondary' ? 'bg-secondary-100 dark:bg-secondary-900' : '',
+                    color === 'accent' ? 'bg-accent-100 dark:bg-accent-900' : '',
                 ]"
             >
                 {{ icon }}
             </div>
             <div class="flex-1 min-w-0">
-                <h3 class="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 dark:text-gray-100 dark:group-hover:text-indigo-400">
+                <h3
+                    :class="[
+                        'text-lg font-semibold text-gray-900 dark:text-gray-100',
+                        color === 'primary' ? 'group-hover:text-primary-600 dark:group-hover:text-primary-400' : '',
+                        color === 'secondary' ? 'group-hover:text-secondary-600 dark:group-hover:text-secondary-400' : '',
+                        color === 'accent' ? 'group-hover:text-accent-600 dark:group-hover:text-accent-400' : '',
+                    ]"
+                >
                     {{ title }}
                 </h3>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     {{ description }}
                 </p>
             </div>
-            <div class="flex-shrink-0 text-gray-400 group-hover:text-indigo-600 dark:text-gray-500 dark:group-hover:text-indigo-400">
+            <div
+                :class="[
+                    'flex-shrink-0 text-gray-400 dark:text-gray-500',
+                    color === 'primary' ? 'group-hover:text-primary-600 dark:group-hover:text-primary-400' : '',
+                    color === 'secondary' ? 'group-hover:text-secondary-600 dark:group-hover:text-secondary-400' : '',
+                    color === 'accent' ? 'group-hover:text-accent-600 dark:group-hover:text-accent-400' : '',
+                ]"
+            >
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>

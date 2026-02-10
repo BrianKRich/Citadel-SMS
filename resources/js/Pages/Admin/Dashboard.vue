@@ -71,7 +71,7 @@ const props = defineProps({
                             description="Customize colors and appearance of your application"
                             icon="🎨"
                             :href="route('admin.theme')"
-                            color="purple"
+                            color="accent"
                         />
 
                         <AdminActionCard
@@ -79,7 +79,7 @@ const props = defineProps({
                             description="Manage student records and enrollment"
                             icon="📚"
                             href="#"
-                            color="blue"
+                            color="primary"
                         />
 
                         <AdminActionCard
@@ -87,7 +87,7 @@ const props = defineProps({
                             description="View and manage registered users"
                             icon="👤"
                             :href="route('admin.users.index')"
-                            color="green"
+                            color="secondary"
                         />
 
                         <AdminActionCard
@@ -95,7 +95,7 @@ const props = defineProps({
                             description="Manage courses and class schedules"
                             icon="📖"
                             href="#"
-                            color="indigo"
+                            color="primary"
                         />
 
                         <AdminActionCard
@@ -103,7 +103,7 @@ const props = defineProps({
                             description="View reports and analytics data"
                             icon="📊"
                             href="#"
-                            color="pink"
+                            color="accent"
                         />
 
                         <AdminActionCard
@@ -111,7 +111,7 @@ const props = defineProps({
                             description="Configure application settings and preferences"
                             icon="⚙️"
                             href="#"
-                            color="indigo"
+                            color="secondary"
                         />
                     </div>
                 </div>

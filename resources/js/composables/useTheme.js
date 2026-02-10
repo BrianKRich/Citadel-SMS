@@ -3,9 +3,9 @@ import axios from 'axios';
 
 export function useTheme() {
     const theme = ref({
-        primary_color: '#6366f1',
-        secondary_color: '#8b5cf6',
-        accent_color: '#ec4899',
+        primary_color: '#1B3A6B',   // Navy Blue - Georgia Youth Challenge Academy
+        secondary_color: '#FFB81C',  // Gold - Georgia Youth Challenge Academy
+        accent_color: '#C8102E',     // Red - Georgia Youth Challenge Academy
         background_color: '#ffffff',
         text_color: '#1f2937',
     });
@@ -21,8 +21,21 @@ export function useTheme() {
         }
     };
 
+    const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (result) {
+            return `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}`;
+        }
+        return '99 102 241'; // fallback to indigo-500
+    };
+
     const applyTheme = () => {
         const root = document.documentElement;
+        // Set RGB values for Tailwind
+        root.style.setProperty('--color-primary-rgb', hexToRgb(theme.value.primary_color));
+        root.style.setProperty('--color-secondary-rgb', hexToRgb(theme.value.secondary_color));
+        root.style.setProperty('--color-accent-rgb', hexToRgb(theme.value.accent_color));
+        // Keep hex values for backward compatibility
         root.style.setProperty('--color-primary', theme.value.primary_color);
         root.style.setProperty('--color-secondary', theme.value.secondary_color);
         root.style.setProperty('--color-accent', theme.value.accent_color);
