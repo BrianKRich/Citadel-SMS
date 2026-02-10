@@ -127,7 +127,7 @@ Student Management System is a comprehensive Student Management System. The syst
 ## Project Structure
 
 ```
-citadel-sms/
+student-management-system/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/

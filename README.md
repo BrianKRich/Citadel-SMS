@@ -174,7 +174,7 @@ Edit `.env` file with your PostgreSQL credentials:
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_DATABASE=citadel_sms
+DB_DATABASE=student_management_system
 DB_USERNAME=postgres
 DB_PASSWORD=your_password
 ```
@@ -183,11 +183,11 @@ DB_PASSWORD=your_password
 
 ```bash
 # Using PostgreSQL command line
-createdb citadel_sms
+createdb student_management_system
 
 # Or via psql
 psql -U postgres
-CREATE DATABASE citadel_sms;
+CREATE DATABASE student_management_system;
 ```
 
 ### 7. Run Migrations
