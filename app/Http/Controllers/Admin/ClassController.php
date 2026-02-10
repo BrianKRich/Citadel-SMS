@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\ClassModel;
 use App\Models\Course;
-use App\Models\Teacher;
+use App\Models\Employee;
 use App\Models\Term;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,15 +19,15 @@ class ClassController extends Controller
     public function index(Request $request)
     {
         $classes = ClassModel::query()
-            ->with(['course', 'teacher', 'term.academicYear'])
+            ->with(['course', 'employee', 'term.academicYear'])
             ->when($request->term_id, function ($query, $termId) {
                 $query->term($termId);
             })
             ->when($request->course_id, function ($query, $courseId) {
                 $query->course($courseId);
             })
-            ->when($request->teacher_id, function ($query, $teacherId) {
-                $query->teacher($teacherId);
+            ->when($request->employee_id, function ($query, $employeeId) {
+                $query->employee($employeeId);
             })
             ->when($request->status, function ($query, $status) {
                 $query->status($status);
@@ -41,14 +41,14 @@ class ClassController extends Controller
         // Get filter options
         $terms = Term::with('academicYear')->orderBy('start_date', 'desc')->get();
         $courses = Course::active()->orderBy('name')->get();
-        $teachers = Teacher::active()->orderBy('first_name')->get();
+        $employees = Employee::active()->orderBy('first_name')->get();
 
         return Inertia::render('Admin/Classes/Index', [
             'classes' => $classes,
             'terms' => $terms,
             'courses' => $courses,
-            'teachers' => $teachers,
-            'filters' => $request->only(['search', 'term_id', 'course_id', 'teacher_id', 'status']),
+            'employees' => $employees,
+            'filters' => $request->only(['search', 'term_id', 'course_id', 'employee_id', 'status']),
         ]);
     }
 
@@ -58,12 +58,12 @@ class ClassController extends Controller
     public function create()
     {
         $courses = Course::active()->orderBy('name')->get();
-        $teachers = Teacher::active()->orderBy('first_name')->get();
+        $employees = Employee::active()->orderBy('first_name')->get();
         $academicYears = AcademicYear::with('terms')->orderBy('start_date', 'desc')->get();
 
         return Inertia::render('Admin/Classes/Create', [
             'courses' => $courses,
-            'teachers' => $teachers,
+            'employees' => $employees,
             'academicYears' => $academicYears,
         ]);
     }
@@ -75,7 +75,7 @@ class ClassController extends Controller
     {
         $validated = $request->validate([
             'course_id' => ['required', 'exists:courses,id'],
-            'teacher_id' => ['required', 'exists:teachers,id'],
+            'employee_id' => ['required', 'exists:employees,id'],
             'academic_year_id' => ['required', 'exists:academic_years,id'],
             'term_id' => ['required', 'exists:terms,id'],
             'section_name' => ['required', 'string', 'max:255'],
@@ -91,7 +91,7 @@ class ClassController extends Controller
         // Check for schedule conflicts with teacher's other classes
         if (!empty($validated['schedule'])) {
             $conflict = $this->checkScheduleConflict(
-                $validated['teacher_id'],
+                $validated['employee_id'],
                 $validated['term_id'],
                 $validated['schedule']
             );
@@ -116,7 +116,7 @@ class ClassController extends Controller
     {
         $class->load([
             'course',
-            'teacher',
+            'employee',
             'academicYear',
             'term',
             'enrollments' => function ($query) {
@@ -135,13 +135,13 @@ class ClassController extends Controller
     public function edit(ClassModel $class)
     {
         $courses = Course::active()->orderBy('name')->get();
-        $teachers = Teacher::active()->orderBy('first_name')->get();
+        $employees = Employee::active()->orderBy('first_name')->get();
         $academicYears = AcademicYear::with('terms')->orderBy('start_date', 'desc')->get();
 
         return Inertia::render('Admin/Classes/Edit', [
-            'class' => $class->load(['course', 'teacher', 'academicYear', 'term']),
+            'class' => $class->load(['course', 'employee', 'academicYear', 'term']),
             'courses' => $courses,
-            'teachers' => $teachers,
+            'employees' => $employees,
             'academicYears' => $academicYears,
         ]);
     }
@@ -153,7 +153,7 @@ class ClassController extends Controller
     {
         $validated = $request->validate([
             'course_id' => ['required', 'exists:courses,id'],
-            'teacher_id' => ['required', 'exists:teachers,id'],
+            'employee_id' => ['required', 'exists:employees,id'],
             'academic_year_id' => ['required', 'exists:academic_years,id'],
             'term_id' => ['required', 'exists:terms,id'],
             'section_name' => ['required', 'string', 'max:255'],
@@ -169,7 +169,7 @@ class ClassController extends Controller
         // Check for schedule conflicts (excluding current class)
         if (!empty($validated['schedule'])) {
             $conflict = $this->checkScheduleConflict(
-                $validated['teacher_id'],
+                $validated['employee_id'],
                 $validated['term_id'],
                 $validated['schedule'],
                 $class->id
@@ -217,9 +217,9 @@ class ClassController extends Controller
     /**
      * Check for schedule conflicts with teacher's other classes
      */
-    private function checkScheduleConflict($teacherId, $termId, $schedule, $excludeClassId = null)
+    private function checkScheduleConflict($employeeId, $termId, $schedule, $excludeClassId = null)
     {
-        $teacherClasses = ClassModel::where('teacher_id', $teacherId)
+        $teacherClasses = ClassModel::where('employee_id', $employeeId)
             ->where('term_id', $termId)
             ->when($excludeClassId, function ($query, $excludeId) {
                 $query->where('id', '!=', $excludeId);

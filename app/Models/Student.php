@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Student extends Model
@@ -20,14 +21,12 @@ class Student extends Model
         'date_of_birth',
         'gender',
         'email',
-        'phone',
         'address',
         'city',
         'state',
         'postal_code',
         'country',
         'emergency_contact_name',
-        'emergency_contact_phone',
         'enrollment_date',
         'status',
         'photo',
@@ -75,6 +74,11 @@ class Student extends Model
     public function getFullNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+    }
+
+    public function phoneNumbers(): MorphMany
+    {
+        return $this->morphMany(PhoneNumber::class, 'phoneable');
     }
 
     /**

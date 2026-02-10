@@ -16,7 +16,7 @@ class StudentController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Student::with(['guardians', 'user']);
+        $query = Student::with(['guardians', 'user', 'phoneNumbers']);
 
         // Search by name, student ID, or email
         if ($request->filled('search')) {
@@ -59,19 +59,27 @@ class StudentController extends Controller
             'date_of_birth' => ['required', 'date', 'before:today'],
             'gender' => ['required', Rule::in(['male', 'female', 'other'])],
             'email' => ['nullable', 'email', 'unique:students,email'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone_area_code' => ['nullable', 'string', 'digits:3'],
+            'phone' => ['nullable', 'string', 'digits:7'],
             'address' => ['nullable', 'string'],
             'city' => ['nullable', 'string', 'max:255'],
             'state' => ['nullable', 'string', 'max:255'],
             'postal_code' => ['nullable', 'string', 'max:20'],
             'country' => ['nullable', 'string', 'max:255'],
             'emergency_contact_name' => ['nullable', 'string', 'max:255'],
-            'emergency_contact_phone' => ['nullable', 'string', 'max:20'],
+            'emergency_phone_area_code' => ['nullable', 'string', 'digits:3'],
+            'emergency_contact_phone' => ['nullable', 'string', 'digits:7'],
             'enrollment_date' => ['required', 'date'],
             'status' => ['required', Rule::in(['active', 'inactive', 'graduated', 'withdrawn', 'suspended'])],
             'photo' => ['nullable', 'image', 'max:2048'], // 2MB max
             'notes' => ['nullable', 'string'],
         ]);
+
+        $phone = $validated['phone'] ?? null;
+        $phoneAreaCode = $validated['phone_area_code'] ?? null;
+        $emergencyPhone = $validated['emergency_contact_phone'] ?? null;
+        $emergencyAreaCode = $validated['emergency_phone_area_code'] ?? null;
+        unset($validated['phone'], $validated['phone_area_code'], $validated['emergency_contact_phone'], $validated['emergency_phone_area_code']);
 
         // Handle photo upload
         if ($request->hasFile('photo')) {
@@ -79,6 +87,13 @@ class StudentController extends Controller
         }
 
         $student = Student::create($validated);
+
+        if ($phone) {
+            $student->phoneNumbers()->create(['area_code' => $phoneAreaCode, 'number' => $phone, 'type' => 'primary', 'is_primary' => true]);
+        }
+        if ($emergencyPhone) {
+            $student->phoneNumbers()->create(['area_code' => $emergencyAreaCode, 'number' => $emergencyPhone, 'type' => 'emergency']);
+        }
 
         return redirect()->route('admin.students.show', $student)
             ->with('success', "Student {$student->student_id} created successfully.");
@@ -89,7 +104,7 @@ class StudentController extends Controller
      */
     public function show(Student $student)
     {
-        $student->load(['guardians', 'user', 'enrollments.class.course']);
+        $student->load(['guardians', 'user', 'enrollments.class.course', 'phoneNumbers']);
 
         return Inertia::render('Admin/Students/Show', [
             'student' => $student,
@@ -118,19 +133,27 @@ class StudentController extends Controller
             'date_of_birth' => ['required', 'date', 'before:today'],
             'gender' => ['required', Rule::in(['male', 'female', 'other'])],
             'email' => ['nullable', 'email', Rule::unique('students')->ignore($student->id)],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone_area_code' => ['nullable', 'string', 'digits:3'],
+            'phone' => ['nullable', 'string', 'digits:7'],
             'address' => ['nullable', 'string'],
             'city' => ['nullable', 'string', 'max:255'],
             'state' => ['nullable', 'string', 'max:255'],
             'postal_code' => ['nullable', 'string', 'max:20'],
             'country' => ['nullable', 'string', 'max:255'],
             'emergency_contact_name' => ['nullable', 'string', 'max:255'],
-            'emergency_contact_phone' => ['nullable', 'string', 'max:20'],
+            'emergency_phone_area_code' => ['nullable', 'string', 'digits:3'],
+            'emergency_contact_phone' => ['nullable', 'string', 'digits:7'],
             'enrollment_date' => ['required', 'date'],
             'status' => ['required', Rule::in(['active', 'inactive', 'graduated', 'withdrawn', 'suspended'])],
             'photo' => ['nullable', 'image', 'max:2048'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        $phone = $validated['phone'] ?? null;
+        $phoneAreaCode = $validated['phone_area_code'] ?? null;
+        $emergencyPhone = $validated['emergency_contact_phone'] ?? null;
+        $emergencyAreaCode = $validated['emergency_phone_area_code'] ?? null;
+        unset($validated['phone'], $validated['phone_area_code'], $validated['emergency_contact_phone'], $validated['emergency_phone_area_code']);
 
         // Handle photo upload
         if ($request->hasFile('photo')) {
@@ -142,6 +165,14 @@ class StudentController extends Controller
         }
 
         $student->update($validated);
+
+        $student->phoneNumbers()->delete();
+        if ($phone) {
+            $student->phoneNumbers()->create(['area_code' => $phoneAreaCode, 'number' => $phone, 'type' => 'primary', 'is_primary' => true]);
+        }
+        if ($emergencyPhone) {
+            $student->phoneNumbers()->create(['area_code' => $emergencyAreaCode, 'number' => $emergencyPhone, 'type' => 'emergency']);
+        }
 
         return redirect()->route('admin.students.show', $student)
             ->with('success', 'Student updated successfully.');

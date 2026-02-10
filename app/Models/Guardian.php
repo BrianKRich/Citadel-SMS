@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Guardian extends Model
 {
@@ -16,11 +17,15 @@ class Guardian extends Model
         'last_name',
         'relationship',
         'email',
-        'phone',
         'address',
         'occupation',
         'user_id',
     ];
+
+    public function phoneNumbers(): MorphMany
+    {
+        return $this->morphMany(PhoneNumber::class, 'phoneable');
+    }
 
     /**
      * Get the full name attribute

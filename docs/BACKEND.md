@@ -1,7 +1,7 @@
 # Student Management System - Backend Architecture
 
-**Version:** 2.0 (Phase 0-2 Complete)
-**Last Updated:** February 9, 2026
+**Version:** 2.2 (Phase 0-2 + Employee & Class Seed Data)
+**Last Updated:** February 10, 2026
 **Framework:** Laravel 12.x
 
 ---
@@ -36,8 +36,8 @@ Student Management System backend is built with Laravel 12, following modern Lar
 
 **Key Features:**
 - RESTful resource controllers for CRUD operations
-- Auto-generated unique IDs (student_id, teacher_id)
-- File upload handling (student/teacher photos)
+- Auto-generated unique IDs (student_id, employee_id)
+- File upload handling (student/employee photos)
 - Soft deletes for data retention
 - Query scopes for reusable filters
 - Eager loading to prevent N+1 queries
@@ -55,10 +55,10 @@ app/
 │   │   │   ├── AcademicYearController.php
 │   │   │   ├── ClassController.php          # Phase 2
 │   │   │   ├── CourseController.php
+│   │   │   ├── EmployeeController.php       # Employee management
 │   │   │   ├── EnrollmentController.php     # Phase 2
 │   │   │   ├── GuardianController.php
-│   │   │   ├── StudentController.php
-│   │   │   └── TeacherController.php
+│   │   │   └── StudentController.php
 │   │   ├── AdminController.php
 │   │   ├── ProfileController.php
 │   │   ├── ThemeController.php
@@ -71,12 +71,16 @@ app/
 ├── Models/
 │   ├── AcademicYear.php
 │   ├── ClassModel.php                       # Phase 2
+│   ├── County.php                           # Reference data
 │   ├── Course.php
+│   ├── Department.php                       # Staff departments
+│   ├── Employee.php                         # Employee profiles
+│   ├── EmployeeRole.php                     # Roles per department
 │   ├── Enrollment.php                       # Phase 2
 │   ├── Guardian.php
+│   ├── PhoneNumber.php                      # Polymorphic phone numbers
 │   ├── Setting.php
 │   ├── Student.php
-│   ├── Teacher.php
 │   ├── Term.php
 │   └── User.php
 ├── Providers/
@@ -345,23 +349,25 @@ $activeCourses = Course::active()->get();
 
 ---
 
-### Teacher Model
+### Employee Model
 
-**File:** `app/Models/Teacher.php`
+**File:** `app/Models/Employee.php`
 
-**Purpose:** Represents teacher profiles and qualifications.
+**Purpose:** Represents staff employee profiles including instructors, counselors, and support staff.
 
 **Key Features:**
-- Auto-generates unique `teacher_id` (TCH-YYYY-###)
-- Belongs to User for authentication
+- Auto-generates unique `employee_id` (EMP-YYYY-###)
+- Belongs to Department and EmployeeRole for organizational structure
+- Optionally linked to User for portal access
 - Soft deletes enabled
+- Polymorphic phone numbers
 
 **Properties:**
 
 ```php
 protected $fillable = [
-    'user_id', 'first_name', 'last_name', 'email', 'phone',
-    'date_of_birth', 'hire_date', 'department', 'specialization',
+    'user_id', 'first_name', 'last_name', 'email',
+    'department_id', 'role_id', 'date_of_birth', 'hire_date',
     'qualifications', 'photo', 'status'
 ];
 
@@ -378,23 +384,23 @@ protected static function boot()
 {
     parent::boot();
 
-    static::creating(function ($teacher) {
-        if (empty($teacher->teacher_id)) {
-            $teacher->teacher_id = static::generateTeacherId();
+    static::creating(function ($employee) {
+        if (empty($employee->employee_id)) {
+            $employee->employee_id = static::generateEmployeeId();
         }
     });
 }
 
-public static function generateTeacherId(): string
+public static function generateEmployeeId(): string
 {
     $year = date('Y');
-    $lastTeacher = static::whereYear('created_at', $year)
+    $last = static::whereYear('created_at', $year)
         ->orderBy('id', 'desc')
         ->first();
 
-    $number = $lastTeacher ? intval(substr($lastTeacher->teacher_id, -3)) + 1 : 1;
+    $number = $last ? intval(substr($last->employee_id, -3)) + 1 : 1;
 
-    return sprintf('TCH-%s-%03d', $year, $number);
+    return sprintf('EMP-%s-%03d', $year, $number);
 }
 ```
 
@@ -406,7 +412,34 @@ public function user(): BelongsTo
     return $this->belongsTo(User::class);
 }
 
-// Future: public function classes(): HasMany
+public function department(): BelongsTo
+{
+    return $this->belongsTo(Department::class);
+}
+
+public function role(): BelongsTo
+{
+    return $this->belongsTo(EmployeeRole::class, 'role_id');
+}
+
+public function classes(): HasMany
+{
+    return $this->hasMany(ClassModel::class);
+}
+
+public function phoneNumbers(): MorphMany
+{
+    return $this->morphMany(PhoneNumber::class, 'phoneable');
+}
+```
+
+**Computed Attributes:**
+
+```php
+public function getFullNameAttribute(): string
+{
+    return trim("{$this->first_name} {$this->last_name}");
+}
 ```
 
 **Query Scopes:**
@@ -417,20 +450,157 @@ public function scopeActive($query)
     return $query->where('status', 'active');
 }
 
-public function scopeDepartment($query, $department)
+public function scopeDepartment($query, $departmentId)
 {
-    return $query->where('department', $department);
+    return $query->where('department_id', $departmentId);
 }
 
 public function scopeSearch($query, $search)
 {
     return $query->where(function ($q) use ($search) {
-        $q->where('teacher_id', 'like', "%{$search}%")
+        $q->where('employee_id', 'like', "%{$search}%")
           ->orWhere('first_name', 'like', "%{$search}%")
           ->orWhere('last_name', 'like', "%{$search}%")
           ->orWhere('email', 'like', "%{$search}%");
     });
 }
+```
+
+**Usage Examples:**
+
+```php
+// Get all active employees
+$employees = Employee::active()->with('department', 'role')->get();
+
+// Search employees
+$employees = Employee::search('Smith')->get();
+
+// Create new employee (auto-generates employee_id)
+$employee = Employee::create([
+    'first_name' => 'Jane',
+    'last_name' => 'Smith',
+    'email' => 'jsmith@school.edu',
+    'department_id' => 1,
+    'role_id' => 2,
+    'hire_date' => now(),
+    'status' => 'active',
+]);
+// $employee->employee_id will be "EMP-2026-001" (auto-generated)
+```
+
+---
+
+### Department Model
+
+**File:** `app/Models/Department.php`
+
+**Purpose:** Organizational departments (Academic, Cadre, Counseling, etc.).
+
+**Properties:**
+
+```php
+protected $fillable = ['name'];
+```
+
+**Relationships:**
+
+```php
+public function roles(): HasMany
+{
+    return $this->hasMany(EmployeeRole::class);
+}
+
+public function employees(): HasMany
+{
+    return $this->hasMany(Employee::class);
+}
+```
+
+---
+
+### EmployeeRole Model
+
+**File:** `app/Models/EmployeeRole.php`
+
+**Purpose:** Job roles within departments (Instructor, Counselor, etc.).
+
+**Properties:**
+
+```php
+protected $fillable = ['department_id', 'name'];
+```
+
+**Relationships:**
+
+```php
+public function department(): BelongsTo
+{
+    return $this->belongsTo(Department::class);
+}
+
+public function employees(): HasMany
+{
+    return $this->hasMany(Employee::class, 'role_id');
+}
+```
+
+---
+
+### County Model
+
+**File:** `app/Models/County.php`
+
+**Purpose:** Georgia county reference data for demographics.
+
+**Properties:**
+
+```php
+protected $fillable = ['name'];
+```
+
+---
+
+### PhoneNumber Model
+
+**File:** `app/Models/PhoneNumber.php`
+
+**Purpose:** Polymorphic phone number storage for employees, students, guardians.
+
+**Properties:**
+
+```php
+protected $fillable = [
+    'area_code', 'number', 'type', 'label', 'is_primary'
+];
+
+protected $casts = [
+    'is_primary' => 'boolean',
+];
+```
+
+**Relationships:**
+
+```php
+// Polymorphic relationship - belongs to any phoneable model
+public function phoneable(): MorphTo
+{
+    return $this->morphTo();
+}
+```
+
+**Usage Examples:**
+
+```php
+// Add phone number to employee
+$employee->phoneNumbers()->create([
+    'area_code' => '912',
+    'number' => '5551234',
+    'type' => 'work',
+    'is_primary' => true,
+]);
+
+// Get employee's primary phone
+$phone = $employee->phoneNumbers()->where('is_primary', true)->first();
 ```
 
 ---
@@ -542,9 +712,9 @@ public function course(): BelongsTo
     return $this->belongsTo(Course::class);
 }
 
-public function teacher(): BelongsTo
+public function employee(): BelongsTo
 {
-    return $this->belongsTo(Teacher::class);
+    return $this->belongsTo(Employee::class);
 }
 
 public function academicYear(): BelongsTo
@@ -607,10 +777,10 @@ public function scopeAvailable($query)
         ->whereRaw("(SELECT COUNT(*) FROM enrollments WHERE class_id = classes.id AND status = 'enrolled') < max_students");
 }
 
-// Filter by term, course, teacher, status
+// Filter by term, course, employee, status
 public function scopeTerm($query, $termId)
 public function scopeCourse($query, $courseId)
-public function scopeTeacher($query, $teacherId)
+public function scopeEmployee($query, $employeeId)
 public function scopeStatus($query, $status)
 
 // Search classes
@@ -619,7 +789,7 @@ public function scopeSearch($query, $search)
     return $query->whereHas('course', function ($q) use ($search) {
         $q->where('name', 'like', "%{$search}%")
           ->orWhere('course_code', 'like', "%{$search}%");
-    })->orWhereHas('teacher', function ($q) use ($search) {
+    })->orWhereHas('employee', function ($q) use ($search) {
         $q->where('first_name', 'like', "%{$search}%")
           ->orWhere('last_name', 'like', "%{$search}%");
     })->orWhere('section_name', 'like', "%{$search}%")
@@ -633,7 +803,7 @@ public function scopeSearch($query, $search)
 // Create class with schedule
 $class = ClassModel::create([
     'course_id' => 1,
-    'teacher_id' => 1,
+    'employee_id' => 1,
     'academic_year_id' => 1,
     'term_id' => 1,
     'section_name' => 'A',
@@ -649,7 +819,7 @@ $class = ClassModel::create([
 // Get available classes for a term
 $classes = ClassModel::available()
     ->term($termId)
-    ->with(['course', 'teacher'])
+    ->with(['course', 'employee'])
     ->get();
 
 // Check if class is full
@@ -1112,48 +1282,66 @@ public function store(Request $request)
 
 ---
 
-### TeacherController
+### EmployeeController
 
-**File:** `app/Http/Controllers/Admin/TeacherController.php`
+**File:** `app/Http/Controllers/Admin/EmployeeController.php`
 
-**Purpose:** CRUD operations for teachers.
+**Purpose:** CRUD operations for employees.
 
 **Key Methods:**
 
 ```php
+public function index(Request $request)
+{
+    $employees = Employee::query()
+        ->with(['department', 'role'])
+        ->when($request->search, fn($q, $s) => $q->search($s))
+        ->when($request->department_id, fn($q, $id) => $q->department($id))
+        ->when($request->status, fn($q, $s) => $q->status($s))
+        ->paginate(10)
+        ->withQueryString();
+
+    return Inertia::render('Admin/Employees/Index', [
+        'employees' => $employees,
+        'departments' => Department::with('roles')->get(),
+        'filters' => $request->only(['search', 'department_id', 'status']),
+    ]);
+}
+
 public function store(Request $request)
 {
     $validated = $request->validate([
-        'user_id' => ['required', 'exists:users,id'],
         'first_name' => ['required', 'string', 'max:255'],
         'last_name' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'email', 'unique:teachers,email'],
-        'phone' => ['nullable', 'string', 'max:20'],
+        'email' => ['required', 'email', 'unique:employees,email'],
+        'department_id' => ['required', 'exists:departments,id'],
+        'role_id' => ['required', 'exists:employee_roles,id'],
         'date_of_birth' => ['nullable', 'date', 'before:today'],
         'hire_date' => ['required', 'date'],
-        'department' => ['nullable', 'string', 'max:255'],
-        'specialization' => ['nullable', 'string', 'max:255'],
         'qualifications' => ['nullable', 'string'],
         'photo' => ['nullable', 'image', 'max:2048'],
         'status' => ['required', 'in:active,inactive,on_leave'],
+        'user_id' => ['nullable', 'exists:users,id'],
     ]);
 
     // Handle photo upload
     if ($request->hasFile('photo')) {
-        $validated['photo'] = $request->file('photo')->store('teachers/photos', 'public');
+        $validated['photo'] = $request->file('photo')->store('employees/photos', 'public');
     }
 
-    $teacher = Teacher::create($validated);
+    $employee = Employee::create($validated);
 
-    return redirect()->route('admin.teachers.show', $teacher)
-        ->with('success', 'Teacher created successfully.');
+    return redirect()->route('admin.employees.index')
+        ->with('success', 'Employee created successfully.');
 }
 ```
 
 **Features:**
-- Links teacher to existing user account
+- Filters by department, status, and search
+- Provides departments with roles for form dropdowns
 - Photo upload handling
-- Auto-generates teacher_id via model boot event
+- Auto-generates employee_id via model boot event
+- Optionally links employee to a user account
 
 ---
 
@@ -1171,7 +1359,7 @@ public function index()
     $academicYears = AcademicYear::with('terms')->get();
 
     return Inertia::render('Admin/AcademicYears/Index', [
-        'academicYears' => $academicYears,
+        'academic_years' => $academicYears,
     ]);
 }
 
@@ -1288,10 +1476,10 @@ public function show()
 public function index(Request $request)
 {
     $classes = ClassModel::query()
-        ->with(['course', 'teacher', 'term.academicYear'])
+        ->with(['course', 'employee', 'term.academicYear'])
         ->when($request->term_id, fn($q, $id) => $q->term($id))
         ->when($request->course_id, fn($q, $id) => $q->course($id))
-        ->when($request->teacher_id, fn($q, $id) => $q->teacher($id))
+        ->when($request->employee_id, fn($q, $id) => $q->employee($id))
         ->when($request->status, fn($q, $status) => $q->status($status))
         ->when($request->search, fn($q, $search) => $q->search($search))
         ->paginate(10)
@@ -1301,8 +1489,8 @@ public function index(Request $request)
         'classes' => $classes,
         'terms' => Term::with('academicYear')->get(),
         'courses' => Course::active()->get(),
-        'teachers' => Teacher::active()->get(),
-        'filters' => $request->only(['search', 'term_id', 'course_id', 'teacher_id', 'status']),
+        'employees' => Employee::active()->with('department')->get(),
+        'filters' => $request->only(['search', 'term_id', 'course_id', 'employee_id', 'status']),
     ]);
 }
 ```
@@ -1314,7 +1502,7 @@ public function store(Request $request)
 {
     $validated = $request->validate([
         'course_id' => ['required', 'exists:courses,id'],
-        'teacher_id' => ['required', 'exists:teachers,id'],
+        'employee_id' => ['required', 'exists:employees,id'],
         'academic_year_id' => ['required', 'exists:academic_years,id'],
         'term_id' => ['required', 'exists:terms,id'],
         'section_name' => ['required', 'string', 'max:255'],
@@ -1330,7 +1518,7 @@ public function store(Request $request)
     // Check for schedule conflicts
     if (!empty($validated['schedule'])) {
         $conflict = $this->checkScheduleConflict(
-            $validated['teacher_id'],
+            $validated['employee_id'],
             $validated['term_id'],
             $validated['schedule']
         );
@@ -1352,15 +1540,15 @@ public function store(Request $request)
 #### Schedule Conflict Detection
 
 ```php
-private function checkScheduleConflict($teacherId, $termId, $schedule, $excludeClassId = null)
+private function checkScheduleConflict($employeeId, $termId, $schedule, $excludeClassId = null)
 {
-    $teacherClasses = ClassModel::where('teacher_id', $teacherId)
+    $employeeClasses = ClassModel::where('employee_id', $employeeId)
         ->where('term_id', $termId)
         ->when($excludeClassId, fn($q, $id) => $q->where('id', '!=', $id))
         ->with('course')
         ->get();
 
-    foreach ($teacherClasses as $existingClass) {
+    foreach ($employeeClasses as $existingClass) {
         if (empty($existingClass->schedule)) continue;
 
         foreach ($schedule as $newSlot) {
@@ -1592,14 +1780,14 @@ use App\Http\Controllers\Admin\{
     AcademicYearController,
     ClassController,
     CourseController,
+    EmployeeController,
     EnrollmentController,
     GuardianController,
     StudentController,
-    TeacherController
 };
 
 Route::middleware(['auth'])->prefix('admin')->group(function () {
-    // Phase 1: Student & Course Foundation
+    // Phase 1: Student, Course & Employee Foundation
 
     // Student management
     Route::resource('students', StudentController::class);
@@ -1610,8 +1798,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     // Course management
     Route::resource('courses', CourseController::class);
 
-    // Teacher management
-    Route::resource('teachers', TeacherController::class);
+    // Employee management
+    Route::resource('employees', EmployeeController::class);
 
     // Academic year management
     Route::resource('academic-years', AcademicYearController::class);

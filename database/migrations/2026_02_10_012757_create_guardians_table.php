@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('last_name');
             $table->enum('relationship', ['mother', 'father', 'guardian', 'grandparent', 'other']);
             $table->string('email')->nullable();
-            $table->string('phone');
             $table->text('address')->nullable();
             $table->string('occupation')->nullable();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete(); // for parent portal access

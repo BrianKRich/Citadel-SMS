@@ -99,10 +99,10 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
-                            title="Teacher Management"
-                            description="Manage teacher profiles and assignments"
+                            title="Employee Management"
+                            description="Manage employee profiles and assignments"
                             icon="👨‍🏫"
-                            :href="route('admin.teachers.index')"
+                            :href="route('admin.employees.index')"
                             color="secondary"
                         />
 

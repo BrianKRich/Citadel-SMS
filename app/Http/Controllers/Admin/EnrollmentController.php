@@ -64,7 +64,7 @@ class EnrollmentController extends Controller
         // Get available classes (open and not full)
         $classes = ClassModel::query()
             ->available()
-            ->with(['course', 'teacher', 'term'])
+            ->with(['course', 'employee', 'term'])
             ->when($request->term_id, function ($query, $termId) {
                 $query->where('term_id', $termId);
             })

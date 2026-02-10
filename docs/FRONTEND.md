@@ -1,7 +1,7 @@
 # Student Management System - Frontend Architecture
 
-**Version:** 2.0 (Phase 0-2 Complete)
-**Last Updated:** February 9, 2026
+**Version:** 2.1 (Phase 0-2 + Employee System)
+**Last Updated:** February 10, 2026
 **Framework:** Vue 3 + Inertia.js
 
 ---
@@ -83,9 +83,10 @@ resources/
 │   │   │   │   ├── Index.vue           # User list
 │   │   │   │   ├── Create.vue          # Create user
 │   │   │   │   └── Edit.vue            # Edit user
-│   │   │   ├── Students/               # Student pages (future)
-│   │   │   ├── Courses/                # Course pages (future)
-│   │   │   └── Teachers/               # Teacher pages (future)
+│   │   │   ├── Students/               # Student pages
+│   │   │   ├── Courses/                # Course pages
+│   │   │   ├── Employees/              # Employee pages
+│   │   │   └── Classes/                # Class pages (Phase 2)
 │   │   ├── Auth/
 │   │   │   ├── ConfirmPassword.vue
 │   │   │   ├── ForgotPassword.vue
@@ -664,7 +665,7 @@ defineProps({
     totalUsers: Number,
     totalStudents: Number,
     totalCourses: Number,
-    totalTeachers: Number,
+    totalEmployees: Number,
 });
 </script>
 
@@ -695,8 +696,8 @@ defineProps({
                     :icon="BookOpenIcon"
                 />
                 <StatCard
-                    title="Total Teachers"
-                    :value="totalTeachers"
+                    title="Total Employees"
+                    :value="totalEmployees"
                     :icon="CalendarIcon"
                 />
             </div>
@@ -745,21 +746,23 @@ All admin pages follow a consistent pattern:
 **Props:**
 - `students` (Object) - Paginated student collection with metadata
 
-#### Teachers Index
+#### Employees Index
 
-**File:** `resources/js/Pages/Admin/Teachers/Index.vue`
+**File:** `resources/js/Pages/Admin/Employees/Index.vue`
 
-**Purpose:** List and manage all teachers.
+**Purpose:** List and manage all employees (staff, instructors, counselors).
 
 **Features:**
-- Teacher directory with department info
+- Employee directory with department and role info
 - Status badges (active, inactive, on_leave)
-- Auto-generated teacher IDs display (TCH-YYYY-###)
-- Search by name or department
-- Filter by status
+- Auto-generated employee IDs display (EMP-YYYY-###)
+- Search by name, email, or employee ID
+- Filter by department and status
 
 **Props:**
-- `teachers` (Object) - Paginated teacher collection
+- `employees` (Object) - Paginated employee collection with department and role
+- `departments` (Array) - Available departments for filtering
+- `filters` (Object) - Current filter values
 
 #### Courses Index
 
@@ -796,12 +799,12 @@ All admin pages follow a consistent pattern:
 - `classes` (Object) - Paginated class collection with relationships
 - `terms` (Array) - Available terms for filtering
 - `courses` (Array) - Available courses for filtering
-- `teachers` (Array) - Available teachers for filtering
+- `employees` (Array) - Available employees (instructors) for filtering
 - `filters` (Object) - Current filter values
 
 **Relationships loaded:**
 - course (name, code)
-- teacher (name)
+- employee (name, department)
 - term (name, academic year)
 
 #### Academic Years Index

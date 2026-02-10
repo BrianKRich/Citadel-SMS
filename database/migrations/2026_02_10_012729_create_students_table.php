@@ -20,14 +20,12 @@ return new class extends Migration
             $table->date('date_of_birth');
             $table->enum('gender', ['male', 'female', 'other']);
             $table->string('email')->unique()->nullable();
-            $table->string('phone')->nullable();
             $table->text('address')->nullable();
             $table->string('city')->nullable();
             $table->string('state')->nullable();
             $table->string('postal_code')->nullable();
             $table->string('country')->default('USA');
             $table->string('emergency_contact_name')->nullable();
-            $table->string('emergency_contact_phone')->nullable();
             $table->date('enrollment_date');
             $table->enum('status', ['active', 'inactive', 'graduated', 'withdrawn', 'suspended'])->default('active');
             $table->string('photo')->nullable(); // path to student photo

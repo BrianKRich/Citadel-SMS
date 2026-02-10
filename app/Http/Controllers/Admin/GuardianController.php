@@ -16,7 +16,7 @@ class GuardianController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Guardian::with(['students']);
+        $query = Guardian::with(['students', 'phoneNumbers']);
 
         // Search by name, email, or phone
         if ($request->filled('search')) {
@@ -25,7 +25,9 @@ class GuardianController extends Controller
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhereHas('phoneNumbers', function ($pq) use ($search) {
+                        $pq->where('number', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -61,7 +63,8 @@ class GuardianController extends Controller
             'last_name' => ['required', 'string', 'max:255'],
             'relationship' => ['required', Rule::in(['mother', 'father', 'guardian', 'grandparent', 'other'])],
             'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone_area_code' => ['nullable', 'string', 'digits:3'],
+            'phone' => ['required', 'string', 'digits:7'],
             'address' => ['nullable', 'string'],
             'occupation' => ['nullable', 'string', 'max:255'],
             'students' => ['nullable', 'array'],
@@ -69,7 +72,12 @@ class GuardianController extends Controller
             'students.*.is_primary' => ['boolean'],
         ]);
 
+        $phone = $validated['phone'];
+        $phoneAreaCode = $validated['phone_area_code'] ?? null;
+        unset($validated['phone'], $validated['phone_area_code']);
+
         $guardian = Guardian::create($validated);
+        $guardian->phoneNumbers()->create(['area_code' => $phoneAreaCode, 'number' => $phone, 'type' => 'primary', 'is_primary' => true]);
 
         // Attach students if provided
         if (isset($validated['students'])) {
@@ -89,7 +97,7 @@ class GuardianController extends Controller
      */
     public function show(Guardian $guardian)
     {
-        $guardian->load(['students', 'user']);
+        $guardian->load(['students', 'user', 'phoneNumbers']);
 
         return Inertia::render('Admin/Guardians/Show', [
             'guardian' => $guardian,
@@ -120,7 +128,8 @@ class GuardianController extends Controller
             'last_name' => ['required', 'string', 'max:255'],
             'relationship' => ['required', Rule::in(['mother', 'father', 'guardian', 'grandparent', 'other'])],
             'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone_area_code' => ['nullable', 'string', 'digits:3'],
+            'phone' => ['required', 'string', 'digits:7'],
             'address' => ['nullable', 'string'],
             'occupation' => ['nullable', 'string', 'max:255'],
             'students' => ['nullable', 'array'],
@@ -128,7 +137,14 @@ class GuardianController extends Controller
             'students.*.is_primary' => ['boolean'],
         ]);
 
+        $phone = $validated['phone'];
+        $phoneAreaCode = $validated['phone_area_code'] ?? null;
+        unset($validated['phone'], $validated['phone_area_code']);
+
         $guardian->update($validated);
+
+        $guardian->phoneNumbers()->delete();
+        $guardian->phoneNumbers()->create(['area_code' => $phoneAreaCode, 'number' => $phone, 'type' => 'primary', 'is_primary' => true]);
 
         // Sync students if provided
         if (isset($validated['students'])) {

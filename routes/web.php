@@ -6,7 +6,7 @@ use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\EnrollmentController;
 use App\Http\Controllers\Admin\GuardianController;
 use App\Http\Controllers\Admin\StudentController;
-use App\Http\Controllers\Admin\TeacherController;
+use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ThemeController;
@@ -79,14 +79,14 @@ Route::middleware('auth')->group(function () {
         'destroy' => 'admin.courses.destroy',
     ]);
 
-    Route::resource('admin/teachers', TeacherController::class)->names([
-        'index' => 'admin.teachers.index',
-        'create' => 'admin.teachers.create',
-        'store' => 'admin.teachers.store',
-        'show' => 'admin.teachers.show',
-        'edit' => 'admin.teachers.edit',
-        'update' => 'admin.teachers.update',
-        'destroy' => 'admin.teachers.destroy',
+    Route::resource('admin/employees', EmployeeController::class)->names([
+        'index' => 'admin.employees.index',
+        'create' => 'admin.employees.create',
+        'store' => 'admin.employees.store',
+        'show' => 'admin.employees.show',
+        'edit' => 'admin.employees.edit',
+        'update' => 'admin.employees.update',
+        'destroy' => 'admin.employees.destroy',
     ]);
 
     Route::resource('admin/academic-years', AcademicYearController::class)->names([

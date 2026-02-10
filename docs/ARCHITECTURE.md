@@ -25,7 +25,7 @@ Student Management System is a comprehensive Student Management System. The syst
 
 - **Student Management** - Student records, enrollment, demographics
 - **Course Management** - Course catalog, curriculum tracking
-- **Teacher Management** - Teacher profiles, assignments, schedules
+- **Employee Management** - Staff profiles, departments, roles, assignments
 - **Guardian Portal** - Parent/guardian access to student information
 - **Grade Tracking** - Assessment management, grade calculations
 - **Attendance System** - Daily attendance, reporting, alerts
@@ -105,7 +105,7 @@ Student Management System is a comprehensive Student Management System. The syst
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │              PostgreSQL Database                     │   │
 │  │  ┌──────────┐  ┌──────────┐  ┌──────────┐          │   │
-│  │  │ Students │  │ Courses  │  │ Teachers │          │   │
+│  │  │ Students │  │ Courses  │  │Employees │          │   │
 │  │  └──────────┘  └──────────┘  └──────────┘          │   │
 │  │  ┌──────────┐  ┌──────────┐  ┌──────────┐          │   │
 │  │  │  Grades  │  │Attendance│  │ Settings │          │   │
@@ -134,8 +134,10 @@ student-management-system/
 │   │   │   ├── Admin/              # Admin-specific controllers
 │   │   │   │   ├── StudentController.php
 │   │   │   │   ├── CourseController.php
-│   │   │   │   ├── TeacherController.php
+│   │   │   │   ├── EmployeeController.php
 │   │   │   │   ├── GuardianController.php
+│   │   │   │   ├── ClassController.php
+│   │   │   │   ├── EnrollmentController.php
 │   │   │   │   └── AcademicYearController.php
 │   │   │   ├── AdminController.php
 │   │   │   ├── ThemeController.php
@@ -146,7 +148,13 @@ student-management-system/
 │   │   ├── Student.php             # Student model with relationships
 │   │   ├── Guardian.php            # Guardian model
 │   │   ├── Course.php              # Course model
-│   │   ├── Teacher.php             # Teacher model
+│   │   ├── Employee.php            # Employee model (auto-ID EMP-YYYY-###)
+│   │   ├── EmployeeRole.php        # Job roles per department
+│   │   ├── Department.php          # Organizational departments
+│   │   ├── County.php              # Georgia county reference data
+│   │   ├── PhoneNumber.php         # Polymorphic phone numbers
+│   │   ├── ClassModel.php          # Class sections (Phase 2)
+│   │   ├── Enrollment.php          # Student enrollments (Phase 2)
 │   │   ├── AcademicYear.php        # Academic year model
 │   │   ├── Term.php                # Term/semester model
 │   │   ├── Setting.php             # System settings
@@ -157,11 +165,19 @@ student-management-system/
 │   │   ├── *_create_students_table.php
 │   │   ├── *_create_guardians_table.php
 │   │   ├── *_create_courses_table.php
-│   │   ├── *_create_teachers_table.php
+│   │   ├── *_create_departments_table.php
+│   │   ├── *_create_employee_roles_table.php
+│   │   ├── *_create_employees_table.php
+│   │   ├── *_create_phone_numbers_table.php
+│   │   ├── *_create_counties_table.php
+│   │   ├── *_create_classes_table.php
+│   │   ├── *_create_enrollments_table.php
 │   │   └── ...
 │   └── seeders/                    # Database seeders
 │       ├── AcademicYearSeeder.php
 │       ├── CourseSeeder.php
+│       ├── DepartmentSeeder.php
+│       ├── CountySeeder.php
 │       └── StudentSeeder.php
 ├── resources/
 │   ├── js/
@@ -183,7 +199,9 @@ student-management-system/
 │   │   │   │   ├── Dashboard.vue
 │   │   │   │   ├── Students/
 │   │   │   │   ├── Courses/
-│   │   │   │   ├── Teachers/
+│   │   │   │   ├── Employees/
+│   │   │   │   ├── Classes/
+│   │   │   │   ├── AcademicYears/
 │   │   │   │   └── ...
 │   │   │   ├── Auth/               # Authentication pages
 │   │   │   └── Welcome.vue         # Landing page
@@ -201,7 +219,7 @@ student-management-system/
 │   ├── app/
 │   │   └── public/                 # Public file storage
 │   │       ├── students/photos/    # Student photos
-│   │       └── teachers/photos/    # Teacher photos
+│   │       └── employees/photos/   # Employee photos
 │   └── logs/                       # Application logs
 ├── tests/                          # Automated tests
 ├── docs/                           # Documentation

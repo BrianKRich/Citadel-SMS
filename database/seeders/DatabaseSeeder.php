@@ -22,9 +22,13 @@ class DatabaseSeeder extends Seeder
 
         // Phase 1 seeders
         $this->call([
+            CountySeeder::class,
+            DepartmentSeeder::class,
+            EmployeeSeeder::class,
             AcademicYearSeeder::class,
             CourseSeeder::class,
             StudentSeeder::class,
+            ClassSeeder::class,
         ]);
     }
 }

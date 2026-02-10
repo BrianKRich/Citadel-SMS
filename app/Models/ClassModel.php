@@ -2,20 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ClassModel extends Model
 {
-    use HasFactory;
-
     protected $table = 'classes';
 
     protected $fillable = [
         'course_id',
-        'teacher_id',
+        'employee_id',
         'academic_year_id',
         'term_id',
         'section_name',
@@ -38,12 +35,9 @@ class ClassModel extends Model
         return $this->belongsTo(Course::class);
     }
 
-    /**
-     * Get the teacher for this class
-     */
-    public function teacher(): BelongsTo
+    public function employee(): BelongsTo
     {
-        return $this->belongsTo(Teacher::class);
+        return $this->belongsTo(Employee::class);
     }
 
     /**
@@ -125,12 +119,9 @@ class ClassModel extends Model
         return $query->where('course_id', $courseId);
     }
 
-    /**
-     * Scope to filter by teacher
-     */
-    public function scopeTeacher($query, $teacherId)
+    public function scopeEmployee($query, $employeeId)
     {
-        return $query->where('teacher_id', $teacherId);
+        return $query->where('employee_id', $employeeId);
     }
 
     /**
@@ -166,7 +157,7 @@ class ClassModel extends Model
         return $query->whereHas('course', function ($q) use ($search) {
             $q->where('name', 'like', "%{$search}%")
                 ->orWhere('course_code', 'like', "%{$search}%");
-        })->orWhereHas('teacher', function ($q) use ($search) {
+        })->orWhereHas('employee', function ($q) use ($search) {
             $q->where('first_name', 'like', "%{$search}%")
                 ->orWhere('last_name', 'like', "%{$search}%");
         })->orWhere('section_name', 'like', "%{$search}%")

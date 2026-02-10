@@ -8,11 +8,13 @@ import { Head, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
-    teachers: Object,
+    employees: Object,
+    departments: Array,
+    filters: Object,
 });
 
-const showSuccess = ref(!!props.teachers.flash?.success);
-const showError = ref(!!props.teachers.flash?.error);
+const showSuccess = ref(!!props.employees.flash?.success);
+const showError = ref(!!props.employees.flash?.error);
 
 const getStatusBadgeClass = (status) => {
     const classes = {
@@ -25,12 +27,12 @@ const getStatusBadgeClass = (status) => {
 </script>
 
 <template>
-    <Head title="Teacher Management" />
+    <Head title="Employee Management" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Teacher Management
+                Employee Management
             </h2>
         </template>
 
@@ -56,13 +58,13 @@ const getStatusBadgeClass = (status) => {
                 <Card>
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                         <PageHeader
-                            title="Teachers"
-                            :description="`Manage all ${teachers.total} teacher profiles`"
+                            title="Employees"
+                            :description="`Manage all ${employees.total} employee profiles`"
                         />
 
                         <div class="sm:ml-auto">
                             <PrimaryButton class="w-full sm:w-auto">
-                                + Add New Teacher
+                                + Add New Employee
                             </PrimaryButton>
                         </div>
                     </div>
@@ -73,7 +75,7 @@ const getStatusBadgeClass = (status) => {
                             <thead class="bg-gray-50 dark:bg-gray-800">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                        Teacher ID
+                                        Employee ID
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Name
@@ -85,6 +87,9 @@ const getStatusBadgeClass = (status) => {
                                         Department
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        Role
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Status
                                     </th>
                                     <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -93,33 +98,38 @@ const getStatusBadgeClass = (status) => {
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                <tr v-for="teacher in teachers.data" :key="teacher.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <tr v-for="employee in employees.data" :key="employee.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {{ teacher.teacher_id }}
+                                            {{ employee.employee_id }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {{ teacher.first_name }} {{ teacher.last_name }}
+                                            {{ employee.first_name }} {{ employee.last_name }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ teacher.email }}
+                                            {{ employee.email }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ teacher.department || 'N/A' }}
+                                            {{ employee.department?.name ?? 'N/A' }}
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-6 py-4">
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            {{ employee.role?.name ?? 'N/A' }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <span
-                                            :class="getStatusBadgeClass(teacher.status)"
+                                            :class="getStatusBadgeClass(employee.status)"
                                             class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
                                         >
-                                            {{ teacher.status.replace('_', ' ') }}
+                                            {{ employee.status.replace('_', ' ') }}
                                         </span>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
@@ -138,27 +148,27 @@ const getStatusBadgeClass = (status) => {
                     <!-- Mobile Card View -->
                     <div class="md:hidden space-y-4">
                         <div
-                            v-for="teacher in teachers.data"
-                            :key="teacher.id"
+                            v-for="employee in employees.data"
+                            :key="employee.id"
                             class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm"
                         >
                             <div class="flex items-start justify-between mb-3">
                                 <div class="flex-1 min-w-0">
                                     <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
-                                        {{ teacher.first_name }} {{ teacher.last_name }}
+                                        {{ employee.first_name }} {{ employee.last_name }}
                                     </h3>
                                     <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                        {{ teacher.teacher_id }}
+                                        {{ employee.employee_id }}
                                     </p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                        {{ teacher.department || 'N/A' }}
+                                        {{ employee.department?.name ?? 'N/A' }} &mdash; {{ employee.role?.name ?? 'N/A' }}
                                     </p>
                                 </div>
                                 <span
-                                    :class="getStatusBadgeClass(teacher.status)"
+                                    :class="getStatusBadgeClass(employee.status)"
                                     class="ml-2 inline-flex flex-shrink-0 rounded-full px-2 py-1 text-xs font-semibold"
                                 >
-                                    {{ teacher.status.replace('_', ' ') }}
+                                    {{ employee.status.replace('_', ' ') }}
                                 </span>
                             </div>
 
@@ -174,18 +184,18 @@ const getStatusBadgeClass = (status) => {
                     </div>
 
                     <!-- Pagination -->
-                    <div v-if="teachers.links.length > 3" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 sm:px-6">
+                    <div v-if="employees.links.length > 3" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 sm:px-6">
                         <div class="flex flex-1 justify-between sm:hidden">
                             <Link
-                                v-if="teachers.prev_page_url"
-                                :href="teachers.prev_page_url"
+                                v-if="employees.prev_page_url"
+                                :href="employees.prev_page_url"
                                 class="relative inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                             >
                                 Previous
                             </Link>
                             <Link
-                                v-if="teachers.next_page_url"
-                                :href="teachers.next_page_url"
+                                v-if="employees.next_page_url"
+                                :href="employees.next_page_url"
                                 class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                             >
                                 Next
@@ -195,18 +205,18 @@ const getStatusBadgeClass = (status) => {
                             <div>
                                 <p class="text-sm text-gray-700 dark:text-gray-300">
                                     Showing
-                                    <span class="font-medium">{{ teachers.from }}</span>
+                                    <span class="font-medium">{{ employees.from }}</span>
                                     to
-                                    <span class="font-medium">{{ teachers.to }}</span>
+                                    <span class="font-medium">{{ employees.to }}</span>
                                     of
-                                    <span class="font-medium">{{ teachers.total }}</span>
-                                    teachers
+                                    <span class="font-medium">{{ employees.total }}</span>
+                                    employees
                                 </p>
                             </div>
                             <div>
                                 <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
                                     <Link
-                                        v-for="link in teachers.links"
+                                        v-for="link in employees.links"
                                         :key="link.label"
                                         :href="link.url"
                                         :class="[

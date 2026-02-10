@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('classes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('course_id')->constrained()->onDelete('restrict');
-            $table->foreignId('teacher_id')->constrained()->onDelete('restrict');
+            $table->foreignId('employee_id')->constrained()->onDelete('restrict');
             $table->foreignId('academic_year_id')->constrained()->onDelete('restrict');
             $table->foreignId('term_id')->constrained()->onDelete('restrict');
             $table->string('section_name'); // e.g., "A", "B", "Morning"

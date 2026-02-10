@@ -1,7 +1,7 @@
 # Student Management System - Database Architecture
 
-**Version:** 2.0 (Phase 0-2 Complete)
-**Last Updated:** February 9, 2026
+**Version:** 2.2 (Phase 0-2 + Employee & Class Seed Data)
+**Last Updated:** February 10, 2026
 **Database:** PostgreSQL 14+
 
 ---
@@ -27,7 +27,8 @@ Student Management System uses PostgreSQL as its primary database. The schema is
 - Guardian relationships
 - Academic year and term management
 - Course catalog
-- Teacher profiles
+- Employee profiles (staff, instructors, counselors)
+- Department and role management
 - Class scheduling
 - Enrollment tracking
 - Grade management
@@ -37,8 +38,8 @@ Student Management System uses PostgreSQL as its primary database. The schema is
 - Normalized schema (3NF) to reduce data redundancy
 - Foreign key constraints for referential integrity
 - Soft deletes for data retention
-- Auto-generated unique IDs for students and teachers
-- Polymorphic relationships for flexible associations
+- Auto-generated unique IDs for students and employees
+- Polymorphic relationships for flexible associations (phone numbers)
 - Indexes on frequently queried columns
 
 ---
@@ -64,7 +65,7 @@ Primary authentication table for all system users.
 **Relationships:**
 - Has one Student (user_id)
 - Has one Guardian (user_id)
-- Has one Teacher (user_id)
+- Has one Employee (user_id)
 
 **Indexes:**
 - PRIMARY KEY (id)
@@ -260,48 +261,139 @@ Course catalog (course definitions, not class instances).
 
 ---
 
-#### **teachers**
-Teacher profiles and qualifications.
+#### **departments**
+Staff departments for organizational grouping.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGINT | PK, AUTO_INCREMENT | Primary key |
-| teacher_id | VARCHAR(255) | UNIQUE, NOT NULL | Auto-generated ID (TCH-YYYY-###) |
-| user_id | BIGINT | FK, NOT NULL | Link to user account |
-| first_name | VARCHAR(255) | NOT NULL | Teacher's first name |
-| last_name | VARCHAR(255) | NOT NULL | Teacher's last name |
-| email | VARCHAR(255) | UNIQUE, NOT NULL | Teacher email |
-| phone | VARCHAR(255) | NULLABLE | Phone number |
+| name | VARCHAR(255) | UNIQUE, NOT NULL | Department name |
+| created_at | TIMESTAMP | | Creation timestamp |
+| updated_at | TIMESTAMP | | Last update timestamp |
+
+**Relationships:**
+- Has many EmployeeRoles
+- Has many Employees
+
+**Indexes:**
+- PRIMARY KEY (id)
+- UNIQUE (name)
+
+---
+
+#### **employee_roles**
+Job roles within each department.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Primary key |
+| department_id | BIGINT | FK, NOT NULL | Department reference |
+| name | VARCHAR(255) | NOT NULL | Role name |
+| created_at | TIMESTAMP | | Creation timestamp |
+| updated_at | TIMESTAMP | | Last update timestamp |
+
+**Relationships:**
+- Belongs to Department (department_id)
+- Has many Employees (via role_id)
+
+**Indexes:**
+- PRIMARY KEY (id)
+- UNIQUE (department_id, name) - role names unique per department
+
+**Constraints:**
+- FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
+
+---
+
+#### **employees**
+Staff employee profiles and employment details.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Primary key |
+| employee_id | VARCHAR(255) | UNIQUE, NOT NULL | Auto-generated ID (EMP-YYYY-###) |
+| user_id | BIGINT | FK, NULLABLE | Link to user account |
+| first_name | VARCHAR(255) | NOT NULL | Employee's first name |
+| last_name | VARCHAR(255) | NOT NULL | Employee's last name |
+| email | VARCHAR(255) | UNIQUE, NOT NULL | Employee email |
+| department_id | BIGINT | FK, NOT NULL | Department reference |
+| role_id | BIGINT | FK, NOT NULL | Role reference |
 | date_of_birth | DATE | NULLABLE | Date of birth |
 | hire_date | DATE | NOT NULL | Date hired |
-| department | VARCHAR(255) | NULLABLE | Department |
-| specialization | VARCHAR(255) | NULLABLE | Specialization |
 | qualifications | TEXT | NULLABLE | Qualifications/certifications |
-| photo | VARCHAR(255) | NULLABLE | Path to teacher photo |
+| photo | VARCHAR(255) | NULLABLE | Path to employee photo |
 | status | ENUM | NOT NULL, DEFAULT 'active' | active, inactive, on_leave |
 | created_at | TIMESTAMP | | Creation timestamp |
 | updated_at | TIMESTAMP | | Last update timestamp |
 | deleted_at | TIMESTAMP | NULLABLE | Soft delete timestamp |
 
 **Relationships:**
-- Belongs to User (user_id)
+- Belongs to User (user_id, nullable)
+- Belongs to Department (department_id)
+- Belongs to EmployeeRole (role_id)
 - Has many Classes
+- Has many PhoneNumbers (polymorphic)
 
 **Indexes:**
 - PRIMARY KEY (id)
-- UNIQUE (teacher_id)
+- UNIQUE (employee_id)
 - UNIQUE (email)
 - INDEX (user_id)
+- INDEX (department_id)
+- INDEX (role_id)
 - INDEX (status)
-- INDEX (department)
 - INDEX (deleted_at)
 
 **Auto-Generated Fields:**
-- `teacher_id` is auto-generated using format: TCH-{YEAR}-{SEQUENCE}
-  - Example: TCH-2026-001, TCH-2026-002
+- `employee_id` is auto-generated using format: EMP-{YEAR}-{SEQUENCE}
+  - Example: EMP-2026-001, EMP-2026-002
+  - Sequence resets each year
 
 **Constraints:**
-- FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+- FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+- FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE RESTRICT
+- FOREIGN KEY (role_id) REFERENCES employee_roles(id) ON DELETE RESTRICT
+
+---
+
+#### **phone_numbers**
+Polymorphic phone number storage for any model.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Primary key |
+| phoneable_type | VARCHAR(255) | NOT NULL | Owning model class |
+| phoneable_id | BIGINT UNSIGNED | NOT NULL | Owning model ID |
+| area_code | VARCHAR(3) | NULLABLE | Area code |
+| number | VARCHAR(7) | NOT NULL | 7-digit phone number |
+| type | VARCHAR(20) | NOT NULL | primary, mobile, home, work, emergency |
+| label | VARCHAR(50) | NULLABLE | Custom label |
+| is_primary | BOOLEAN | DEFAULT false | Primary phone flag |
+| created_at | TIMESTAMP | | Creation timestamp |
+| updated_at | TIMESTAMP | | Last update timestamp |
+
+**Relationships:**
+- Belongs to phoneable (Employee, Student, Guardian, etc.)
+
+**Indexes:**
+- PRIMARY KEY (id)
+- INDEX (phoneable_type, phoneable_id)
+
+---
+
+#### **counties**
+Georgia county reference data.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Primary key |
+| name | VARCHAR(255) | UNIQUE, NOT NULL | County name |
+| created_at | TIMESTAMP | | Creation timestamp |
+| updated_at | TIMESTAMP | | Last update timestamp |
+
+**Indexes:**
+- PRIMARY KEY (id)
+- UNIQUE (name)
 
 ---
 
@@ -314,7 +406,7 @@ Class instances (course offerings in a specific term).
 |--------|------|-------------|-------------|
 | id | BIGINT | PK, AUTO_INCREMENT | Primary key |
 | course_id | BIGINT | FK, NOT NULL | Course reference |
-| teacher_id | BIGINT | FK, NOT NULL | Teacher reference |
+| employee_id | BIGINT | FK, NOT NULL | Instructor (employee) reference |
 | academic_year_id | BIGINT | FK, NOT NULL | Academic year reference |
 | term_id | BIGINT | FK, NOT NULL | Term reference |
 | section_name | VARCHAR(255) | NOT NULL | Section (e.g., "A", "Morning") |
@@ -510,7 +602,7 @@ System-wide settings (including theme).
 users
 ├── has one → students (user_id)
 ├── has one → guardians (user_id)
-└── has one → teachers (user_id)
+└── has one → employees (user_id)
 
 students
 ├── belongs to → users (user_id)
@@ -522,6 +614,27 @@ guardians
 ├── belongs to → users (user_id)
 └── has many → students (through guardian_student)
 
+departments
+├── has many → employee_roles
+└── has many → employees
+
+employee_roles
+├── belongs to → departments
+└── has many → employees (via role_id)
+
+employees
+├── belongs to → users (user_id, nullable)
+├── belongs to → departments
+├── belongs to → employee_roles (role_id)
+├── has many → classes
+└── has many → phone_numbers (polymorphic)
+
+phone_numbers (polymorphic)
+└── belongs to → phoneable (Employee, Student, Guardian, etc.)
+
+counties
+└── (reference data, no relationships defined)
+
 academic_years
 └── has many → terms
 
@@ -532,13 +645,9 @@ terms
 courses
 └── has many → classes
 
-teachers
-├── belongs to → users (user_id)
-└── has many → classes
-
 classes
 ├── belongs to → courses
-├── belongs to → teachers
+├── belongs to → employees (instructor, via employee_id)
 ├── belongs to → academic_years
 ├── belongs to → terms
 ├── has many → enrollments
@@ -566,7 +675,7 @@ attendance_records
 └── belongs to → users (marked_by)
 
 documents (polymorphic)
-├── belongs to → documentable (Student, Teacher, Course, etc.)
+├── belongs to → documentable (Student, Employee, Course, etc.)
 └── belongs to → users (uploaded_by)
 ```
 
@@ -580,8 +689,11 @@ documents (polymorphic)
 - `students.student_id` - UNIQUE index for fast lookups
 - `students.status` - Filter active students
 - `students.deleted_at` - Soft delete queries
-- `teachers.teacher_id` - UNIQUE index for fast lookups
-- `teachers.status` - Filter active teachers
+- `employees.employee_id` - UNIQUE index for fast lookups
+- `employees.status` - Filter active employees
+- `employees.department_id` - Filter by department
+- `employee_roles.(department_id, name)` - Composite UNIQUE for role names per dept
+- `phone_numbers.(phoneable_type, phoneable_id)` - Polymorphic relationship index
 - `courses.course_code` - UNIQUE index for fast lookups
 - `courses.department` - Filter by department
 - `courses.is_active` - Filter active courses
@@ -611,11 +723,14 @@ documents (polymorphic)
 - `guardian_student.guardian_id` → `guardians.id` (ON DELETE CASCADE)
 - `guardian_student.student_id` → `students.id` (ON DELETE CASCADE)
 - `terms.academic_year_id` → `academic_years.id` (ON DELETE CASCADE)
-- `teachers.user_id` → `users.id` (ON DELETE CASCADE)
+- `employee_roles.department_id` → `departments.id` (ON DELETE CASCADE)
+- `employees.user_id` → `users.id` (ON DELETE SET NULL)
+- `employees.department_id` → `departments.id` (ON DELETE RESTRICT)
+- `employees.role_id` → `employee_roles.id` (ON DELETE RESTRICT)
 
 **Phase 2:**
 - `classes.course_id` → `courses.id` (ON DELETE RESTRICT)
-- `classes.teacher_id` → `teachers.id` (ON DELETE RESTRICT)
+- `classes.employee_id` → `employees.id` (ON DELETE RESTRICT)
 - `classes.academic_year_id` → `academic_years.id` (ON DELETE RESTRICT)
 - `classes.term_id` → `terms.id` (ON DELETE RESTRICT)
 - `enrollments.student_id` → `students.id` (ON DELETE CASCADE)
@@ -643,18 +758,22 @@ documents (polymorphic)
 4. **2019_12_14_000001_create_personal_access_tokens_table.php** - API tokens
 5. **2026_02_08_195420_create_settings_table.php** - System settings
 
-**Phase 1: Student & Course Foundation**
+**Phase 1: Student, Course & Employee Foundation**
 6. **2026_02_10_012729_create_students_table.php** - Students
-7. **2026_02_10_012730_create_guardians_table.php** - Guardians
+7. **2026_02_10_012757_create_guardians_table.php** - Guardians
 8. **2026_02_10_012758_create_guardian_student_table.php** - Guardian-student pivot
-9. **2026_02_10_012731_create_academic_years_table.php** - Academic years
-10. **2026_02_10_012732_create_terms_table.php** - Terms/semesters
-11. **2026_02_10_012733_create_courses_table.php** - Courses
-12. **2026_02_10_012734_create_teachers_table.php** - Teachers
+9. **2026_02_10_012823_create_academic_years_table.php** - Academic years
+10. **2026_02_10_012823_create_terms_table.php** - Terms/semesters
+11. **2026_02_10_012854_create_courses_table.php** - Courses
+12. **2026_02_10_012900_create_departments_table.php** - Departments
+13. **2026_02_10_012905_create_employee_roles_table.php** - Employee roles
+14. **2026_02_10_012912_create_employees_table.php** - Employees
+15. **2026_02_10_020000_create_phone_numbers_table.php** - Phone numbers (polymorphic)
+16. **2026_02_10_021400_create_counties_table.php** - Counties (reference data)
 
 **Phase 2: Class Scheduling & Enrollment**
-13. **2026_02_10_021337_create_classes_table.php** - Class sections
-14. **2026_02_10_021345_create_enrollments_table.php** - Student enrollments
+17. **2026_02_10_021337_create_classes_table.php** - Class sections
+18. **2026_02_10_021345_create_enrollments_table.php** - Student enrollments
 
 ### Pending Migrations (Future Phases)
 
@@ -678,18 +797,14 @@ public function run(): void
         'email' => 'test@example.com',
     ]);
 
-    // Phase 1 seeders
     $this->call([
-        AcademicYearSeeder::class,  // 1. Academic years and terms
-        CourseSeeder::class,        // 2. Course catalog
-        TeacherSeeder::class,       // 3. Teachers
-        StudentSeeder::class,       // 4. Students with guardians
-    ]);
-
-    // Phase 2 seeders
-    $this->call([
-        ClassSeeder::class,         // 5. Class sections
-        EnrollmentSeeder::class,    // 6. Student enrollments
+        CountySeeder::class,        // 1. Georgia counties (reference data)
+        DepartmentSeeder::class,    // 2. Departments and roles
+        EmployeeSeeder::class,      // 3. Employees (staff, instructors, counselors)
+        AcademicYearSeeder::class,  // 4. Academic years and terms
+        CourseSeeder::class,        // 5. Course catalog
+        StudentSeeder::class,       // 6. Students with guardians
+        ClassSeeder::class,         // 7. Class sections with schedules
     ]);
 }
 ```
@@ -708,20 +823,32 @@ public function run(): void
 - PE-101 (Physical Education, Physical Education, Beginner, 1 credit)
 - 5 additional courses
 
-**TeacherSeeder:**
-- 5 teachers with auto-generated IDs (TCH-2026-001 through TCH-2026-005)
-- Various departments: Mathematics, English, Science, History, Physical Education
-- All with active status
+**DepartmentSeeder:**
+- 5 departments: Education, Administration, Counseling, Cadre, Health Services
+- Roles per department: Teacher/Instructor, Administrator/Coordinator, Counselor/Case Manager, Drill Instructor/Platoon Sergeant, Nurse/Health Aide
 
-**ClassSeeder (Phase 2):**
-- 12 class sections across different courses
-- Each with:
-  - Assigned teacher
-  - Section name (A, B, Morning, Afternoon)
-  - Room number
-  - Weekly schedule (JSON format)
-  - Capacity (20-30 students)
-  - Status (mostly "open")
+**EmployeeSeeder:**
+- 7 sample employees with auto-generated IDs (EMP-2026-001 through EMP-2026-007):
+  - Marcus Williams — Education / Teacher (Math)
+  - Patricia Johnson — Education / Teacher (English)
+  - David Thompson — Education / Teacher (Science)
+  - Angela Davis — Education / Teacher (Social Studies)
+  - Robert Harris — Administration / Administrator
+  - Sandra Mitchell — Counseling / Counselor
+  - James Washington — Cadre / Drill Instructor
+
+**CountySeeder:**
+- All 159 Georgia counties for address/demographic data
+
+**ClassSeeder:**
+- 10 class sections across both terms (5 per term):
+  - Algebra I — Marcus Williams / Room 101 / MWF 8:00–9:00
+  - English Literature — Patricia Johnson / Room 102 / MWF 9:15–10:15
+  - General Science — David Thompson / Room 105 / TTh 8:00–9:30
+  - World History — Angela Davis / Room 103 / TTh 10:00–11:00
+  - Intro to Programming — Marcus Williams / Room 110 / TTh 13:00–14:00
+- Fall 2025 classes: status `in_progress`
+- Spring 2026 classes: status `open`
 
 **EnrollmentSeeder (Phase 2):**
 - Sample enrollments for students
@@ -766,10 +893,10 @@ Student::with('guardians')->paginate(10);
 Student::with('user')->get();
 
 // Enrollments with student and class
-Enrollment::with(['student', 'class.course', 'class.teacher'])->get();
+Enrollment::with(['student', 'class.course', 'class.employee'])->get();
 
 // Classes with all related data
-Class::with(['course', 'teacher', 'term.academicYear'])->get();
+Class::with(['course', 'employee', 'term.academicYear'])->get();
 ```
 
 ### Query Scopes
@@ -787,10 +914,10 @@ Course::department('Mathematics')->get();
 Course::level('Beginner')->get();
 Course::active()->get();
 
-// Teacher scopes
-Teacher::active()->get();
-Teacher::department('Science')->get();
-Teacher::search('Smith')->get();
+// Employee scopes
+Employee::active()->get();
+Employee::department(1)->get(); // by department_id
+Employee::search('Smith')->get();
 ```
 
 ### Pagination
@@ -805,7 +932,7 @@ $students = Student::with('guardians')->paginate(10);
 $courses = Course::active()->paginate(15);
 
 // Simple pagination (no page count)
-$teachers = Teacher::active()->simplePaginate(10);
+$employees = Employee::active()->simplePaginate(10);
 ```
 
 ### Indexing Strategy
@@ -849,7 +976,7 @@ psql sms < backup_20260209.sql
 
 ### Data Retention
 
-- Soft deletes enabled on: students, teachers
+- Soft deletes enabled on: students, employees
 - Retention period: 7 years for student records (compliance)
 - Hard delete after retention period via scheduled command
 
@@ -886,7 +1013,7 @@ protected $fillable = [
     // ... explicit list
 ];
 
-// Auto-generated fields NOT in fillable (student_id, teacher_id)
+// Auto-generated fields NOT in fillable (student_id, employee_id)
 ```
 
 ### Database Credentials
