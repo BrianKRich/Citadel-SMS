@@ -1,7 +1,7 @@
 # Citadel SMS - Database Architecture
 
-**Version:** 1.0
-**Last Updated:** February 2026
+**Version:** 2.0 (Phase 0-2 Complete)
+**Last Updated:** February 9, 2026
 **Database:** PostgreSQL 14+
 
 ---
@@ -305,7 +305,7 @@ Teacher profiles and qualifications.
 
 ---
 
-### Phase 2 Tables (To Be Implemented)
+### Phase 2 Tables ✅ Implemented
 
 #### **classes**
 Class instances (course offerings in a specific term).
@@ -634,13 +634,16 @@ documents (polymorphic)
 
 ## Migration History
 
-### Executed Migrations (Phase 1)
+### Executed Migrations (Phase 0-2)
 
+**Phase 0: Core Laravel + Settings**
 1. **2014_10_12_000000_create_users_table.php** - Laravel default users table
 2. **2014_10_12_100000_create_password_reset_tokens_table.php** - Password resets
 3. **2019_08_19_000000_create_failed_jobs_table.php** - Queue failed jobs
 4. **2019_12_14_000001_create_personal_access_tokens_table.php** - API tokens
 5. **2026_02_08_195420_create_settings_table.php** - System settings
+
+**Phase 1: Student & Course Foundation**
 6. **2026_02_10_012729_create_students_table.php** - Students
 7. **2026_02_10_012730_create_guardians_table.php** - Guardians
 8. **2026_02_10_012758_create_guardian_student_table.php** - Guardian-student pivot
@@ -649,12 +652,15 @@ documents (polymorphic)
 11. **2026_02_10_012733_create_courses_table.php** - Courses
 12. **2026_02_10_012734_create_teachers_table.php** - Teachers
 
+**Phase 2: Class Scheduling & Enrollment**
+13. **2026_02_10_021337_create_classes_table.php** - Class sections
+14. **2026_02_10_021345_create_enrollments_table.php** - Student enrollments
+
 ### Pending Migrations (Future Phases)
 
-- Phase 2: classes, enrollments
 - Phase 3: assessment_types, assessments, grades
 - Phase 4: attendance_records
-- Phase 5: calendar_events, documents
+- Phase 5: calendar_events, documents, notifications
 
 ---
 
@@ -676,13 +682,15 @@ public function run(): void
     $this->call([
         AcademicYearSeeder::class,  // 1. Academic years and terms
         CourseSeeder::class,        // 2. Course catalog
-        StudentSeeder::class,       // 3. Students with guardians
+        TeacherSeeder::class,       // 3. Teachers
+        StudentSeeder::class,       // 4. Students with guardians
     ]);
 
-    // Phase 2 seeders (future)
-    // TeacherSeeder::class
-    // ClassSeeder::class
-    // EnrollmentSeeder::class
+    // Phase 2 seeders
+    $this->call([
+        ClassSeeder::class,         // 5. Class sections
+        EnrollmentSeeder::class,    // 6. Student enrollments
+    ]);
 }
 ```
 
@@ -693,11 +701,33 @@ public function run(): void
 - Terms: Fall 2025, Spring 2026
 
 **CourseSeeder:**
-- MATH-101 (Algebra I, Mathematics, Beginner)
-- ENG-101 (English Literature, English, Beginner)
-- SCI-101 (General Science, Science, Beginner)
-- HIST-101 (U.S. History, History, Beginner)
-- PE-101 (Physical Education, Physical Education, Beginner)
+- MATH-101 (Algebra I, Mathematics, Beginner, 3 credits)
+- ENG-101 (English Literature, English, Beginner, 3 credits)
+- SCI-101 (General Science, Science, Beginner, 4 credits)
+- HIST-101 (U.S. History, History, Beginner, 3 credits)
+- PE-101 (Physical Education, Physical Education, Beginner, 1 credit)
+- 5 additional courses
+
+**TeacherSeeder:**
+- 5 teachers with auto-generated IDs (TCH-2026-001 through TCH-2026-005)
+- Various departments: Mathematics, English, Science, History, Physical Education
+- All with active status
+
+**ClassSeeder (Phase 2):**
+- 12 class sections across different courses
+- Each with:
+  - Assigned teacher
+  - Section name (A, B, Morning, Afternoon)
+  - Room number
+  - Weekly schedule (JSON format)
+  - Capacity (20-30 students)
+  - Status (mostly "open")
+
+**EnrollmentSeeder (Phase 2):**
+- Sample enrollments for students
+- Respects capacity limits
+- No schedule conflicts
+- All with "enrolled" status
 
 **StudentSeeder:**
 - 5 sample students with varied statuses
