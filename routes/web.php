@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\AcademicYearController;
+use App\Http\Controllers\Admin\ClassController;
 use App\Http\Controllers\Admin\CourseController;
+use App\Http\Controllers\Admin\EnrollmentController;
 use App\Http\Controllers\Admin\GuardianController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TeacherController;
@@ -108,6 +110,26 @@ Route::middleware('auth')->group(function () {
         ->name('admin.academic-years.terms.destroy');
     Route::post('admin/academic-years/{academicYear}/terms/{term}/set-current', [AcademicYearController::class, 'setCurrentTerm'])
         ->name('admin.academic-years.terms.set-current');
+
+    // Phase 2: Class & Enrollment Management
+    Route::resource('admin/classes', ClassController::class)->names([
+        'index' => 'admin.classes.index',
+        'create' => 'admin.classes.create',
+        'store' => 'admin.classes.store',
+        'show' => 'admin.classes.show',
+        'edit' => 'admin.classes.edit',
+        'update' => 'admin.classes.update',
+        'destroy' => 'admin.classes.destroy',
+    ]);
+
+    // Enrollment routes
+    Route::prefix('admin/enrollment')->group(function () {
+        Route::get('/', [EnrollmentController::class, 'index'])->name('admin.enrollment.index');
+        Route::get('/create', [EnrollmentController::class, 'create'])->name('admin.enrollment.create');
+        Route::post('/enroll', [EnrollmentController::class, 'enroll'])->name('admin.enrollment.enroll');
+        Route::delete('/{enrollment}', [EnrollmentController::class, 'drop'])->name('admin.enrollment.drop');
+        Route::get('/student/{student}/schedule', [EnrollmentController::class, 'studentSchedule'])->name('admin.enrollment.student-schedule');
+    });
 });
 
 // Public route to get current theme
