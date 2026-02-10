@@ -141,7 +141,7 @@ Student Management System is a full-stack web application designed for managing 
 
 ```bash
 git clone <repository-url>
-cd citadel-sms
+cd student-management-system
 ```
 
 ### 2. Install PHP Dependencies
@@ -254,7 +254,7 @@ npm run build
 ## Project Structure
 
 ```
-citadel-sms/
+student-management-system/
 ├── app/
 │   ├── Http/Controllers/     # Backend controllers
 │   ├── Models/                # Database models
