@@ -1,7 +1,7 @@
 # Citadel SMS - Backend Architecture
 
-**Version:** 1.0
-**Last Updated:** February 2026
+**Version:** 2.0 (Phase 0-2 Complete)
+**Last Updated:** February 9, 2026
 **Framework:** Laravel 12.x
 
 ---
@@ -52,27 +52,32 @@ app/
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Admin/
-│   │   │   ├── StudentController.php
-│   │   │   ├── GuardianController.php
+│   │   │   ├── AcademicYearController.php
+│   │   │   ├── ClassController.php          # Phase 2
 │   │   │   ├── CourseController.php
-│   │   │   ├── TeacherController.php
-│   │   │   └── AcademicYearController.php
+│   │   │   ├── EnrollmentController.php     # Phase 2
+│   │   │   ├── GuardianController.php
+│   │   │   ├── StudentController.php
+│   │   │   └── TeacherController.php
 │   │   ├── AdminController.php
 │   │   ├── ProfileController.php
-│   │   └── ThemeController.php
+│   │   ├── ThemeController.php
+│   │   └── UserManagementController.php
 │   ├── Middleware/
 │   │   ├── HandleInertiaRequests.php
 │   │   └── (custom middleware - future)
 │   └── Requests/
 │       └── (form requests - future)
 ├── Models/
-│   ├── Student.php
-│   ├── Guardian.php
-│   ├── Course.php
-│   ├── Teacher.php
 │   ├── AcademicYear.php
-│   ├── Term.php
+│   ├── ClassModel.php                       # Phase 2
+│   ├── Course.php
+│   ├── Enrollment.php                       # Phase 2
+│   ├── Guardian.php
 │   ├── Setting.php
+│   ├── Student.php
+│   ├── Teacher.php
+│   ├── Term.php
 │   └── User.php
 ├── Providers/
 │   ├── AppServiceProvider.php
@@ -496,6 +501,271 @@ $currentYear->terms()->create([
     'end_date' => '2026-12-20',
     'is_current' => true,
 ]);
+```
+
+---
+
+### ClassModel (Phase 2)
+
+**File:** `app/Models/ClassModel.php`
+
+**Purpose:** Represents class sections (instances of courses) with schedules, capacity, and enrollment tracking.
+
+**Key Features:**
+- JSON schedule storage for flexible scheduling
+- Capacity enforcement (max_students)
+- Schedule conflict detection
+- Enrollment count tracking
+- Query scopes for availability
+
+**Properties:**
+
+```php
+protected $table = 'classes'; // 'Class' is a reserved keyword
+
+protected $fillable = [
+    'course_id', 'teacher_id', 'academic_year_id', 'term_id',
+    'section_name', 'room', 'schedule', 'max_students', 'status'
+];
+
+protected $casts = [
+    'schedule' => 'array',
+    'max_students' => 'integer',
+];
+```
+
+**Relationships:**
+
+```php
+public function course(): BelongsTo
+{
+    return $this->belongsTo(Course::class);
+}
+
+public function teacher(): BelongsTo
+{
+    return $this->belongsTo(Teacher::class);
+}
+
+public function academicYear(): BelongsTo
+{
+    return $this->belongsTo(AcademicYear::class);
+}
+
+public function term(): BelongsTo
+{
+    return $this->belongsTo(Term::class);
+}
+
+public function enrollments(): HasMany
+{
+    return $this->hasMany(Enrollment::class, 'class_id');
+}
+
+public function students()
+{
+    return $this->hasManyThrough(
+        Student::class,
+        Enrollment::class,
+        'class_id', 'id', 'id', 'student_id'
+    );
+}
+```
+
+**Computed Attributes:**
+
+```php
+public function getEnrolledCountAttribute(): int
+{
+    return $this->enrollments()->where('status', 'enrolled')->count();
+}
+
+public function getAvailableSeatsAttribute(): int
+{
+    return max(0, $this->max_students - $this->enrolled_count);
+}
+
+public function isFull(): bool
+{
+    return $this->enrolled_count >= $this->max_students;
+}
+```
+
+**Query Scopes:**
+
+```php
+// Get open classes
+public function scopeOpen($query)
+{
+    return $query->where('status', 'open');
+}
+
+// Get classes with available seats
+public function scopeAvailable($query)
+{
+    return $query->where('status', 'open')
+        ->whereRaw("(SELECT COUNT(*) FROM enrollments WHERE class_id = classes.id AND status = 'enrolled') < max_students");
+}
+
+// Filter by term, course, teacher, status
+public function scopeTerm($query, $termId)
+public function scopeCourse($query, $courseId)
+public function scopeTeacher($query, $teacherId)
+public function scopeStatus($query, $status)
+
+// Search classes
+public function scopeSearch($query, $search)
+{
+    return $query->whereHas('course', function ($q) use ($search) {
+        $q->where('name', 'like', "%{$search}%")
+          ->orWhere('course_code', 'like', "%{$search}%");
+    })->orWhereHas('teacher', function ($q) use ($search) {
+        $q->where('first_name', 'like', "%{$search}%")
+          ->orWhere('last_name', 'like', "%{$search}%");
+    })->orWhere('section_name', 'like', "%{$search}%")
+      ->orWhere('room', 'like', "%{$search}%");
+}
+```
+
+**Usage Examples:**
+
+```php
+// Create class with schedule
+$class = ClassModel::create([
+    'course_id' => 1,
+    'teacher_id' => 1,
+    'academic_year_id' => 1,
+    'term_id' => 1,
+    'section_name' => 'A',
+    'room' => '101',
+    'schedule' => [
+        ['day' => 'Monday', 'start_time' => '09:00', 'end_time' => '10:30'],
+        ['day' => 'Wednesday', 'start_time' => '09:00', 'end_time' => '10:30'],
+    ],
+    'max_students' => 30,
+    'status' => 'open',
+]);
+
+// Get available classes for a term
+$classes = ClassModel::available()
+    ->term($termId)
+    ->with(['course', 'teacher'])
+    ->get();
+
+// Check if class is full
+if ($class->isFull()) {
+    // Cannot enroll more students
+}
+
+// Get enrolled students
+$students = $class->students;
+```
+
+---
+
+### Enrollment Model (Phase 2)
+
+**File:** `app/Models/Enrollment.php`
+
+**Purpose:** Represents student enrollments in classes with status tracking.
+
+**Key Features:**
+- Unique constraint (student_id, class_id) prevents duplicates
+- Status tracking (enrolled, dropped, completed, failed)
+- Future: Grade storage (final_grade, grade_points)
+
+**Properties:**
+
+```php
+protected $fillable = [
+    'student_id', 'class_id', 'enrollment_date',
+    'status', 'final_grade', 'grade_points'
+];
+
+protected $casts = [
+    'enrollment_date' => 'date',
+    'grade_points' => 'decimal:2',
+];
+```
+
+**Relationships:**
+
+```php
+public function student(): BelongsTo
+{
+    return $this->belongsTo(Student::class);
+}
+
+public function class(): BelongsTo
+{
+    return $this->belongsTo(ClassModel::class, 'class_id');
+}
+
+// Future: Phase 3
+public function grades(): HasMany
+{
+    return $this->hasMany(Grade::class);
+}
+```
+
+**Query Scopes:**
+
+```php
+// Filter active enrollments
+public function scopeEnrolled($query)
+{
+    return $query->where('status', 'enrolled');
+}
+
+// Filter by student, class, or status
+public function scopeStudent($query, $studentId)
+public function scopeClass($query, $classId)
+public function scopeStatus($query, $status)
+
+// Filter by term (through class relationship)
+public function scopeTerm($query, $termId)
+{
+    return $query->whereHas('class', function ($q) use ($termId) {
+        $q->where('term_id', $termId);
+    });
+}
+```
+
+**Methods:**
+
+```php
+public function isActive(): bool
+{
+    return $this->status === 'enrolled';
+}
+
+// Future: Phase 3
+public function calculateFinalGrade(): void
+{
+    // Will aggregate assessment grades
+}
+```
+
+**Usage Examples:**
+
+```php
+// Enroll student in class
+$enrollment = Enrollment::create([
+    'student_id' => $student->id,
+    'class_id' => $class->id,
+    'enrollment_date' => now(),
+    'status' => 'enrolled',
+]);
+
+// Get all enrollments for a student in current term
+$enrollments = Enrollment::enrolled()
+    ->student($studentId)
+    ->term($currentTermId)
+    ->with('class.course')
+    ->get();
+
+// Drop student from class
+$enrollment->update(['status' => 'dropped']);
 ```
 
 ---
@@ -1000,6 +1270,317 @@ public function show()
 
 ---
 
+### ClassController (Phase 2)
+
+**File:** `app/Http/Controllers/Admin/ClassController.php`
+
+**Purpose:** Manage class sections with scheduling and capacity control.
+
+**Key Features:**
+- Schedule conflict detection for teachers
+- Capacity validation (cannot reduce below enrolled count)
+- Prevents deletion if enrollments exist
+- Eager loads relationships for performance
+
+#### `index()` - List All Classes
+
+```php
+public function index(Request $request)
+{
+    $classes = ClassModel::query()
+        ->with(['course', 'teacher', 'term.academicYear'])
+        ->when($request->term_id, fn($q, $id) => $q->term($id))
+        ->when($request->course_id, fn($q, $id) => $q->course($id))
+        ->when($request->teacher_id, fn($q, $id) => $q->teacher($id))
+        ->when($request->status, fn($q, $status) => $q->status($status))
+        ->when($request->search, fn($q, $search) => $q->search($search))
+        ->paginate(10)
+        ->withQueryString();
+
+    return Inertia::render('Admin/Classes/Index', [
+        'classes' => $classes,
+        'terms' => Term::with('academicYear')->get(),
+        'courses' => Course::active()->get(),
+        'teachers' => Teacher::active()->get(),
+        'filters' => $request->only(['search', 'term_id', 'course_id', 'teacher_id', 'status']),
+    ]);
+}
+```
+
+#### `store()` - Create New Class
+
+```php
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'course_id' => ['required', 'exists:courses,id'],
+        'teacher_id' => ['required', 'exists:teachers,id'],
+        'academic_year_id' => ['required', 'exists:academic_years,id'],
+        'term_id' => ['required', 'exists:terms,id'],
+        'section_name' => ['required', 'string', 'max:255'],
+        'room' => ['nullable', 'string', 'max:255'],
+        'schedule' => ['nullable', 'array'],
+        'schedule.*.day' => ['required', 'string', 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'],
+        'schedule.*.start_time' => ['required', 'string'],
+        'schedule.*.end_time' => ['required', 'string'],
+        'max_students' => ['required', 'integer', 'min:1', 'max:500'],
+        'status' => ['required', 'in:open,closed,in_progress,completed'],
+    ]);
+
+    // Check for schedule conflicts
+    if (!empty($validated['schedule'])) {
+        $conflict = $this->checkScheduleConflict(
+            $validated['teacher_id'],
+            $validated['term_id'],
+            $validated['schedule']
+        );
+
+        if ($conflict) {
+            return back()->withErrors([
+                'schedule' => "Schedule conflict detected with {$conflict->course->name}"
+            ])->withInput();
+        }
+    }
+
+    $class = ClassModel::create($validated);
+
+    return redirect()->route('admin.classes.show', $class)
+        ->with('success', 'Class created successfully.');
+}
+```
+
+#### Schedule Conflict Detection
+
+```php
+private function checkScheduleConflict($teacherId, $termId, $schedule, $excludeClassId = null)
+{
+    $teacherClasses = ClassModel::where('teacher_id', $teacherId)
+        ->where('term_id', $termId)
+        ->when($excludeClassId, fn($q, $id) => $q->where('id', '!=', $id))
+        ->with('course')
+        ->get();
+
+    foreach ($teacherClasses as $existingClass) {
+        if (empty($existingClass->schedule)) continue;
+
+        foreach ($schedule as $newSlot) {
+            foreach ($existingClass->schedule as $existingSlot) {
+                if ($newSlot['day'] === $existingSlot['day']) {
+                    if ($this->timesOverlap(
+                        $newSlot['start_time'], $newSlot['end_time'],
+                        $existingSlot['start_time'], $existingSlot['end_time']
+                    )) {
+                        return $existingClass;
+                    }
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+private function timesOverlap($start1, $end1, $start2, $end2)
+{
+    return ($start1 < $end2) && ($end1 > $start2);
+}
+```
+
+#### `update()` - Update Class
+
+**Key Validations:**
+- Schedule conflict detection (excluding current class)
+- Cannot reduce max_students below current enrolled count
+- Full validation same as store()
+
+#### `destroy()` - Delete Class
+
+```php
+public function destroy(ClassModel $class)
+{
+    if ($class->enrollments()->count() > 0) {
+        return back()->withErrors([
+            'error' => 'Cannot delete class with existing enrollments.'
+        ]);
+    }
+
+    $class->delete();
+
+    return redirect()->route('admin.classes.index')
+        ->with('success', 'Class deleted successfully.');
+}
+```
+
+---
+
+### EnrollmentController (Phase 2)
+
+**File:** `app/Http/Controllers/Admin/EnrollmentController.php`
+
+**Purpose:** Manage student enrollments with validation and conflict detection.
+
+**Key Features:**
+- Duplicate enrollment prevention
+- Capacity enforcement
+- Schedule conflict detection for students
+- Drop/withdraw functionality
+
+#### `index()` - List All Enrollments
+
+```php
+public function index(Request $request)
+{
+    $enrollments = Enrollment::query()
+        ->with(['student', 'class.course', 'class.teacher', 'class.term'])
+        ->when($request->student_id, fn($q, $id) => $q->student($id))
+        ->when($request->class_id, fn($q, $id) => $q->class($id))
+        ->when($request->term_id, fn($q, $id) => $q->term($id))
+        ->when($request->status, fn($q, $status) => $q->status($status))
+        ->when($request->search, fn($q, $search) => $q->whereHas('student', function ($query) use ($search) {
+            $query->where('student_id', 'like', "%{$search}%")
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%");
+        }))
+        ->orderBy('created_at', 'desc')
+        ->paginate(10);
+
+    return Inertia::render('Admin/Enrollment/Index', [
+        'enrollments' => $enrollments,
+        'students' => Student::active()->get(),
+        'terms' => Term::with('academicYear')->get(),
+        'filters' => $request->only(['search', 'student_id', 'class_id', 'term_id', 'status']),
+    ]);
+}
+```
+
+#### `enroll()` - Enroll Student in Class
+
+```php
+public function enroll(Request $request)
+{
+    $validated = $request->validate([
+        'student_id' => ['required', 'exists:students,id'],
+        'class_id' => ['required', 'exists:classes,id'],
+        'enrollment_date' => ['nullable', 'date'],
+    ]);
+
+    $student = Student::findOrFail($validated['student_id']);
+    $class = ClassModel::findOrFail($validated['class_id']);
+
+    // Check if already enrolled
+    $existing = Enrollment::where('student_id', $student->id)
+        ->where('class_id', $class->id)
+        ->first();
+
+    if ($existing) {
+        return back()->withErrors([
+            'error' => 'Student is already enrolled in this class.'
+        ]);
+    }
+
+    // Check if class is full
+    if ($class->isFull()) {
+        return back()->withErrors([
+            'error' => 'Class is full. Cannot enroll more students.'
+        ]);
+    }
+
+    // Check if class is open
+    if ($class->status !== 'open') {
+        return back()->withErrors([
+            'error' => 'Class is not open for enrollment.'
+        ]);
+    }
+
+    // Check for schedule conflicts
+    $conflict = $this->checkStudentScheduleConflict($student->id, $class);
+    if ($conflict) {
+        return back()->withErrors([
+            'error' => "Schedule conflict with {$conflict->course->name}"
+        ]);
+    }
+
+    Enrollment::create([
+        'student_id' => $student->id,
+        'class_id' => $class->id,
+        'enrollment_date' => $validated['enrollment_date'] ?? now(),
+        'status' => 'enrolled',
+    ]);
+
+    return redirect()->route('admin.enrollment.index')
+        ->with('success', "Successfully enrolled {$student->full_name}");
+}
+```
+
+#### Student Schedule Conflict Detection
+
+```php
+private function checkStudentScheduleConflict($studentId, ClassModel $newClass)
+{
+    if (empty($newClass->schedule)) return null;
+
+    $studentClasses = ClassModel::query()
+        ->whereHas('enrollments', function ($query) use ($studentId) {
+            $query->where('student_id', $studentId)
+                  ->where('status', 'enrolled');
+        })
+        ->where('term_id', $newClass->term_id)
+        ->where('id', '!=', $newClass->id)
+        ->with('course')
+        ->get();
+
+    foreach ($studentClasses as $existingClass) {
+        if (empty($existingClass->schedule)) continue;
+
+        foreach ($newClass->schedule as $newSlot) {
+            foreach ($existingClass->schedule as $existingSlot) {
+                if ($newSlot['day'] === $existingSlot['day']) {
+                    if ($this->timesOverlap(
+                        $newSlot['start_time'], $newSlot['end_time'],
+                        $existingSlot['start_time'], $existingSlot['end_time']
+                    )) {
+                        return $existingClass;
+                    }
+                }
+            }
+        }
+    }
+
+    return null;
+}
+```
+
+#### `drop()` - Drop Student from Class
+
+```php
+public function drop(Enrollment $enrollment)
+{
+    $enrollment->update(['status' => 'dropped']);
+
+    return redirect()->route('admin.enrollment.index')
+        ->with('success', 'Student dropped from class successfully.');
+}
+```
+
+#### `studentSchedule()` - View Student's Schedule
+
+```php
+public function studentSchedule(Student $student)
+{
+    $enrollments = $student->enrollments()
+        ->with(['class.course', 'class.teacher', 'class.term'])
+        ->enrolled()
+        ->get();
+
+    return Inertia::render('Admin/Enrollment/StudentSchedule', [
+        'student' => $student,
+        'enrollments' => $enrollments,
+    ]);
+}
+```
+
+---
+
 ## Routes
 
 **File:** `routes/web.php`
@@ -1008,14 +1589,18 @@ public function show()
 
 ```php
 use App\Http\Controllers\Admin\{
-    StudentController,
-    GuardianController,
+    AcademicYearController,
+    ClassController,
     CourseController,
-    TeacherController,
-    AcademicYearController
+    EnrollmentController,
+    GuardianController,
+    StudentController,
+    TeacherController
 };
 
 Route::middleware(['auth'])->prefix('admin')->group(function () {
+    // Phase 1: Student & Course Foundation
+
     // Student management
     Route::resource('students', StudentController::class);
 
@@ -1030,8 +1615,33 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     // Academic year management
     Route::resource('academic-years', AcademicYearController::class);
+
+    // Additional Academic Year routes for term management
+    Route::post('academic-years/{academicYear}/set-current', [AcademicYearController::class, 'setCurrent'])
+        ->name('admin.academic-years.set-current');
     Route::post('academic-years/{academicYear}/terms', [AcademicYearController::class, 'storeTerm'])
         ->name('admin.academic-years.terms.store');
+    Route::put('academic-years/{academicYear}/terms/{term}', [AcademicYearController::class, 'updateTerm'])
+        ->name('admin.academic-years.terms.update');
+    Route::delete('academic-years/{academicYear}/terms/{term}', [AcademicYearController::class, 'destroyTerm'])
+        ->name('admin.academic-years.terms.destroy');
+    Route::post('academic-years/{academicYear}/terms/{term}/set-current', [AcademicYearController::class, 'setCurrentTerm'])
+        ->name('admin.academic-years.terms.set-current');
+
+    // Phase 2: Class & Enrollment Management
+
+    // Class management
+    Route::resource('classes', ClassController::class);
+
+    // Enrollment management
+    Route::prefix('enrollment')->group(function () {
+        Route::get('/', [EnrollmentController::class, 'index'])->name('admin.enrollment.index');
+        Route::get('/create', [EnrollmentController::class, 'create'])->name('admin.enrollment.create');
+        Route::post('/enroll', [EnrollmentController::class, 'enroll'])->name('admin.enrollment.enroll');
+        Route::delete('/{enrollment}', [EnrollmentController::class, 'drop'])->name('admin.enrollment.drop');
+        Route::get('/student/{student}/schedule', [EnrollmentController::class, 'studentSchedule'])
+            ->name('admin.enrollment.student-schedule');
+    });
 });
 ```
 
