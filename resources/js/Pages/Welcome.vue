@@ -302,7 +302,7 @@ const submit = () => {
         <footer class="mt-auto border-t border-gray-200 bg-white/50 py-8 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <p class="text-center text-sm text-gray-600 dark:text-gray-400">
-                    &copy; {{ new Date().getFullYear() }} Georgia Youth Challenge Academy. All rights reserved.
+                    &copy; {{ new Date().getFullYear() }} Brian K. Rich. All rights reserved.
                 </p>
                 <p class="mt-2 text-center text-xs text-gray-500 dark:text-gray-500">
                     Powered by Citadel SMS

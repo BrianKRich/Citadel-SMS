@@ -807,4 +807,4 @@ query {
 
 ---
 
-**© 2026 Georgia Youth Challenge Academy. All rights reserved.**
+**© 2026 Brian K. Rich. All rights reserved.**

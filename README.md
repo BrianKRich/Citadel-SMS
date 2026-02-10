@@ -419,7 +419,7 @@ npm run build
 
 ## License
 
-This project is proprietary software. All rights reserved.
+© 2026 Brian K. Rich. All rights reserved.
 
 ## Support
 

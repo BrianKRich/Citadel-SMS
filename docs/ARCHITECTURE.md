@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Last Updated:** February 2026
-**Organization:** Georgia Youth Challenge Academy
+**Organization:** Brian K. Rich
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@
 
 ## Overview
 
-Citadel SMS is a comprehensive Student Management System built for the Georgia Youth Challenge Academy. The system manages student records, courses, grades, attendance, and academic operations with a focus on scalability, security, and user experience.
+Citadel SMS is a comprehensive Student Management System. The system manages student records, courses, grades, attendance, and academic operations with a focus on scalability, security, and user experience.
 
 ### Key Features
 
@@ -421,4 +421,4 @@ For technical questions or issues:
 
 ---
 
-**© 2026 Georgia Youth Challenge Academy. All rights reserved.**
+**© 2026 Brian K. Rich. All rights reserved.**
