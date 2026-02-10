@@ -1,7 +1,7 @@
 # Citadel SMS - Frontend Architecture
 
-**Version:** 1.0
-**Last Updated:** February 2026
+**Version:** 2.0 (Phase 0-2 Complete)
+**Last Updated:** February 9, 2026
 **Framework:** Vue 3 + Inertia.js
 
 ---
@@ -716,6 +716,118 @@ defineProps({
     </AuthenticatedLayout>
 </template>
 ```
+
+---
+
+### Admin Pages (Phase 1 & 2)
+
+All admin pages follow a consistent pattern:
+- Responsive design (desktop table + mobile cards)
+- Dark mode support
+- Pagination for large datasets
+- Status badges with color coding
+- Search and filter capabilities
+
+#### Students Index
+
+**File:** `resources/js/Pages/Admin/Students/Index.vue`
+
+**Purpose:** List and manage all students with search and filtering.
+
+**Features:**
+- Paginated student list
+- Status badges (active, inactive, graduated, withdrawn, suspended)
+- Desktop: table view with sortable columns
+- Mobile: card view with touch-friendly buttons
+- Search by name, student ID, or email
+- Filter by status
+
+**Props:**
+- `students` (Object) - Paginated student collection with metadata
+
+#### Teachers Index
+
+**File:** `resources/js/Pages/Admin/Teachers/Index.vue`
+
+**Purpose:** List and manage all teachers.
+
+**Features:**
+- Teacher directory with department info
+- Status badges (active, inactive, on_leave)
+- Auto-generated teacher IDs display (TCH-YYYY-###)
+- Search by name or department
+- Filter by status
+
+**Props:**
+- `teachers` (Object) - Paginated teacher collection
+
+#### Courses Index
+
+**File:** `resources/js/Pages/Admin/Courses/Index.vue`
+
+**Purpose:** Course catalog management.
+
+**Features:**
+- Course listings with codes and credits
+- Department and level organization
+- Active/inactive status
+- Search by course name or code
+- Filter by department
+
+**Props:**
+- `courses` (Object) - Paginated course collection
+
+#### Classes Index (Phase 2)
+
+**File:** `resources/js/Pages/Admin/Classes/Index.vue`
+
+**Purpose:** Manage class sections with schedules and enrollment.
+
+**Features:**
+- Class sections with course and teacher info
+- Term and room information
+- Status badges (open, closed, in_progress, completed)
+- Schedule display
+- Enrollment count vs capacity
+- Filter by term, course, teacher, status
+- Search across multiple fields
+
+**Props:**
+- `classes` (Object) - Paginated class collection with relationships
+- `terms` (Array) - Available terms for filtering
+- `courses` (Array) - Available courses for filtering
+- `teachers` (Array) - Available teachers for filtering
+- `filters` (Object) - Current filter values
+
+**Relationships loaded:**
+- course (name, code)
+- teacher (name)
+- term (name, academic year)
+
+#### Academic Years Index
+
+**File:** `resources/js/Pages/Admin/AcademicYears/Index.vue`
+
+**Purpose:** Manage academic years and their terms.
+
+**Features:**
+- Academic year cards (not table layout)
+- Current year badge
+- Nested term display with current term badge
+- Term date ranges
+- Action buttons for edit and set current
+
+**Props:**
+- `academic_years` (Object) - Paginated academic years with terms
+
+**Layout:**
+Each academic year is displayed as a card containing:
+- Year name and date range
+- "Current" badge if active
+- List of terms with dates and current status
+- Edit and "Set Current" action buttons
+
+---
 
 ### Welcome Page
 
