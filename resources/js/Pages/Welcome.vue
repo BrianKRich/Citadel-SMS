@@ -89,7 +89,7 @@ const submit = () => {
                         <div class="flex h-32 w-auto items-center justify-center">
                             <img
                                 src="/images/logos/georgia-youth-challenge-logo.png"
-                                alt="Georgia Youth Challenge Academy"
+                                alt="Georgia Job Challenge"
                                 class="h-full w-auto object-contain"
                             />
                         </div>
@@ -108,7 +108,7 @@ const submit = () => {
                             Welcome to Citadel SMS
                         </h2>
                         <p class="mt-4 text-lg text-gray-600 dark:text-gray-300">
-                            Student Management System for Georgia Youth Challenge Academy
+                            Student Management System for Georgia Job Challenge
                         </p>
                         <p class="mt-2 text-gray-500 dark:text-gray-400">
                             A comprehensive solution for managing student records, courses, grades, attendance, and academic operations.

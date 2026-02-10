@@ -3,9 +3,9 @@ import axios from 'axios';
 
 export function useTheme() {
     const theme = ref({
-        primary_color: '#1B3A6B',   // Navy Blue - Georgia Youth Challenge Academy
-        secondary_color: '#FFB81C',  // Gold - Georgia Youth Challenge Academy
-        accent_color: '#C8102E',     // Red - Georgia Youth Challenge Academy
+        primary_color: '#1B3A6B',   // Navy Blue - Georgia Job Challenge
+        secondary_color: '#FFB81C',  // Gold - Georgia Job Challenge
+        accent_color: '#C8102E',     // Red - Georgia Job Challenge
         background_color: '#ffffff',
         text_color: '#1f2937',
     });
