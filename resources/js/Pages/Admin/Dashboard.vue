@@ -78,7 +78,7 @@ const props = defineProps({
                             title="Student Management"
                             description="Manage student records and enrollment"
                             icon="📚"
-                            href="#"
+                            :href="route('admin.students.index')"
                             color="primary"
                         />
 
@@ -91,28 +91,37 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
-                            title="Course Management"
-                            description="Manage courses and class schedules"
+                            title="Class Management"
+                            description="Manage class schedules and enrollment"
                             icon="📖"
-                            href="#"
+                            :href="route('admin.classes.index')"
                             color="primary"
                         />
 
                         <AdminActionCard
-                            title="Analytics"
-                            description="View reports and analytics data"
-                            icon="📊"
-                            href="#"
+                            title="Teacher Management"
+                            description="Manage teacher profiles and assignments"
+                            icon="👨‍🏫"
+                            :href="route('admin.teachers.index')"
+                            color="secondary"
+                        />
+
+                        <AdminActionCard
+                            title="Course Catalog"
+                            description="Manage course offerings and curriculum"
+                            icon="📚"
+                            :href="route('admin.courses.index')"
                             color="accent"
                         />
 
                         <AdminActionCard
-                            title="Settings"
-                            description="Configure application settings and preferences"
-                            icon="⚙️"
-                            href="#"
-                            color="secondary"
+                            title="Academic Years"
+                            description="Manage academic years and terms"
+                            icon="📅"
+                            :href="route('admin.academic-years.index')"
+                            color="primary"
                         />
+
                     </div>
                 </div>
 
