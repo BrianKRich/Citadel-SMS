@@ -1,0 +1,186 @@
+<script setup>
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import Card from '@/Components/UI/Card.vue';
+import PageHeader from '@/Components/UI/PageHeader.vue';
+import Alert from '@/Components/UI/Alert.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
+
+const props = defineProps({
+    academic_years: Object,
+});
+
+const showSuccess = ref(!!props.academic_years.flash?.success);
+const showError = ref(!!props.academic_years.flash?.error);
+</script>
+
+<template>
+    <Head title="Academic Years" />
+
+    <AuthenticatedLayout>
+        <template #header>
+            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
+                Academic Years
+            </h2>
+        </template>
+
+        <div class="py-12">
+            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <!-- Alerts -->
+                <div v-if="showSuccess" class="mb-4">
+                    <Alert
+                        type="success"
+                        :message="$page.props.flash.success"
+                        @dismiss="showSuccess = false"
+                    />
+                </div>
+
+                <div v-if="showError" class="mb-4">
+                    <Alert
+                        type="error"
+                        :message="$page.props.flash.error"
+                        @dismiss="showError = false"
+                    />
+                </div>
+
+                <Card>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                        <PageHeader
+                            title="Academic Years"
+                            :description="`Manage all ${academic_years.total} academic years and terms`"
+                        />
+
+                        <div class="sm:ml-auto">
+                            <PrimaryButton class="w-full sm:w-auto">
+                                + Add New Academic Year
+                            </PrimaryButton>
+                        </div>
+                    </div>
+
+                    <!-- Academic Years List -->
+                    <div class="space-y-6">
+                        <div
+                            v-for="year in academic_years.data"
+                            :key="year.id"
+                            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm"
+                        >
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3">
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                            {{ year.name }}
+                                        </h3>
+                                        <span
+                                            v-if="year.is_current"
+                                            class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-300"
+                                        >
+                                            Current
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        {{ new Date(year.start_date).toLocaleDateString() }} - {{ new Date(year.end_date).toLocaleDateString() }}
+                                    </p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 text-sm font-medium">
+                                        Edit
+                                    </button>
+                                    <button
+                                        v-if="!year.is_current"
+                                        class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 text-sm font-medium"
+                                    >
+                                        Set Current
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Terms -->
+                            <div v-if="year.terms && year.terms.length > 0" class="mt-4">
+                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Terms:</h4>
+                                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    <div
+                                        v-for="term in year.terms"
+                                        :key="term.id"
+                                        class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+                                    >
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2">
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                        {{ term.name }}
+                                                    </p>
+                                                    <span
+                                                        v-if="term.is_current"
+                                                        class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900 px-2 py-0.5 text-xs font-medium text-blue-800 dark:text-blue-300"
+                                                    >
+                                                        Current
+                                                    </span>
+                                                </div>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                    {{ new Date(term.start_date).toLocaleDateString() }} - {{ new Date(term.end_date).toLocaleDateString() }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="mt-4 text-sm text-gray-500 dark:text-gray-400 italic">
+                                No terms defined for this academic year
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div v-if="academic_years.links.length > 3" class="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 sm:px-6">
+                        <div class="flex flex-1 justify-between sm:hidden">
+                            <Link
+                                v-if="academic_years.prev_page_url"
+                                :href="academic_years.prev_page_url"
+                                class="relative inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                                Previous
+                            </Link>
+                            <Link
+                                v-if="academic_years.next_page_url"
+                                :href="academic_years.next_page_url"
+                                class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                                Next
+                            </Link>
+                        </div>
+                        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700 dark:text-gray-300">
+                                    Showing
+                                    <span class="font-medium">{{ academic_years.from }}</span>
+                                    to
+                                    <span class="font-medium">{{ academic_years.to }}</span>
+                                    of
+                                    <span class="font-medium">{{ academic_years.total }}</span>
+                                    academic years
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                                    <Link
+                                        v-for="link in academic_years.links"
+                                        :key="link.label"
+                                        :href="link.url"
+                                        :class="[
+                                            link.active
+                                                ? 'z-10 bg-primary-600 text-white'
+                                                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700',
+                                            'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 dark:ring-gray-600',
+                                        ]"
+                                        v-html="link.label"
+                                    />
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+        </div>
+    </AuthenticatedLayout>
+</template>
