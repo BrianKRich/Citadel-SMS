@@ -1,0 +1,49 @@
+name: Deploy to Lightsail
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_USER }}
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            echo "--- Pulling latest code ---"
+            git pull origin main
+
+            echo "--- Installing PHP dependencies ---"
+            composer install --no-dev --optimize-autoloader --no-interaction
+
+            echo "--- Building frontend assets ---"
+            npm ci --prefer-offline
+            npm run build
+
+            echo "--- Running database migrations ---"
+            php artisan migrate --force
+
+            echo "--- Rebuilding application caches ---"
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan event:cache
+
+            echo "--- Restarting queue workers ---"
+            php artisan queue:restart
+
+            echo "--- Setting storage permissions ---"
+            chmod -R 775 storage bootstrap/cache
+
+            echo "--- Deployment complete ---"
