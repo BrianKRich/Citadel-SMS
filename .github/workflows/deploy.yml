@@ -47,7 +47,4 @@ jobs:
             echo "--- Restarting queue workers ---"
             php artisan queue:restart
 
-            echo "--- Setting storage permissions ---"
-            chmod -R 775 storage bootstrap/cache
-
             echo "--- Deployment complete ---"
