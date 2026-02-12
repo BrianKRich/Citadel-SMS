@@ -102,7 +102,7 @@ MAIL_PORT=587
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=noreply@student-management-system.com
+MAIL_FROM_ADDRESS=noreply@sms.com
 MAIL_FROM_NAME="Student Management System"
 ```
 
@@ -111,7 +111,7 @@ MAIL_FROM_NAME="Student Management System"
 MAIL_MAILER=mailgun
 MAILGUN_DOMAIN=your-domain.mailgun.org
 MAILGUN_SECRET=your-secret-key
-MAIL_FROM_ADDRESS=noreply@student-management-system.com
+MAIL_FROM_ADDRESS=noreply@sms.com
 ```
 
 **Option 3: Amazon SES, SendGrid, etc.**

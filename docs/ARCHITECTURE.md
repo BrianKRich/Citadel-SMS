@@ -127,7 +127,7 @@ Student Management System is a comprehensive Student Management System. The syst
 ## Project Structure
 
 ```
-student-management-system/
+sms/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/

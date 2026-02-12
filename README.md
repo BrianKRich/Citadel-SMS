@@ -141,7 +141,7 @@ Student Management System is a full-stack web application designed for managing 
 
 ```bash
 git clone <repository-url>
-cd student-management-system
+cd sms
 ```
 
 ### 2. Install PHP Dependencies
@@ -254,7 +254,7 @@ npm run build
 ## Project Structure
 
 ```
-student-management-system/
+sms/
 ├── app/
 │   ├── Http/Controllers/     # Backend controllers
 │   ├── Models/                # Database models
