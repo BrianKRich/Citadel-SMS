@@ -184,63 +184,139 @@ Route::prefix('admin/transcripts')->group(function () {  // 3B
 
 ## 3B: Report Cards, Transcripts & Class Rank
 
-### Step 1: Dependencies & Services
+### Step 1: Foundation Fixes & DomPDF
 
 `composer require barryvdh/laravel-dompdf`
 
-**Add to GradeCalculationService:**
-- `calculateClassRank(ClassModel): Collection` — rank students by weighted average
+**Data-mapping fix** (discovered during 3B planning): `ClassGrades.vue` references `enrollment.weighted_average` and `enrollment.final_letter_grade` but neither exists on the Enrollment model/DB.
 
-**`app/Services/ReportCardService.php`:**
-- `generateForStudent(Student, Term): array` — enrollment grades, term GPA (via `calculateTermGpa`), cumulative GPA (via `calculateCumulativeGpa`)
-- `generatePdf(Student, Term): string` — DomPDF render
-- `generateBatchPdf(Term): string` — all students in term
+**New migration** — `add_weighted_average_to_enrollments_table`:
+- Add `weighted_average decimal(5,2) nullable` to `enrollments`
 
-**`app/Services/TranscriptService.php`:**
-- `generateForStudent(Student): array` — all terms/courses, cumulative GPA (via `calculateCumulativeGpa`), credits
-- `generatePdf(Student, bool $official): string` — with official/unofficial watermark
+**Modify `app/Models/Enrollment.php`:**
+- Add `weighted_average` to `$fillable` and `$casts`
+- Add `getFinalLetterGradeAttribute()` accessor (returns `$this->final_grade`)
+- Add `$appends = ['final_letter_grade']`
 
-### Step 2: Controllers & Pages
+**Modify `app/Services/GradeCalculationService.php` — `updateEnrollmentGrade()`:**
+- Store computed average in `weighted_average` alongside `final_grade`/`grade_points`
 
-**Controllers:**
+### Step 2: Class Rank
 
-| Controller | Actions |
-|------------|---------|
-| `ReportCardController` | `index` (select term, list students), `show` (HTML preview), `download` (PDF), `batchDownload` (all students) |
-| `TranscriptController` | `index` (student search), `show` (HTML preview), `download` (PDF, `?official=true`) |
+**Modify `app/Services/GradeCalculationService.php`:**
+- Add `calculateClassRank(ClassModel): Collection` — queries enrolled enrollments with `weighted_average`, sorts descending, standard ranking (ties share rank, next skips: 1,1,3). Returns `[enrollment_id, student_id, weighted_average, rank]`.
 
-**Vue Pages:**
-- `Pages/Admin/ReportCards/` — Index.vue, Show.vue
-- `Pages/Admin/Transcripts/` — Index.vue, Show.vue
+### Step 3: Services
 
-**Blade PDF templates:**
-- `resources/views/pdf/report-card.blade.php`
-- `resources/views/pdf/transcript.blade.php`
+**Create `app/Services/ReportCardService.php`** (injects `GradeCalculationService`):
+- `generateForStudent(Student, Term): array` — enrollment grades, term GPA, cumulative GPA
+- `generatePdf(Student, Term): string` — DomPDF render via `pdf.report-card` Blade
+- `generateBatchPdf(Term): string` — single PDF with page-break-after per student
 
-**Update existing pages:**
-- `ClassGrades.vue` — add rank column
-- `StudentGrades.vue` — add rank, links to report card/transcript
+**Create `app/Services/TranscriptService.php`** (injects `GradeCalculationService`):
+- `generateForStudent(Student): array` — all terms grouped, cumulative GPA, total credits
+- `generatePdf(Student, bool $official): string` — DomPDF render via `pdf.transcript` Blade
 
-### Step 3: Tests
+### Step 4: Blade PDF Templates
 
-**Unit** (add to `GradeCalculationServiceTest.php`):
-- `test_calculate_class_rank_orders_by_average`, `test_calculate_class_rank_handles_tied_scores`
+**Create `resources/views/pdf/report-card.blade.php`:**
+- Inline CSS only (DomPDF limitation), DejaVu Sans font
+- Header: school name, "Report Card", student name/ID, term
+- Table: Course | Section | Teacher | Avg % | Grade | GPA | Credits
+- Footer: Term GPA, Cumulative GPA, date
+
+**Create `resources/views/pdf/transcript.blade.php`:**
+- Official/unofficial conditional header + watermark (CSS `position: fixed; opacity: 0.1`)
+- Per-term sections with course tables
+- Cumulative GPA, total credits, signature line if official
+
+### Step 5: Controllers & Routes
+
+**Create `app/Http/Controllers/Admin/ReportCardController.php`** (injects `ReportCardService`):
+
+| Action | Description |
+|--------|-------------|
+| `index(Request)` | Term selector dropdown + paginated students for selected term |
+| `show(Student, Term)` | HTML preview via Inertia |
+| `download(Student, Term)` | PDF response (`Content-Type: application/pdf`) |
+| `batchDownload(Term)` | Combined PDF for all students in term |
+
+**Create `app/Http/Controllers/Admin/TranscriptController.php`** (injects `TranscriptService`):
+
+| Action | Description |
+|--------|-------------|
+| `index(Request)` | Student search, paginated |
+| `show(Student)` | HTML preview via Inertia |
+| `download(Student, Request)` | PDF, `?official=1` flag |
+
+**Modify `routes/web.php`** — route ordering critical:
+```php
+Route::prefix('admin/report-cards')->group(function () {
+    Route::get('/', ...)->name('admin.report-cards.index');
+    Route::get('/batch/{term}', ...)->name('admin.report-cards.batch');        // BEFORE {student}
+    Route::get('/{student}/{term}', ...)->name('admin.report-cards.show');
+    Route::get('/{student}/{term}/download', ...)->name('admin.report-cards.download');
+});
+Route::prefix('admin/transcripts')->group(function () {
+    Route::get('/', ...)->name('admin.transcripts.index');
+    Route::get('/{student}/download', ...)->name('admin.transcripts.download'); // BEFORE {student}
+    Route::get('/{student}', ...)->name('admin.transcripts.show');
+});
+```
+
+### Step 6: Vue Pages
+
+**Create `resources/js/Pages/Admin/ReportCards/Index.vue`:**
+- Term dropdown, student table (Name, ID, Status, View/Download), batch download button
+
+**Create `resources/js/Pages/Admin/ReportCards/Show.vue`:**
+- Student info header, enrollment table, term/cumulative GPA, download button
+
+**Create `resources/js/Pages/Admin/Transcripts/Index.vue`:**
+- Student search, table with View/Download/Download Official actions
+
+**Create `resources/js/Pages/Admin/Transcripts/Show.vue`:**
+- Student info, per-term course tables, cumulative summary, download buttons
+
+### Step 7: Update Existing Pages
+
+**Modify `app/Http/Controllers/Admin/GradeController.php`:**
+- `classGrades()` — call `calculateClassRank()`, pass `rankMap` prop
+- `studentGrades()` — compute rank per enrollment, pass `classRanks` prop
+
+**Modify `resources/js/Pages/Admin/Grades/ClassGrades.vue`:**
+- Add `rankMap` prop, add "Rank" column after "Grade"
+
+**Modify `resources/js/Pages/Admin/Grades/StudentGrades.vue`:**
+- Add `classRanks` prop, show rank per enrollment card
+- Add links to report card and transcript
+
+**Modify `resources/js/Pages/Admin/Dashboard.vue`:**
+- Add "Report Cards" and "Transcripts" action cards
+
+### Step 8: Tests
+
+**Unit** (add to `tests/Unit/Services/GradeCalculationServiceTest.php`):
+- `test_calculate_class_rank_orders_by_average`
+- `test_calculate_class_rank_handles_tied_scores` (standard ranking: 1,1,3)
 
 **Feature:**
 
 | File | Tests |
 |------|-------|
-| `tests/Feature/Admin/ReportCardTest.php` | Index lists students, show renders preview, download returns PDF (content-type), batch download, auth redirect |
-| `tests/Feature/Admin/TranscriptTest.php` | Index search, show preview, download PDF, official watermark flag, includes all terms |
-| `tests/Feature/Services/ReportCardServiceTest.php` | Includes all enrolled courses, calculates term GPA, batch creates combined doc |
-| `tests/Feature/Services/TranscriptServiceTest.php` | Includes all terms, calculates cumulative GPA, official flag |
+| `tests/Feature/Admin/ReportCardTest.php` | Index renders, index with term lists students, show preview, download PDF (content-type), batch PDF, auth redirect (~6 tests) |
+| `tests/Feature/Admin/TranscriptTest.php` | Index renders, search filters, show preview, download PDF, official flag, includes all terms, auth redirect (~7 tests) |
+| `tests/Feature/Services/ReportCardServiceTest.php` | Includes enrolled courses, calculates term GPA, batch PDF starts with `%PDF` (~3 tests) |
+| `tests/Feature/Services/TranscriptServiceTest.php` | Includes all terms, calculates cumulative GPA, official/unofficial PDFs (~4 tests) |
 
 ### 3B Verification
 
-1. `php artisan test` — all pass
-2. Report card: preview → PDF download → batch download
-3. Transcript: preview → official/unofficial PDF
-4. Class rank on grade book
+1. `php artisan migrate` — weighted_average column added
+2. `php artisan test` — all existing 66 + ~22 new tests pass
+3. ClassGrades shows Avg %, Grade, and Rank columns populated
+4. Report card: select term → preview → PDF download → batch download
+5. Transcript: search student → preview → official/unofficial PDF
+6. `npm run build` — frontend compiles cleanly
 
 ---
 
@@ -289,9 +365,12 @@ CSV format: `student_id, assessment_name, score, notes`
 | `resources/js/Pages/Admin/Dashboard.vue` | Grade management action card | 3A |
 | `routes/web.php` | All Phase 3 routes | 3A |
 | `database/seeders/DatabaseSeeder.php` | New seeders | 3A |
-| `app/Services/GradeCalculationService.php` | Add `calculateClassRank()` | 3B |
+| `app/Models/Enrollment.php` | Add `weighted_average` to fillable/casts, `final_letter_grade` accessor, `$appends` | 3B |
+| `app/Services/GradeCalculationService.php` | Add `calculateClassRank()`, store `weighted_average` in `updateEnrollmentGrade()` | 3B |
+| `app/Http/Controllers/Admin/GradeController.php` | Pass `rankMap` and `classRanks` props | 3B |
 | `resources/js/Pages/Admin/Grades/ClassGrades.vue` | Rank column (3B), export button (3C) | 3B, 3C |
 | `resources/js/Pages/Admin/Grades/StudentGrades.vue` | Rank + report card/transcript links | 3B |
+| `resources/js/Pages/Admin/Dashboard.vue` | Report Cards + Transcripts action cards | 3B |
 | `composer.json` | `barryvdh/laravel-dompdf` (3B), `maatwebsite/excel` (3C) | 3B, 3C |
 
 ## New Files
@@ -299,7 +378,7 @@ CSV format: `student_id, assessment_name, score, notes`
 | Sub-Phase | Count | Files |
 |-----------|-------|-------|
 | 3A | ~32 | 13 factories, 4 migrations, 4 models, 1 service, 4 controllers, ~13 Vue pages, 4 seeders, 6 test files |
-| 3B | ~14 | 2 services, 2 controllers, 4 Vue pages, 2 Blade templates, 4 test files |
+| 3B | ~16 | 1 migration, 2 services, 2 controllers, 4 Vue pages, 2 Blade templates, 4 test files, 1 composer dep |
 | 3C | ~2 | 1 Vue page, 1 test file (+ 3 methods on GradeController) |
 
 ## Post-Completion
