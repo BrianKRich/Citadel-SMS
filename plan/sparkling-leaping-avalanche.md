@@ -132,21 +132,33 @@ Route::prefix('admin/transcripts')->group(function () {
 
 ## Step 8 — Tests
 
-**Modify `tests/Unit/Services/GradeCalculationServiceTest.php`** — add:
+**Unit — GradeCalculationService** (add to `tests/Unit/Services/GradeCalculationServiceTest.php`):
 - `test_calculate_class_rank_orders_by_average`
 - `test_calculate_class_rank_handles_tied_scores` (standard ranking: 1,1,3)
+- `test_update_enrollment_grade_stores_weighted_average` — verify `weighted_average` column is populated after `updateEnrollmentGrade()`
 
-**Create `tests/Feature/Admin/ReportCardTest.php`** (~6 tests):
-- Index renders, index with term lists students, show preview, download PDF (Content-Type), batch PDF, auth redirect
+**Unit — Enrollment model** (create `tests/Unit/Models/EnrollmentTest.php`):
+- `test_final_letter_grade_accessor_returns_final_grade` — verify accessor maps `final_grade` to `final_letter_grade`
+- `test_final_letter_grade_accessor_returns_null_when_no_grade` — verify null handling
+- `test_weighted_average_is_fillable` — verify mass assignment works
 
-**Create `tests/Feature/Admin/TranscriptTest.php`** (~7 tests):
-- Index renders, search filters, show preview, download PDF, official flag, includes all terms, auth redirect
+**Feature — Controllers:**
 
-**Create `tests/Feature/Services/ReportCardServiceTest.php`** (~3 tests):
-- Includes enrolled courses, calculates term GPA, batch PDF starts with `%PDF`
+| File | Tests |
+|------|-------|
+| `tests/Feature/Admin/ReportCardTest.php` | Index renders, index with term lists students, show preview, download PDF (content-type), batch PDF, auth redirect (~6 tests) |
+| `tests/Feature/Admin/TranscriptTest.php` | Index renders, search filters, show preview, download PDF, official flag, includes all terms, auth redirect (~7 tests) |
 
-**Create `tests/Feature/Services/TranscriptServiceTest.php`** (~4 tests):
-- Includes all terms, calculates cumulative GPA, official/unofficial PDFs start with `%PDF`
+**Feature — Services:**
+
+| File | Tests |
+|------|-------|
+| `tests/Feature/Services/ReportCardServiceTest.php` | Includes enrolled courses, calculates term GPA, batch PDF starts with `%PDF` (~3 tests) |
+| `tests/Feature/Services/TranscriptServiceTest.php` | Includes all terms, calculates cumulative GPA, official/unofficial PDFs (~4 tests) |
+
+**Feature — Updated controllers** (add to existing `tests/Feature/Admin/GradeTest.php`):
+- `test_class_grades_includes_rank_map` — verify `classGrades()` returns `rankMap` prop via `assertInertia`
+- `test_student_grades_includes_class_ranks` — verify `studentGrades()` returns `classRanks` prop via `assertInertia`
 
 ---
 
@@ -184,7 +196,7 @@ Route::prefix('admin/transcripts')->group(function () {
 ## Verification
 
 1. `php artisan migrate` — weighted_average column added
-2. `php artisan test` — all existing 66 + new ~22 tests pass
+2. `php artisan test` — all existing 66 + new ~28 tests pass
 3. Manual: ClassGrades now shows Avg % and Rank columns populated
 4. Manual: Report Cards → select term → view preview → download PDF
 5. Manual: Transcripts → search student → view preview → download official/unofficial PDF
