@@ -138,7 +138,11 @@ sms/
 │   │   │   │   ├── GuardianController.php
 │   │   │   │   ├── ClassController.php
 │   │   │   │   ├── EnrollmentController.php
-│   │   │   │   └── AcademicYearController.php
+│   │   │   │   ├── AcademicYearController.php
+│   │   │   │   ├── AssessmentCategoryController.php  # Phase 3A
+│   │   │   │   ├── AssessmentController.php           # Phase 3A
+│   │   │   │   ├── GradeController.php                # Phase 3A
+│   │   │   │   └── GradingScaleController.php         # Phase 3A
 │   │   │   ├── AdminController.php
 │   │   │   ├── ThemeController.php
 │   │   │   └── UserManagementController.php
@@ -155,10 +159,16 @@ sms/
 │   │   ├── PhoneNumber.php         # Polymorphic phone numbers
 │   │   ├── ClassModel.php          # Class sections (Phase 2)
 │   │   ├── Enrollment.php          # Student enrollments (Phase 2)
+│   │   ├── Assessment.php          # Assessments (Phase 3A)
+│   │   ├── AssessmentCategory.php  # Assessment categories (Phase 3A)
+│   │   ├── Grade.php               # Student grades (Phase 3A)
+│   │   ├── GradingScale.php        # Grading scales (Phase 3A)
 │   │   ├── AcademicYear.php        # Academic year model
 │   │   ├── Term.php                # Term/semester model
 │   │   ├── Setting.php             # System settings
 │   │   └── User.php                # User authentication
+│   ├── Services/
+│   │   └── GradeCalculationService.php  # Grade math (Phase 3A)
 │   └── Providers/                  # Service providers
 ├── database/
 │   ├── migrations/                 # Database schema migrations
@@ -175,9 +185,13 @@ sms/
 │   │   └── ...
 │   └── seeders/                    # Database seeders
 │       ├── AcademicYearSeeder.php
+│       ├── AssessmentCategorySeeder.php  # Phase 3A
+│       ├── AssessmentSeeder.php          # Phase 3A
 │       ├── CourseSeeder.php
-│       ├── DepartmentSeeder.php
 │       ├── CountySeeder.php
+│       ├── DepartmentSeeder.php
+│       ├── GradeSeeder.php               # Phase 3A
+│       ├── GradingScaleSeeder.php        # Phase 3A
 │       └── StudentSeeder.php
 ├── resources/
 │   ├── js/
@@ -202,6 +216,10 @@ sms/
 │   │   │   │   ├── Employees/
 │   │   │   │   ├── Classes/
 │   │   │   │   ├── AcademicYears/
+│   │   │   │   ├── AssessmentCategories/  # Phase 3A
+│   │   │   │   ├── Assessments/           # Phase 3A
+│   │   │   │   ├── GradingScales/         # Phase 3A
+│   │   │   │   ├── Grades/                # Phase 3A
 │   │   │   │   └── ...
 │   │   │   ├── Auth/               # Authentication pages
 │   │   │   └── Welcome.vue         # Landing page
@@ -221,7 +239,10 @@ sms/
 │   │       ├── students/photos/    # Student photos
 │   │       └── employees/photos/   # Employee photos
 │   └── logs/                       # Application logs
-├── tests/                          # Automated tests
+├── tests/                          # Automated tests (66 tests, 228 assertions)
+│   ├── Unit/Models/                # Model unit tests
+│   ├── Unit/Services/              # Service unit tests
+│   └── Feature/Admin/              # Feature tests for admin controllers
 ├── docs/                           # Documentation
 │   ├── FRONTEND.md
 │   ├── BACKEND.md
@@ -272,9 +293,9 @@ Service classes encapsulate complex business logic:
 
 ```php
 app/Services/
-├── EnrollmentService.php
-├── GradeCalculationService.php
-└── AttendanceService.php
+├── GradeCalculationService.php    # ✅ Implemented (Phase 3A)
+├── EnrollmentService.php          # Future
+└── AttendanceService.php          # Future
 ```
 
 ---

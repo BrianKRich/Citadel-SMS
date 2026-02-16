@@ -30,5 +30,13 @@ class DatabaseSeeder extends Seeder
             StudentSeeder::class,
             ClassSeeder::class,
         ]);
+
+        // Phase 3 seeders
+        $this->call([
+            GradingScaleSeeder::class,
+            AssessmentCategorySeeder::class,
+            AssessmentSeeder::class,
+            GradeSeeder::class,
+        ]);
     }
 }

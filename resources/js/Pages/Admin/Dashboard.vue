@@ -62,6 +62,30 @@ const props = defineProps({
                     </div>
                 </div>
 
+                <!-- Grade Statistics -->
+                <div class="mb-8">
+                    <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Grade Statistics</h3>
+                    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                        <StatCard
+                            title="Total Assessments"
+                            :value="stats.total_assessments"
+                            icon="📝"
+                        />
+
+                        <StatCard
+                            title="Grades This Week"
+                            :value="stats.grades_this_week"
+                            icon="✅"
+                        />
+
+                        <StatCard
+                            title="Average GPA"
+                            :value="stats.average_gpa || '—'"
+                            icon="🎓"
+                        />
+                    </div>
+                </div>
+
                 <!-- Admin Actions -->
                 <div>
                     <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Quick Actions</h3>
@@ -120,6 +144,14 @@ const props = defineProps({
                             icon="📅"
                             :href="route('admin.academic-years.index')"
                             color="primary"
+                        />
+
+                        <AdminActionCard
+                            title="Grade Management"
+                            description="Enter grades, manage assessments, and view student performance"
+                            icon="📊"
+                            :href="route('admin.grades.index')"
+                            color="accent"
                         />
 
                     </div>

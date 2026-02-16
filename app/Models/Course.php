@@ -33,6 +33,11 @@ class Course extends Model
         return $this->hasMany(ClassModel::class);
     }
 
+    public function assessmentCategories(): HasMany
+    {
+        return $this->hasMany(AssessmentCategory::class);
+    }
+
     /**
      * Scope to filter active courses
      */

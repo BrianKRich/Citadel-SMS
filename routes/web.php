@@ -1,9 +1,13 @@
 <?php
 
 use App\Http\Controllers\Admin\AcademicYearController;
+use App\Http\Controllers\Admin\AssessmentCategoryController;
+use App\Http\Controllers\Admin\AssessmentController;
 use App\Http\Controllers\Admin\ClassController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\EnrollmentController;
+use App\Http\Controllers\Admin\GradeController;
+use App\Http\Controllers\Admin\GradingScaleController;
 use App\Http\Controllers\Admin\GuardianController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\EmployeeController;
@@ -129,6 +133,21 @@ Route::middleware('auth')->group(function () {
         Route::post('/enroll', [EnrollmentController::class, 'enroll'])->name('admin.enrollment.enroll');
         Route::delete('/{enrollment}', [EnrollmentController::class, 'drop'])->name('admin.enrollment.drop');
         Route::get('/student/{student}/schedule', [EnrollmentController::class, 'studentSchedule'])->name('admin.enrollment.student-schedule');
+    });
+
+    // Phase 3: Grading & Assessments
+    Route::resource('admin/assessment-categories', AssessmentCategoryController::class)->names('admin.assessment-categories');
+    Route::resource('admin/assessments', AssessmentController::class)->names('admin.assessments');
+    Route::resource('admin/grading-scales', GradingScaleController::class)->names('admin.grading-scales');
+    Route::post('admin/grading-scales/{gradingScale}/set-default', [GradingScaleController::class, 'setDefault'])
+        ->name('admin.grading-scales.set-default');
+
+    Route::prefix('admin/grades')->group(function () {
+        Route::get('/', [GradeController::class, 'index'])->name('admin.grades.index');
+        Route::get('/class/{classModel}', [GradeController::class, 'classGrades'])->name('admin.grades.class');
+        Route::get('/enter/{assessment}', [GradeController::class, 'enter'])->name('admin.grades.enter');
+        Route::post('/store', [GradeController::class, 'store'])->name('admin.grades.store');
+        Route::get('/student/{student}', [GradeController::class, 'studentGrades'])->name('admin.grades.student');
     });
 });
 

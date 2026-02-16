@@ -12,7 +12,7 @@ Student Management System (SMS) v2.0 — Laravel 12 + Vue 3 + Inertia.js + Postg
 # Development (starts Laravel, queue, log viewer, and Vite HMR)
 composer run dev
 
-# Testing (SQLite in-memory, no DB setup needed)
+# Testing (PostgreSQL sms_testing database, RefreshDatabase trait)
 php artisan test
 php artisan test --filter StudentTest    # single test
 composer run test                        # clears config cache first

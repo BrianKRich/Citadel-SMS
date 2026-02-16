@@ -795,6 +795,7 @@ query {
 - CSRF protection automatic
 - Server-side routing with Laravel
 - SPA experience with Vue 3
+- Phase 3A grading routes added (assessment categories, assessments, grading scales, grades — all Inertia, not REST API)
 
 **Future API:**
 - RESTful API for mobile apps (Phase 9)

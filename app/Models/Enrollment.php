@@ -100,13 +100,8 @@ class Enrollment extends Model
         return $this->status === 'enrolled';
     }
 
-    /**
-     * Calculate final grade (Future: Phase 3)
-     * This will aggregate all assessment grades
-     */
     public function calculateFinalGrade(): void
     {
-        // TODO: Implement in Phase 3 when grades/assessments are added
-        // For now, this is a placeholder
+        app(\App\Services\GradeCalculationService::class)->updateEnrollmentGrade($this);
     }
 }

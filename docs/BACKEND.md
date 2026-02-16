@@ -1,7 +1,7 @@
 # Student Management System - Backend Architecture
 
-**Version:** 2.2 (Phase 0-2 + Employee & Class Seed Data)
-**Last Updated:** February 10, 2026
+**Version:** 3.0 (Phase 0-3A: Core Grading System)
+**Last Updated:** February 15, 2026
 **Framework:** Laravel 12.x
 
 ---
@@ -53,10 +53,14 @@ app/
 │   ├── Controllers/
 │   │   ├── Admin/
 │   │   │   ├── AcademicYearController.php
-│   │   │   ├── ClassController.php          # Phase 2
+│   │   │   ├── AssessmentCategoryController.php  # Phase 3A
+│   │   │   ├── AssessmentController.php           # Phase 3A
+│   │   │   ├── ClassController.php                # Phase 2
 │   │   │   ├── CourseController.php
-│   │   │   ├── EmployeeController.php       # Employee management
-│   │   │   ├── EnrollmentController.php     # Phase 2
+│   │   │   ├── EmployeeController.php
+│   │   │   ├── EnrollmentController.php           # Phase 2
+│   │   │   ├── GradeController.php                # Phase 3A
+│   │   │   ├── GradingScaleController.php         # Phase 3A
 │   │   │   ├── GuardianController.php
 │   │   │   └── StudentController.php
 │   │   ├── AdminController.php
@@ -70,24 +74,27 @@ app/
 │       └── (form requests - future)
 ├── Models/
 │   ├── AcademicYear.php
-│   ├── ClassModel.php                       # Phase 2
-│   ├── County.php                           # Reference data
+│   ├── Assessment.php                        # Phase 3A
+│   ├── AssessmentCategory.php                # Phase 3A
+│   ├── ClassModel.php                        # Phase 2
+│   ├── County.php
 │   ├── Course.php
-│   ├── Department.php                       # Staff departments
-│   ├── Employee.php                         # Employee profiles
-│   ├── EmployeeRole.php                     # Roles per department
-│   ├── Enrollment.php                       # Phase 2
+│   ├── Department.php
+│   ├── Employee.php
+│   ├── EmployeeRole.php
+│   ├── Enrollment.php                        # Phase 2
+│   ├── Grade.php                             # Phase 3A
+│   ├── GradingScale.php                      # Phase 3A
 │   ├── Guardian.php
-│   ├── PhoneNumber.php                      # Polymorphic phone numbers
+│   ├── PhoneNumber.php
 │   ├── Setting.php
 │   ├── Student.php
 │   ├── Term.php
 │   └── User.php
 ├── Providers/
-│   ├── AppServiceProvider.php
-│   └── (custom service providers - future)
+│   └── AppServiceProvider.php
 └── Services/
-    └── (service classes - future)
+    └── GradeCalculationService.php           # Phase 3A
 ```
 
 ---
@@ -936,6 +943,163 @@ $enrollments = Enrollment::enrolled()
 
 // Drop student from class
 $enrollment->update(['status' => 'dropped']);
+```
+
+---
+
+### GradingScale Model (Phase 3A)
+
+**File:** `app/Models/GradingScale.php`
+
+**Purpose:** Configurable grading scales storing letter grade thresholds and GPA points as JSON.
+
+**Properties:**
+
+```php
+protected $fillable = ['name', 'is_default', 'scale'];
+
+protected $casts = [
+    'is_default' => 'boolean',
+    'scale' => 'array',
+];
+```
+
+**Methods:**
+
+```php
+// Look up letter grade from percentage
+public function getLetterGrade(float $percentage): string
+
+// Look up GPA points from letter grade
+public function getGpaPoints(string $letter): float
+
+// Set this scale as the default (unsets all others)
+public function setDefault(): void
+```
+
+**Query Scopes:**
+
+```php
+public function scopeDefault($query)  // Where is_default = true
+```
+
+---
+
+### AssessmentCategory Model (Phase 3A)
+
+**File:** `app/Models/AssessmentCategory.php`
+
+**Purpose:** Assessment categories (Homework, Quizzes, Exams, etc.) with configurable weights. Can be course-specific or global (course_id = NULL).
+
+**Properties:**
+
+```php
+protected $fillable = ['course_id', 'name', 'weight', 'description'];
+
+protected $casts = ['weight' => 'decimal:2'];
+```
+
+**Relationships:**
+
+```php
+public function course(): BelongsTo    // Optional course association
+public function assessments(): HasMany  // All assessments in this category
+```
+
+**Query Scopes:**
+
+```php
+public function scopeSearch($query, $search)   // Name search
+public function scopeCourse($query, $courseId)  // Filter by course
+public function scopeGlobal($query)             // Where course_id IS NULL
+```
+
+---
+
+### Assessment Model (Phase 3A)
+
+**File:** `app/Models/Assessment.php`
+
+**Purpose:** Individual assessments within a class (assignments, quizzes, exams). Supports draft/published states, extra credit, and weight overrides.
+
+**Properties:**
+
+```php
+protected $fillable = [
+    'class_id', 'assessment_category_id', 'name',
+    'max_score', 'due_date', 'weight', 'is_extra_credit', 'status',
+];
+
+protected $casts = [
+    'max_score' => 'decimal:2',
+    'weight' => 'decimal:2',
+    'due_date' => 'date',
+    'is_extra_credit' => 'boolean',
+];
+```
+
+**Relationships:**
+
+```php
+public function classModel(): BelongsTo  // Class this assessment belongs to
+public function category(): BelongsTo    // Assessment category
+public function grades(): HasMany        // Student grades
+```
+
+**Computed Attributes:**
+
+```php
+// Returns own weight if set, otherwise category weight
+public function getEffectiveWeightAttribute(): float
+```
+
+**Query Scopes:**
+
+```php
+public function scopeClass($query, $classId)
+public function scopeCategory($query, $categoryId)
+public function scopePublished($query)
+public function scopeDraft($query)
+public function scopeSearch($query, $search)
+```
+
+---
+
+### Grade Model (Phase 3A)
+
+**File:** `app/Models/Grade.php`
+
+**Purpose:** Individual student grades for assessments with late submission tracking and penalty support.
+
+**Properties:**
+
+```php
+protected $fillable = [
+    'enrollment_id', 'assessment_id', 'score', 'notes',
+    'is_late', 'late_penalty', 'graded_by', 'graded_at',
+];
+
+protected $casts = [
+    'score' => 'decimal:2',
+    'late_penalty' => 'decimal:2',
+    'is_late' => 'boolean',
+    'graded_at' => 'datetime',
+];
+```
+
+**Relationships:**
+
+```php
+public function enrollment(): BelongsTo  // Student enrollment
+public function assessment(): BelongsTo  // Assessment being graded
+public function gradedBy(): BelongsTo    // User who graded
+```
+
+**Computed Attributes:**
+
+```php
+// Score after applying late penalty (percentage reduction)
+public function getAdjustedScoreAttribute(): float
 ```
 
 ---
@@ -1830,6 +1994,28 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::get('/student/{student}/schedule', [EnrollmentController::class, 'studentSchedule'])
             ->name('admin.enrollment.student-schedule');
     });
+
+    // Phase 3: Grading & Assessments
+
+    // Assessment category management
+    Route::resource('assessment-categories', AssessmentCategoryController::class);
+
+    // Assessment management
+    Route::resource('assessments', AssessmentController::class);
+
+    // Grading scale management
+    Route::resource('grading-scales', GradingScaleController::class);
+    Route::post('grading-scales/{gradingScale}/set-default', [GradingScaleController::class, 'setDefault'])
+        ->name('admin.grading-scales.set-default');
+
+    // Grade management
+    Route::prefix('grades')->group(function () {
+        Route::get('/', [GradeController::class, 'index'])->name('admin.grades.index');
+        Route::get('/class/{classModel}', [GradeController::class, 'classGrades'])->name('admin.grades.class');
+        Route::get('/enter/{assessment}', [GradeController::class, 'enter'])->name('admin.grades.enter');
+        Route::post('/store', [GradeController::class, 'store'])->name('admin.grades.store');
+        Route::get('/student/{student}', [GradeController::class, 'studentGrades'])->name('admin.grades.student');
+    });
 });
 ```
 
@@ -1941,53 +2127,54 @@ public function store(StoreStudentRequest $request)
 
 ## Services
 
-### Service Layer Pattern (Future)
+### GradeCalculationService (Phase 3A)
 
-For complex business logic, create service classes:
+**File:** `app/Services/GradeCalculationService.php`
+
+**Purpose:** Single source of truth for all grade calculations — weighted averages, GPA computation, and enrollment grade updates.
+
+**Methods:**
 
 ```php
-// app/Services/EnrollmentService.php
-class EnrollmentService
-{
-    public function enrollStudent(Student $student, Class $class): Enrollment
-    {
-        // Check class capacity
-        if ($class->enrollments()->count() >= $class->max_students) {
-            throw new \Exception('Class is full');
-        }
+// Calculate weighted average percentage for an enrollment
+// Groups grades by category, applies category weights, handles extra credit additively
+public function calculateWeightedAverage(Enrollment $enrollment): float
 
-        // Check schedule conflicts
-        if ($this->hasScheduleConflict($student, $class)) {
-            throw new \Exception('Schedule conflict detected');
-        }
+// Calculate GPA for a student in a specific term (credit-weighted)
+public function calculateTermGpa(Student $student, Term $term): float
 
-        // Create enrollment
-        return Enrollment::create([
-            'student_id' => $student->id,
-            'class_id' => $class->id,
-            'enrollment_date' => now(),
-            'status' => 'enrolled',
-        ]);
-    }
+// Calculate cumulative GPA across all terms (credit-weighted)
+public function calculateCumulativeGpa(Student $student): float
 
-    private function hasScheduleConflict(Student $student, Class $class): bool
-    {
-        // Check if student's existing classes conflict with new class
-        // ...
-    }
-}
+// Compute weighted average → look up letter grade via default GradingScale → update enrollment
+public function updateEnrollmentGrade(Enrollment $enrollment): void
 
-// Controller usage
-public function enroll(Request $request, EnrollmentService $enrollmentService)
-{
-    $student = Student::findOrFail($request->student_id);
-    $class = Class::findOrFail($request->class_id);
-
-    $enrollment = $enrollmentService->enrollStudent($student, $class);
-
-    return redirect()->back()->with('success', 'Student enrolled successfully.');
-}
+// Batch update all enrolled students' grades in a class
+public function updateAllClassGrades(ClassModel $classModel): void
 ```
+
+**Usage:**
+
+```php
+$service = new GradeCalculationService();
+
+// After entering grades, recalculate enrollment
+$service->updateEnrollmentGrade($enrollment);
+
+// Batch recalculate after bulk grade entry
+$service->updateAllClassGrades($class);
+
+// Display GPA
+$termGpa = $service->calculateTermGpa($student, $term);
+$cumulativeGpa = $service->calculateCumulativeGpa($student);
+```
+
+**Calculation Details:**
+- Weighted average groups grades by `AssessmentCategory`, applies `category.weight`
+- Extra credit assessments are additive (not part of normal weighting)
+- Late penalty reduces score by percentage: `score - (score * late_penalty / 100)`
+- GPA is credit-weighted: `sum(grade_points * credits) / sum(credits)`
+- Normalizes weights if categories don't sum to 1.0
 
 ---
 
@@ -2112,7 +2299,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
 ## Testing
 
-### Feature Tests
+### Test Suite (66 tests, 228 assertions)
+
+**Unit Tests:**
+- `tests/Unit/Models/GradingScaleTest.php` — Letter grade boundaries, GPA point mapping
+- `tests/Unit/Services/GradeCalculationServiceTest.php` — Weighted averages, extra credit, late penalty, enrollment updates, term/cumulative GPA
+
+**Feature Tests (Phase 3A):**
+- `tests/Feature/Admin/AssessmentCategoryTest.php` — CRUD, auth, validation, destroy protection
+- `tests/Feature/Admin/AssessmentTest.php` — CRUD, filters, grade stats, validation
+- `tests/Feature/Admin/GradeTest.php` — Class matrix, bulk entry, store + recalculation, student grades
+- `tests/Feature/Admin/GradingScaleTest.php` — CRUD, JSON validation, set-default, delete protection
 
 **Example:** `tests/Feature/StudentTest.php`
 

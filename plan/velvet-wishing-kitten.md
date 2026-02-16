@@ -8,7 +8,30 @@ Phases 0-2 complete. Phase 3 implements grading & assessments per GitHub Issue #
 
 **Roadmap:** Phase 3 (Issue #6) → 4: Attendance (#5) → 5: Guardian Portal (#4) → 6: Calendar (#3) → 7: Documents (#2) → 8: Reporting (#1)
 
-**Conventions:** Backend before frontend. PHPUnit with SQLite in-memory. `RefreshDatabase`, `test_snake_case`, `actingAs()`. `assertInertia()` for page responses.
+**Conventions:** Backend before frontend. PHPUnit with PostgreSQL (`sms_testing` database). `RefreshDatabase`, `test_snake_case`, `actingAs()`. `assertInertia()` for page responses.
+
+---
+
+## Execution Progress
+
+**Status:** 3A complete. 66 tests passing (228 assertions). Next: 3B.
+
+### Completed
+- [x] **3A Step 1 — Factories (13 of 13):** All model factories created and verified.
+- [x] **3A Step 1 — HasFactory trait:** Added to `ClassModel`, `Department`, `EmployeeRole`.
+- [x] **3A Step 1 — Migrations:** 4 tables created (`grading_scales`, `assessment_categories`, `assessments`, `grades`).
+- [x] **3A Step 1 — New Models:** `GradingScale`, `AssessmentCategory`, `Assessment`, `Grade` with scopes, relationships, accessors.
+- [x] **3A Step 1 — Updated Models:** `ClassModel` → `assessments()`, `Course` → `assessmentCategories()`, `Enrollment` → `calculateFinalGrade()`.
+- [x] **3A Step 2 — GradeCalculationService:** All 5 methods implemented.
+- [x] **3A Step 3 — Routes & Controllers:** All Phase 3 routes + 4 controllers (AssessmentCategory, Assessment, Grade, GradingScale).
+- [x] **3A Step 4 — Vue Pages:** 14 pages across 4 directories. Frontend builds cleanly.
+- [x] **3A Step 5 — Seeders & Dashboard:** 4 seeders + DatabaseSeeder updated + dashboard grade stats + Grade Management action card.
+- [x] **3A Step 6 — Tests:** 2 unit + 4 feature test files (41 new tests). All 66 tests passing.
+- [x] **Test infrastructure:** Fixed `phpunit.xml` — PostgreSQL `sms_testing` database. Updated CLAUDE.md.
+
+### Next Up
+- [ ] **3B** — Report Cards, Transcripts & Class Rank
+- [ ] **3C** — CSV/Excel Grade Import & Export
 
 ---
 

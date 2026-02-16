@@ -1,7 +1,7 @@
 # Student Management System - Database Architecture
 
-**Version:** 2.2 (Phase 0-2 + Employee & Class Seed Data)
-**Last Updated:** February 10, 2026
+**Version:** 3.0 (Phase 0-3A: Core Grading System)
+**Last Updated:** February 15, 2026
 **Database:** PostgreSQL 14+
 
 ---
@@ -455,42 +455,94 @@ Student enrollment in classes.
 
 ---
 
-### Phase 3 Tables (To Be Implemented)
+### Phase 3 Tables ✅ Implemented (3A — Core Grading)
 
-#### **assessment_types**
-Types of assessments (Quiz, Exam, Homework, etc.).
+#### **grading_scales**
+Configurable grading scales with letter grade thresholds and GPA points.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGINT | PK, AUTO_INCREMENT | Primary key |
-| name | VARCHAR(255) | NOT NULL | Type name |
-| weight | DECIMAL(5,2) | NOT NULL | Weight percentage (0.20 = 20%) |
+| name | VARCHAR(255) | NOT NULL | Scale name (e.g., "Standard") |
+| is_default | BOOLEAN | DEFAULT false | Default scale flag |
+| scale | JSON | NOT NULL | Array of `{letter, min_percentage, gpa_points}` |
+| created_at | TIMESTAMP | | Creation timestamp |
+| updated_at | TIMESTAMP | | Last update timestamp |
+
+**JSON `scale` Format:**
+```json
+[
+  { "letter": "A", "min_percentage": 90, "gpa_points": 4.0 },
+  { "letter": "B", "min_percentage": 80, "gpa_points": 3.0 },
+  { "letter": "C", "min_percentage": 70, "gpa_points": 2.0 },
+  { "letter": "D", "min_percentage": 60, "gpa_points": 1.0 },
+  { "letter": "F", "min_percentage": 0, "gpa_points": 0.0 }
+]
+```
+
+**Business Rules:**
+- Only one grading scale can have `is_default = true` at a time
+- Default scale is used by `GradeCalculationService` for letter grade lookups
+
+---
+
+#### **assessment_categories**
+Assessment categories per course with configurable weights (e.g., Homework 15%, Quizzes 15%, Exams 30%).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Primary key |
+| course_id | BIGINT | FK, NULLABLE | Course reference (NULL = global default) |
+| name | VARCHAR(255) | NOT NULL | Category name |
+| weight | DECIMAL(5,2) | NOT NULL | Weight as decimal (0.15 = 15%) |
 | description | TEXT | NULLABLE | Description |
 | created_at | TIMESTAMP | | Creation timestamp |
 | updated_at | TIMESTAMP | | Last update timestamp |
 
+**Relationships:**
+- Belongs to Course (course_id, nullable — NULL means global/reusable template)
+- Has many Assessments
+
+**Constraints:**
+- FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL
+
+**Design Note:** Originally planned as `assessment_types` (global-only). Implemented as `assessment_categories` with optional `course_id` FK, enabling both global templates (course_id = NULL) and course-specific categories.
+
 ---
 
 #### **assessments**
-Individual assessment instances.
+Individual assessment instances within a class.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGINT | PK, AUTO_INCREMENT | Primary key |
 | class_id | BIGINT | FK, NOT NULL | Class reference |
-| assessment_type_id | BIGINT | FK, NOT NULL | Type reference |
+| assessment_category_id | BIGINT | FK, NOT NULL | Category reference |
 | name | VARCHAR(255) | NOT NULL | Assessment name |
-| description | TEXT | NULLABLE | Description |
-| max_score | DECIMAL(8,2) | NOT NULL | Maximum score |
+| max_score | DECIMAL(8,2) | NOT NULL | Maximum possible score |
 | due_date | DATE | NULLABLE | Due date |
-| weight | DECIMAL(5,2) | NULLABLE | Override type weight |
+| weight | DECIMAL(5,2) | NULLABLE | Override category weight |
+| is_extra_credit | BOOLEAN | DEFAULT false | Extra credit flag |
+| status | VARCHAR(255) | DEFAULT 'draft' | draft, published |
 | created_at | TIMESTAMP | | Creation timestamp |
 | updated_at | TIMESTAMP | | Last update timestamp |
+
+**Indexes:**
+- INDEX (class_id)
+
+**Relationships:**
+- Belongs to ClassModel (class_id)
+- Belongs to AssessmentCategory (assessment_category_id)
+- Has many Grades
+
+**Constraints:**
+- FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+- FOREIGN KEY (assessment_category_id) REFERENCES assessment_categories(id) ON DELETE CASCADE
 
 ---
 
 #### **grades**
-Individual student grades for assessments.
+Individual student grades for assessments with late submission tracking.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -499,13 +551,20 @@ Individual student grades for assessments.
 | assessment_id | BIGINT | FK, NOT NULL | Assessment reference |
 | score | DECIMAL(8,2) | NOT NULL | Score earned |
 | notes | TEXT | NULLABLE | Grading notes |
-| graded_by | BIGINT | FK, NOT NULL | User who graded |
+| is_late | BOOLEAN | DEFAULT false | Late submission flag |
+| late_penalty | DECIMAL(5,2) | NULLABLE | Penalty percentage (e.g., 10.00 = 10%) |
+| graded_by | BIGINT | FK, NULLABLE | User who graded |
 | graded_at | TIMESTAMP | NULLABLE | Grading timestamp |
 | created_at | TIMESTAMP | | Creation timestamp |
 | updated_at | TIMESTAMP | | Last update timestamp |
 
 **Indexes:**
-- UNIQUE (enrollment_id, assessment_id) - one grade per student per assessment
+- UNIQUE (enrollment_id, assessment_id) — one grade per student per assessment
+
+**Constraints:**
+- FOREIGN KEY (enrollment_id) REFERENCES enrollments(id) ON DELETE CASCADE
+- FOREIGN KEY (assessment_id) REFERENCES assessments(id) ON DELETE CASCADE
+- FOREIGN KEY (graded_by) REFERENCES users(id) ON DELETE SET NULL
 
 ---
 
@@ -643,7 +702,8 @@ terms
 └── has many → classes
 
 courses
-└── has many → classes
+├── has many → classes
+└── has many → assessment_categories
 
 classes
 ├── belongs to → courses
@@ -652,16 +712,23 @@ classes
 ├── belongs to → terms
 ├── has many → enrollments
 ├── has many → assessments
-└── has many → attendance_records
+└── has many → attendance_records (future)
 
 enrollments
 ├── belongs to → students
 ├── belongs to → classes
 └── has many → grades
 
+grading_scales
+└── (standalone, referenced by GradeCalculationService)
+
+assessment_categories
+├── belongs to → courses (nullable, NULL = global)
+└── has many → assessments
+
 assessments
 ├── belongs to → classes
-├── belongs to → assessment_types
+├── belongs to → assessment_categories
 └── has many → grades
 
 grades
@@ -669,7 +736,7 @@ grades
 ├── belongs to → assessments
 └── belongs to → users (graded_by)
 
-attendance_records
+attendance_records (future)
 ├── belongs to → students
 ├── belongs to → classes
 └── belongs to → users (marked_by)
@@ -698,13 +765,13 @@ documents (polymorphic)
 - `courses.department` - Filter by department
 - `courses.is_active` - Filter active courses
 
-**Phase 2 (To Be Implemented):**
+**Phase 2 (Implemented):**
 - `classes.course_id, classes.term_id` - Composite index for class queries
 - `enrollments.student_id, enrollments.class_id` - UNIQUE composite to prevent duplicates
 - `enrollments.status` - Filter by enrollment status
 
-**Phase 3 (To Be Implemented):**
-- `grades.enrollment_id, grades.assessment_id` - UNIQUE composite for grade lookups
+**Phase 3 (Implemented):**
+- `grades.(enrollment_id, assessment_id)` - UNIQUE composite for grade lookups
 - `assessments.class_id` - Filter assessments by class
 
 **Phase 4 (To Be Implemented):**
@@ -735,6 +802,14 @@ documents (polymorphic)
 - `classes.term_id` → `terms.id` (ON DELETE RESTRICT)
 - `enrollments.student_id` → `students.id` (ON DELETE CASCADE)
 - `enrollments.class_id` → `classes.id` (ON DELETE CASCADE)
+
+**Phase 3:**
+- `assessment_categories.course_id` → `courses.id` (ON DELETE SET NULL)
+- `assessments.class_id` → `classes.id` (ON DELETE CASCADE)
+- `assessments.assessment_category_id` → `assessment_categories.id` (ON DELETE CASCADE)
+- `grades.enrollment_id` → `enrollments.id` (ON DELETE CASCADE)
+- `grades.assessment_id` → `assessments.id` (ON DELETE CASCADE)
+- `grades.graded_by` → `users.id` (ON DELETE SET NULL)
 
 ### Check Constraints
 
@@ -775,9 +850,15 @@ documents (polymorphic)
 17. **2026_02_10_021337_create_classes_table.php** - Class sections
 18. **2026_02_10_021345_create_enrollments_table.php** - Student enrollments
 
+**Phase 3A: Core Grading System**
+19. **2026_02_15_000001_create_grading_scales_table.php** - Grading scales (JSON scale data)
+20. **2026_02_15_000002_create_assessment_categories_table.php** - Assessment categories (per-course or global)
+21. **2026_02_15_000003_create_assessments_table.php** - Assessments (per-class)
+22. **2026_02_15_000004_create_grades_table.php** - Student grades with late tracking
+
 ### Pending Migrations (Future Phases)
 
-- Phase 3: assessment_types, assessments, grades
+- Phase 3B/3C: No additional tables (report card/transcript generation, import/export)
 - Phase 4: attendance_records
 - Phase 5: calendar_events, documents, notifications
 
@@ -798,13 +879,17 @@ public function run(): void
     ]);
 
     $this->call([
-        CountySeeder::class,        // 1. Georgia counties (reference data)
-        DepartmentSeeder::class,    // 2. Departments and roles
-        EmployeeSeeder::class,      // 3. Employees (staff, instructors, counselors)
-        AcademicYearSeeder::class,  // 4. Academic years and terms
-        CourseSeeder::class,        // 5. Course catalog
-        StudentSeeder::class,       // 6. Students with guardians
-        ClassSeeder::class,         // 7. Class sections with schedules
+        CountySeeder::class,              // 1. Georgia counties (reference data)
+        DepartmentSeeder::class,          // 2. Departments and roles
+        EmployeeSeeder::class,            // 3. Employees (staff, instructors, counselors)
+        AcademicYearSeeder::class,        // 4. Academic years and terms
+        CourseSeeder::class,              // 5. Course catalog
+        StudentSeeder::class,             // 6. Students with guardians
+        ClassSeeder::class,               // 7. Class sections with schedules
+        GradingScaleSeeder::class,        // 8. Default grading scale (A-F)
+        AssessmentCategorySeeder::class,  // 9. Default assessment categories with weights
+        AssessmentSeeder::class,          // 10. Sample assessments for seeded classes
+        GradeSeeder::class,              // 11. Sample grades for seeded enrollments
     ]);
 }
 ```
@@ -860,6 +945,22 @@ public function run(): void
 - 5 sample students with varied statuses
 - Linked guardians with is_primary flags
 - Realistic demographics and contact information
+
+**GradingScaleSeeder (Phase 3A):**
+- Default grading scale: A=90/4.0, B=80/3.0, C=70/2.0, D=60/1.0, F=0/0.0
+- Marked as `is_default = true`
+
+**AssessmentCategorySeeder (Phase 3A):**
+- 5 global categories (course_id = NULL):
+  - Homework (0.15), Quizzes (0.15), Midterm Exam (0.25), Final Exam (0.30), Projects (0.15)
+
+**AssessmentSeeder (Phase 3A):**
+- Sample assessments for seeded classes across categories
+- Mix of draft and published statuses
+
+**GradeSeeder (Phase 3A):**
+- Sample grades for seeded enrollments
+- Triggers grade calculation to populate `final_grade` and `grade_points` on enrollments
 
 ---
 

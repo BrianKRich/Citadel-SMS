@@ -1,7 +1,7 @@
 # Student Management System - Frontend Architecture
 
-**Version:** 2.1 (Phase 0-2 + Employee System)
-**Last Updated:** February 10, 2026
+**Version:** 3.0 (Phase 0-3A: Core Grading System)
+**Last Updated:** February 15, 2026
 **Framework:** Vue 3 + Inertia.js
 
 ---
@@ -86,7 +86,25 @@ resources/
 │   │   │   ├── Students/               # Student pages
 │   │   │   ├── Courses/                # Course pages
 │   │   │   ├── Employees/              # Employee pages
-│   │   │   └── Classes/                # Class pages (Phase 2)
+│   │   │   ├── Classes/                # Class pages (Phase 2)
+│   │   │   ├── AssessmentCategories/   # Phase 3A
+│   │   │   │   ├── Index.vue           # Category list with course filter
+│   │   │   │   ├── Create.vue          # Create category
+│   │   │   │   └── Edit.vue            # Edit category
+│   │   │   ├── Assessments/            # Phase 3A
+│   │   │   │   ├── Index.vue           # Assessment list with filters
+│   │   │   │   ├── Create.vue          # Create assessment
+│   │   │   │   ├── Edit.vue            # Edit assessment
+│   │   │   │   └── Show.vue            # Assessment details with grade stats
+│   │   │   ├── GradingScales/          # Phase 3A
+│   │   │   │   ├── Index.vue           # Scale list with default indicator
+│   │   │   │   ├── Create.vue          # Create scale with JSON editor
+│   │   │   │   └── Edit.vue            # Edit scale
+│   │   │   ├── Grades/                 # Phase 3A
+│   │   │   │   ├── Index.vue           # Grade overview with filters
+│   │   │   │   ├── ClassGrades.vue     # Grade book matrix (students x assessments)
+│   │   │   │   ├── Enter.vue           # Bulk grade entry (spreadsheet-style)
+│   │   │   │   └── StudentGrades.vue   # Per-student grades with GPA
 │   │   ├── Auth/
 │   │   │   ├── ConfirmPassword.vue
 │   │   │   ├── ForgotPassword.vue
@@ -720,7 +738,7 @@ defineProps({
 
 ---
 
-### Admin Pages (Phase 1 & 2)
+### Admin Pages (Phase 1, 2 & 3A)
 
 All admin pages follow a consistent pattern:
 - Responsive design (desktop table + mobile cards)
@@ -829,6 +847,95 @@ Each academic year is displayed as a card containing:
 - "Current" badge if active
 - List of terms with dates and current status
 - Edit and "Set Current" action buttons
+
+#### Assessment Categories (Phase 3A)
+
+**Directory:** `resources/js/Pages/Admin/AssessmentCategories/`
+
+**Pages:** Index.vue, Create.vue, Edit.vue
+
+**Features:**
+- Category list with weight percentages
+- Filter by course (or show global categories)
+- Weight displayed as percentage (e.g., 0.15 → 15%)
+- Course association or global template designation
+- CRUD operations with validation (weight 0-1)
+
+**Props (Index):**
+- `categories` (Object) - Paginated assessment categories
+- `courses` (Array) - Available courses for filtering
+- `filters` (Object) - Current filter values
+
+#### Assessments (Phase 3A)
+
+**Directory:** `resources/js/Pages/Admin/Assessments/`
+
+**Pages:** Index.vue, Create.vue, Edit.vue, Show.vue
+
+**Features:**
+- Assessment list with class, category, and status info
+- Filter by class, category, and status (draft/published)
+- Show page includes grade statistics (average, min, max scores)
+- Extra credit and weight override indicators
+- Due date display
+- Draft/published status badges
+
+**Props (Index):**
+- `assessments` (Object) - Paginated assessments with relationships
+- `classes` (Array) - Available classes for filtering
+- `categories` (Array) - Available categories for filtering
+- `filters` (Object) - Current filter values
+
+#### Grading Scales (Phase 3A)
+
+**Directory:** `resources/js/Pages/Admin/GradingScales/`
+
+**Pages:** Index.vue, Create.vue, Edit.vue
+
+**Features:**
+- Scale list with default indicator badge
+- JSON scale editor for letter grade thresholds
+- Set default action button
+- Preview of grade boundaries (letter → min% → GPA points)
+- Prevents deletion of default scale
+
+**Props (Index):**
+- `gradingScales` (Object) - Paginated grading scales
+
+#### Grades (Phase 3A)
+
+**Directory:** `resources/js/Pages/Admin/Grades/`
+
+**Pages:** Index.vue, ClassGrades.vue, Enter.vue, StudentGrades.vue
+
+**Features:**
+
+**Index.vue** — Grade overview with class/term filters for navigation to grade books.
+
+**ClassGrades.vue** — Grade book matrix view:
+- Students as rows, assessments as columns
+- Category weights and assessment weights displayed
+- Weighted average and letter grade per student
+- Color-coded scores relative to max points
+- Links to bulk grade entry per assessment
+
+**Enter.vue** — Bulk grade entry (spreadsheet-style):
+- Student names with score inputs
+- Late submission checkbox and penalty field
+- Notes per grade
+- Bulk save with automatic grade recalculation
+
+**StudentGrades.vue** — Per-student grade view:
+- Grades organized by class/course
+- Assessment scores with adjusted scores (after late penalties)
+- Per-class weighted average and letter grade
+- Term GPA and cumulative GPA display
+
+**Props (ClassGrades):**
+- `classModel` (Object) - Class with course, employee, term
+- `enrollments` (Array) - Enrolled students with grades
+- `assessments` (Array) - All assessments for the class
+- `categories` (Array) - Assessment categories with weights
 
 ---
 
