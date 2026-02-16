@@ -184,40 +184,28 @@ Route::prefix('admin/transcripts')->group(function () {  // 3B
 
 ## 3B: Report Cards, Transcripts & Class Rank
 
-### Step 1: Foundation Fixes & DomPDF
+### Step 1: Foundation, Class Rank & DomPDF
 
 `composer require barryvdh/laravel-dompdf`
 
 **Data-mapping fix** (discovered during 3B planning): `ClassGrades.vue` references `enrollment.weighted_average` and `enrollment.final_letter_grade` but neither exists on the Enrollment model/DB.
 
-**New migration** — `add_weighted_average_to_enrollments_table`:
+**New migration** — `update_enrollments_for_grade_display`:
 - Add `weighted_average decimal(5,2) nullable` to `enrollments`
+- Rename `final_grade` → `final_letter_grade` (fixes root cause — no accessor/appends overhead)
 
 **Modify `app/Models/Enrollment.php`:**
-- Add `weighted_average` to `$fillable` and `$casts`
-- Add `getFinalLetterGradeAttribute()` accessor (returns `$this->final_grade`)
-- Add `$appends = ['final_letter_grade']`
-
-**Modify `app/Services/GradeCalculationService.php` — `updateEnrollmentGrade()`:**
-- Store computed average in `weighted_average` alongside `final_grade`/`grade_points`
-
-### Step 2: Class Rank
+- Update `$fillable`: replace `final_grade` with `final_letter_grade`, add `weighted_average`
+- Update `$casts`: add `weighted_average` as `decimal:2`
+- No accessor or `$appends` needed (column rename handles it)
 
 **Modify `app/Services/GradeCalculationService.php`:**
-- Add `calculateClassRank(ClassModel): Collection` — queries enrolled enrollments with `weighted_average`, sorts descending, standard ranking (ties share rank, next skips: 1,1,3). Returns `[enrollment_id, student_id, weighted_average, rank]`.
+- `updateEnrollmentGrade()` — store `weighted_average`, update `final_letter_grade` (renamed from `final_grade`)
+- Add `calculateClassRank(ClassModel): Collection` — queries enrolled enrollments with `weighted_average`, sorts descending, standard ranking (ties share rank, next skips: 1,1,3). Returns `[enrollment_id, student_id, weighted_average, rank]`
 
-### Step 3: Services
+**Update any references** to `final_grade` across existing code (controllers, seeders, factories, tests, Vue pages) to use `final_letter_grade`.
 
-**Create `app/Services/ReportCardService.php`** (injects `GradeCalculationService`):
-- `generateForStudent(Student, Term): array` — enrollment grades, term GPA, cumulative GPA
-- `generatePdf(Student, Term): string` — DomPDF render via `pdf.report-card` Blade
-- `generateBatchPdf(Term): string` — single PDF with page-break-after per student
-
-**Create `app/Services/TranscriptService.php`** (injects `GradeCalculationService`):
-- `generateForStudent(Student): array` — all terms grouped, cumulative GPA, total credits
-- `generatePdf(Student, bool $official): string` — DomPDF render via `pdf.transcript` Blade
-
-### Step 4: Blade PDF Templates
+### Step 2: Blade PDF Templates
 
 **Create `resources/views/pdf/report-card.blade.php`:**
 - Inline CSS only (DomPDF limitation), DejaVu Sans font
@@ -230,7 +218,18 @@ Route::prefix('admin/transcripts')->group(function () {  // 3B
 - Per-term sections with course tables
 - Cumulative GPA, total credits, signature line if official
 
-### Step 5: Controllers & Routes
+### Step 3: Services
+
+**Create `app/Services/ReportCardService.php`** (injects `GradeCalculationService`):
+- `generateForStudent(Student, Term): array` — enrollment grades, term GPA, cumulative GPA
+- `generatePdf(Student, Term): string` — DomPDF render via `pdf.report-card` Blade
+- `generateBatchPdf(Term): string` — single Blade view with `@foreach` + `page-break-after: always` per student
+
+**Create `app/Services/TranscriptService.php`** (injects `GradeCalculationService`):
+- `generateForStudent(Student): array` — all terms grouped, cumulative GPA, total credits
+- `generatePdf(Student, bool $official): string` — DomPDF render via `pdf.transcript` Blade
+
+### Step 4: Controllers & Routes
 
 **Create `app/Http/Controllers/Admin/ReportCardController.php`** (injects `ReportCardService`):
 
@@ -264,7 +263,7 @@ Route::prefix('admin/transcripts')->group(function () {
 });
 ```
 
-### Step 6: Vue Pages
+### Step 5: Vue Pages
 
 **Create `resources/js/Pages/Admin/ReportCards/Index.vue`:**
 - Term dropdown, student table (Name, ID, Status, View/Download), batch download button
@@ -278,11 +277,11 @@ Route::prefix('admin/transcripts')->group(function () {
 **Create `resources/js/Pages/Admin/Transcripts/Show.vue`:**
 - Student info, per-term course tables, cumulative summary, download buttons
 
-### Step 7: Update Existing Pages
+### Step 6: Update Existing Pages
 
 **Modify `app/Http/Controllers/Admin/GradeController.php`:**
 - `classGrades()` — call `calculateClassRank()`, pass `rankMap` prop
-- `studentGrades()` — compute rank per enrollment, pass `classRanks` prop
+- `studentGrades()` — collect unique class IDs, batch-compute ranks per class in a single loop, build `classRanks` map (avoids N+1 by caching rank results per class)
 
 **Modify `resources/js/Pages/Admin/Grades/ClassGrades.vue`:**
 - Add `rankMap` prop, add "Rank" column after "Grade"
@@ -294,31 +293,24 @@ Route::prefix('admin/transcripts')->group(function () {
 **Modify `resources/js/Pages/Admin/Dashboard.vue`:**
 - Add "Report Cards" and "Transcripts" action cards
 
-### Step 8: Tests
+### Step 7: Tests
 
 **Unit — GradeCalculationService** (add to `tests/Unit/Services/GradeCalculationServiceTest.php`):
 - `test_calculate_class_rank_orders_by_average`
 - `test_calculate_class_rank_handles_tied_scores` (standard ranking: 1,1,3)
-- `test_update_enrollment_grade_stores_weighted_average` — verify `weighted_average` column is populated after `updateEnrollmentGrade()`
+- `test_update_enrollment_grade_stores_weighted_average` — verify `weighted_average` is populated
 
 **Unit — Enrollment model** (create `tests/Unit/Models/EnrollmentTest.php`):
-- `test_final_letter_grade_accessor_returns_final_grade` — verify accessor maps `final_grade` to `final_letter_grade`
-- `test_final_letter_grade_accessor_returns_null_when_no_grade` — verify null handling
-- `test_weighted_average_is_fillable` — verify mass assignment works
+- `test_final_letter_grade_is_fillable`
+- `test_weighted_average_is_fillable`
 
-**Feature — Controllers:**
+**Feature — Report Cards** (`tests/Feature/Admin/ReportCardTest.php`, ~9 tests):
+- Index renders, index with term lists students, show preview, download PDF (content-type), batch PDF, auth redirect
+- Service integration: includes enrolled courses, calculates term GPA, batch PDF starts with `%PDF`
 
-| File | Tests |
-|------|-------|
-| `tests/Feature/Admin/ReportCardTest.php` | Index renders, index with term lists students, show preview, download PDF (content-type), batch PDF, auth redirect (~6 tests) |
-| `tests/Feature/Admin/TranscriptTest.php` | Index renders, search filters, show preview, download PDF, official flag, includes all terms, auth redirect (~7 tests) |
-
-**Feature — Services:**
-
-| File | Tests |
-|------|-------|
-| `tests/Feature/Services/ReportCardServiceTest.php` | Includes enrolled courses, calculates term GPA, batch PDF starts with `%PDF` (~3 tests) |
-| `tests/Feature/Services/TranscriptServiceTest.php` | Includes all terms, calculates cumulative GPA, official/unofficial PDFs (~4 tests) |
+**Feature — Transcripts** (`tests/Feature/Admin/TranscriptTest.php`, ~11 tests):
+- Index renders, search filters, show preview, download PDF, official flag, includes all terms, auth redirect
+- Service integration: includes all terms, calculates cumulative GPA, official/unofficial PDFs start with `%PDF`
 
 **Feature — Updated controllers** (add to existing `tests/Feature/Admin/GradeTest.php`):
 - `test_class_grades_includes_rank_map` — verify `classGrades()` returns `rankMap` prop via `assertInertia`
@@ -326,7 +318,7 @@ Route::prefix('admin/transcripts')->group(function () {
 
 ### 3B Verification
 
-1. `php artisan migrate` — weighted_average column added
+1. `php artisan migrate` — weighted_average added, final_grade renamed to final_letter_grade
 2. `php artisan test` — all existing 66 + ~28 new tests pass
 3. ClassGrades shows Avg %, Grade, and Rank columns populated
 4. Report card: select term → preview → PDF download → batch download
@@ -380,9 +372,9 @@ CSV format: `student_id, assessment_name, score, notes`
 | `resources/js/Pages/Admin/Dashboard.vue` | Grade management action card | 3A |
 | `routes/web.php` | All Phase 3 routes | 3A |
 | `database/seeders/DatabaseSeeder.php` | New seeders | 3A |
-| `app/Models/Enrollment.php` | Add `weighted_average` to fillable/casts, `final_letter_grade` accessor, `$appends` | 3B |
-| `app/Services/GradeCalculationService.php` | Add `calculateClassRank()`, store `weighted_average` in `updateEnrollmentGrade()` | 3B |
-| `app/Http/Controllers/Admin/GradeController.php` | Pass `rankMap` and `classRanks` props | 3B |
+| `app/Models/Enrollment.php` | Rename `final_grade` → `final_letter_grade` in fillable, add `weighted_average` to fillable/casts | 3B |
+| `app/Services/GradeCalculationService.php` | Add `calculateClassRank()`, store `weighted_average`, use renamed `final_letter_grade` | 3B |
+| `app/Http/Controllers/Admin/GradeController.php` | Pass `rankMap` and `classRanks` props (batch-computed, no N+1) | 3B |
 | `resources/js/Pages/Admin/Grades/ClassGrades.vue` | Rank column (3B), export button (3C) | 3B, 3C |
 | `resources/js/Pages/Admin/Grades/StudentGrades.vue` | Rank + report card/transcript links | 3B |
 | `resources/js/Pages/Admin/Dashboard.vue` | Report Cards + Transcripts action cards | 3B |
