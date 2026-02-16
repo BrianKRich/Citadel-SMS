@@ -296,23 +296,38 @@ Route::prefix('admin/transcripts')->group(function () {
 
 ### Step 8: Tests
 
-**Unit** (add to `tests/Unit/Services/GradeCalculationServiceTest.php`):
+**Unit — GradeCalculationService** (add to `tests/Unit/Services/GradeCalculationServiceTest.php`):
 - `test_calculate_class_rank_orders_by_average`
 - `test_calculate_class_rank_handles_tied_scores` (standard ranking: 1,1,3)
+- `test_update_enrollment_grade_stores_weighted_average` — verify `weighted_average` column is populated after `updateEnrollmentGrade()`
 
-**Feature:**
+**Unit — Enrollment model** (create `tests/Unit/Models/EnrollmentTest.php`):
+- `test_final_letter_grade_accessor_returns_final_grade` — verify accessor maps `final_grade` to `final_letter_grade`
+- `test_final_letter_grade_accessor_returns_null_when_no_grade` — verify null handling
+- `test_weighted_average_is_fillable` — verify mass assignment works
+
+**Feature — Controllers:**
 
 | File | Tests |
 |------|-------|
 | `tests/Feature/Admin/ReportCardTest.php` | Index renders, index with term lists students, show preview, download PDF (content-type), batch PDF, auth redirect (~6 tests) |
 | `tests/Feature/Admin/TranscriptTest.php` | Index renders, search filters, show preview, download PDF, official flag, includes all terms, auth redirect (~7 tests) |
+
+**Feature — Services:**
+
+| File | Tests |
+|------|-------|
 | `tests/Feature/Services/ReportCardServiceTest.php` | Includes enrolled courses, calculates term GPA, batch PDF starts with `%PDF` (~3 tests) |
 | `tests/Feature/Services/TranscriptServiceTest.php` | Includes all terms, calculates cumulative GPA, official/unofficial PDFs (~4 tests) |
+
+**Feature — Updated controllers** (add to existing `tests/Feature/Admin/GradeTest.php`):
+- `test_class_grades_includes_rank_map` — verify `classGrades()` returns `rankMap` prop via `assertInertia`
+- `test_student_grades_includes_class_ranks` — verify `studentGrades()` returns `classRanks` prop via `assertInertia`
 
 ### 3B Verification
 
 1. `php artisan migrate` — weighted_average column added
-2. `php artisan test` — all existing 66 + ~22 new tests pass
+2. `php artisan test` — all existing 66 + ~28 new tests pass
 3. ClassGrades shows Avg %, Grade, and Rank columns populated
 4. Report card: select term → preview → PDF download → batch download
 5. Transcript: search student → preview → official/unofficial PDF
