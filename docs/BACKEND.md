@@ -1,7 +1,7 @@
 # Student Management System - Backend Architecture
 
-**Version:** 3.0 (Phase 0-3A: Core Grading System)
-**Last Updated:** February 15, 2026
+**Version:** 3.1 (Phase 0-3B Step 2: PDF Templates)
+**Last Updated:** February 16, 2026
 **Framework:** Laravel 12.x
 
 ---
@@ -95,6 +95,13 @@ app/
 │   └── AppServiceProvider.php
 └── Services/
     └── GradeCalculationService.php           # Phase 3A
+
+config/
+└── dompdf.php                                # Phase 3B Step 2
+
+resources/views/pdf/
+├── report-card.blade.php                     # Phase 3B Step 2
+└── transcript.blade.php                      # Phase 3B Step 2
 ```
 
 ---
@@ -849,18 +856,19 @@ $students = $class->students;
 **Key Features:**
 - Unique constraint (student_id, class_id) prevents duplicates
 - Status tracking (enrolled, dropped, completed, failed)
-- Future: Grade storage (final_grade, grade_points)
+- Grade storage: weighted_average, final_letter_grade, grade_points
 
 **Properties:**
 
 ```php
 protected $fillable = [
     'student_id', 'class_id', 'enrollment_date',
-    'status', 'final_grade', 'grade_points'
+    'status', 'weighted_average', 'final_letter_grade', 'grade_points'
 ];
 
 protected $casts = [
     'enrollment_date' => 'date',
+    'weighted_average' => 'decimal:2',
     'grade_points' => 'decimal:2',
 ];
 ```
@@ -878,7 +886,6 @@ public function class(): BelongsTo
     return $this->belongsTo(ClassModel::class, 'class_id');
 }
 
-// Future: Phase 3
 public function grades(): HasMany
 {
     return $this->hasMany(Grade::class);
@@ -916,10 +923,10 @@ public function isActive(): bool
     return $this->status === 'enrolled';
 }
 
-// Future: Phase 3
+// Delegates to GradeCalculationService
 public function calculateFinalGrade(): void
 {
-    // Will aggregate assessment grades
+    app(GradeCalculationService::class)->updateEnrollmentGrade($this);
 }
 ```
 
@@ -2127,11 +2134,11 @@ public function store(StoreStudentRequest $request)
 
 ## Services
 
-### GradeCalculationService (Phase 3A)
+### GradeCalculationService (Phase 3A + 3B)
 
 **File:** `app/Services/GradeCalculationService.php`
 
-**Purpose:** Single source of truth for all grade calculations — weighted averages, GPA computation, and enrollment grade updates.
+**Purpose:** Single source of truth for all grade calculations — weighted averages, GPA computation, enrollment grade updates, and class rank.
 
 **Methods:**
 
@@ -2151,6 +2158,10 @@ public function updateEnrollmentGrade(Enrollment $enrollment): void
 
 // Batch update all enrolled students' grades in a class
 public function updateAllClassGrades(ClassModel $classModel): void
+
+// Calculate class rank using standard competition ranking (1,1,3)
+// Returns array of [enrollment_id => rank]
+public function calculateClassRank(ClassModel $classModel, Term $term): array
 ```
 
 **Usage:**
@@ -2175,6 +2186,68 @@ $cumulativeGpa = $service->calculateCumulativeGpa($student);
 - Late penalty reduces score by percentage: `score - (score * late_penalty / 100)`
 - GPA is credit-weighted: `sum(grade_points * credits) / sum(credits)`
 - Normalizes weights if categories don't sum to 1.0
+
+---
+
+## PDF Generation (Phase 3B)
+
+### Overview
+
+PDF report cards and transcripts are rendered using [barryvdh/laravel-dompdf](https://github.com/barryvdh/laravel-dompdf). Blade templates live in `resources/views/pdf/` and use inline CSS for DomPDF compatibility.
+
+**Config:** `config/dompdf.php` (published via `vendor:publish`)
+**Font:** DejaVu Sans (bundled with DomPDF)
+**Page size:** Letter (8.5 × 11)
+
+### Templates
+
+#### Report Card (`resources/views/pdf/report-card.blade.php`)
+
+**Expected variables:**
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `$student` | Student | Student model (student_id, full_name, date_of_birth) |
+| `$term` | Term | Term model with academicYear relationship |
+| `$enrollments` | Collection | Enrollment models with class.course, class.employee eager-loaded |
+| `$termGpa` | float | GPA for the specific term |
+| `$cumulativeGpa` | float | Overall cumulative GPA |
+| `$generatedAt` | Carbon | Generation timestamp |
+
+**Layout:** Header (school name, student info, term) → Grades table (Course Code, Course Name, Section, Teacher, Avg %, Grade, GPA Pts, Credits) → GPA summary → Generation date.
+
+#### Transcript (`resources/views/pdf/transcript.blade.php`)
+
+**Expected variables:**
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `$student` | Student | Student model |
+| `$termGroups` | Collection | Each item: `['term' => Term, 'enrollments' => Collection, 'termGpa' => float, 'termCredits' => float]` |
+| `$cumulativeGpa` | float | Overall cumulative GPA |
+| `$totalCredits` | float | Total credits earned |
+| `$official` | bool | Official vs. unofficial designation |
+| `$generatedAt` | Carbon | Generation timestamp |
+
+**Layout:** Header (official/unofficial) → Student info block → Per-term sections (term header, course table, term GPA/credits) → Cumulative summary → Signature lines (official only) → Generation date. Unofficial mode adds a rotated, low-opacity "UNOFFICIAL" watermark.
+
+### Usage (via services — Step 3)
+
+```php
+use Barryvdh\DomPDF\Facade\Pdf;
+
+// Render report card
+$pdf = Pdf::loadView('pdf.report-card', [
+    'student' => $student,
+    'term' => $term,
+    'enrollments' => $enrollments,
+    'termGpa' => $termGpa,
+    'cumulativeGpa' => $cumulativeGpa,
+    'generatedAt' => now(),
+]);
+
+return $pdf->download("report-card-{$student->student_id}.pdf");
+```
 
 ---
 

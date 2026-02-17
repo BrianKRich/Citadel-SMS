@@ -328,8 +328,86 @@ Checks all same-day time slots for the instructor across existing classes in the
 
 ---
 
+## Phase 3B Step 1: Foundation, Class Rank & DomPDF
+
+**Date:** February 16, 2026
+**Commit:** `38d11d9`
+
+### What Was Built
+
+**Database migration:**
+- Added `weighted_average` decimal(5,2) column to `enrollments` table
+- Renamed `final_grade` → `final_letter_grade` on `enrollments` table
+
+**Model updates:**
+- Updated `Enrollment` model: `$fillable` and `$casts` now include `weighted_average` and `final_letter_grade`
+- Updated `EnrollmentFactory` to use `final_letter_grade` and `weighted_average`
+
+**GradeCalculationService — new method:**
+
+| Method | Logic |
+|--------|-------|
+| `calculateClassRank(ClassModel, Term)` | Standard competition ranking (1,1,3). Queries enrollments for given class/term, orders by `weighted_average` DESC, handles ties. Returns array of `[enrollment_id => rank]`. |
+
+**Package installed:**
+- `barryvdh/laravel-dompdf` — PDF generation library for rendering Blade templates to PDF
+
+**Tests:** 66 passing (228 assertions) — no regressions.
+
+---
+
+## Phase 3B Step 2: Blade PDF Templates
+
+**Date:** February 16, 2026
+**Commit:** `9d6de03`
+
+### What Was Built
+
+**DomPDF configuration:**
+- Published `config/dompdf.php` via `vendor:publish`
+
+**PDF templates (2 new Blade files):**
+
+| Template | Purpose |
+|----------|---------|
+| `resources/views/pdf/report-card.blade.php` | Per-student, per-term report card. Header with school name, student info, term/academic year. Grades table: Course Code, Course Name, Section, Teacher, Avg %, Grade, GPA Pts, Credits. Footer with Term GPA, Cumulative GPA, generation date. |
+| `resources/views/pdf/transcript.blade.php` | Multi-term transcript. Conditional "OFFICIAL"/"UNOFFICIAL" header. Rotated low-opacity watermark for unofficial. Student info block. Per-term sections with course table + term GPA/credits. Cumulative summary. Signature lines for official mode. |
+
+**Template design decisions:**
+- All CSS inline for DomPDF compatibility (no external stylesheets)
+- Font: DejaVu Sans (bundled with DomPDF, no font installation needed)
+- Page size: Letter (8.5 × 11)
+- `page-break-inside: avoid` on term blocks in transcript
+- Null-safe rendering with `?? '—'` fallbacks for missing grades
+- Striped table rows via `nth-child(even)` background color
+
+**Tests:** 66 passing (228 assertions) — templates are inert until wired to services in Step 3.
+
+---
+
+## Project Statistics (as of Phase 3B Step 2)
+
+| Metric | Value |
+|--------|-------|
+| Total commits | 49 |
+| Development period | Feb 8–16, 2026 |
+| Phases completed | 4 (Phase 0–2 + 3A) |
+| Phase 3B steps completed | 2 of 7 |
+| Database tables | 22 |
+| Eloquent models | 18 |
+| Admin controllers | 11 |
+| Vue pages | 36 |
+| Vue components | 23 |
+| Blade PDF templates | 2 |
+| Services | 1 (GradeCalculationService) |
+| Test files | 15 |
+| Tests passing | 66 (228 assertions) |
+| Contributors | 1 |
+
+---
+
 ## Current Status
 
-**Phase 3A** complete. **Phase 3B** (Report Cards, Transcripts & Class Rank) planned with detailed 8-step execution plan in `plan/velvet-wishing-kitten.md`. Tracked in GitHub Issue #6.
+**Phase 3B Step 2** complete. Next: Step 3 (ReportCardService + TranscriptService). Tracked in GitHub Issue #6.
 
 **Roadmap:** Phase 3 (Issue #6) → 4: Attendance (#5) → 5: Guardian Portal (#4) → 6: Calendar (#3) → 7: Documents (#2) → 8: Reporting (#1)
