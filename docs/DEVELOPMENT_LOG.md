@@ -436,6 +436,11 @@ Scaled up all seeders from minimal sample data to realistic volumes for developm
 
 **Tests:** 66 passing (228 assertions) — no regressions.
 
+**Production deployment:**
+- Deploy path is `/var/www/citadel-sms` (not `/var/www/sms`)
+- Seeding production required temporarily installing dev deps (`composer install`) since `fakerphp/faker` is a dev dependency, then restoring with `composer install --no-dev`
+- Updated `.env` to use PostgreSQL `sms` database locally (was SQLite with no driver)
+
 ---
 
 ## Current Status

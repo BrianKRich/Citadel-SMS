@@ -388,6 +388,8 @@ npm run dev               # Frontend (Vite)
 
 ### Production Deployment
 
+**Deploy path:** `/var/www/citadel-sms` on AWS Lightsail (`18.191.102.47`)
+
 ```bash
 # Optimize for production
 composer install --optimize-autoloader --no-dev
@@ -401,6 +403,14 @@ php artisan migrate --force
 
 # Set permissions
 chmod -R 755 storage bootstrap/cache
+```
+
+**Re-seeding production:** Faker is a dev dependency, so seeding requires temporarily installing dev deps:
+```bash
+composer install                          # install all deps (including faker)
+php artisan migrate:fresh --seed --force  # drop tables and re-seed
+composer install --no-dev --optimize-autoloader  # restore production deps
+php artisan config:cache && php artisan route:cache && php artisan view:cache
 ```
 
 ---
