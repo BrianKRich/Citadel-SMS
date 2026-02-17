@@ -7,6 +7,7 @@ use App\Models\Enrollment;
 use App\Models\GradingScale;
 use App\Models\Student;
 use App\Models\Term;
+use Illuminate\Support\Collection;
 
 class GradeCalculationService
 {
@@ -137,9 +138,39 @@ class GradeCalculationService
         $gpaPoints = $scale->getGpaPoints($letter);
 
         $enrollment->update([
-            'final_grade' => $letter,
+            'weighted_average' => $average,
+            'final_letter_grade' => $letter,
             'grade_points' => $gpaPoints,
         ]);
+    }
+
+    public function calculateClassRank(ClassModel $classModel): Collection
+    {
+        $enrollments = $classModel->enrollments()
+            ->enrolled()
+            ->whereNotNull('weighted_average')
+            ->with('student')
+            ->orderByDesc('weighted_average')
+            ->get();
+
+        $rank = 0;
+        $lastAverage = null;
+        $skip = 0;
+
+        return $enrollments->map(function ($enrollment) use (&$rank, &$lastAverage, &$skip) {
+            $skip++;
+            if ((float) $enrollment->weighted_average !== $lastAverage) {
+                $rank = $skip;
+                $lastAverage = (float) $enrollment->weighted_average;
+            }
+
+            return [
+                'enrollment_id' => $enrollment->id,
+                'student_id' => $enrollment->student_id,
+                'weighted_average' => $enrollment->weighted_average,
+                'rank' => $rank,
+            ];
+        });
     }
 
     public function updateAllClassGrades(ClassModel $classModel): void

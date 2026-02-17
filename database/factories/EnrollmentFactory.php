@@ -32,7 +32,7 @@ class EnrollmentFactory extends Factory
     public function withGrade(string $grade, float $points): static
     {
         return $this->state(fn () => [
-            'final_grade' => $grade,
+            'final_letter_grade' => $grade,
             'grade_points' => $points,
             'status' => 'completed',
         ]);

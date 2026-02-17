@@ -147,7 +147,7 @@ class GradeTest extends TestCase
         ]);
 
         $enrollment->refresh();
-        $this->assertNotNull($enrollment->final_grade);
+        $this->assertNotNull($enrollment->final_letter_grade);
     }
 
     public function test_store_validates_score(): void

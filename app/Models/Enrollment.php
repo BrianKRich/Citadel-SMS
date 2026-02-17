@@ -16,12 +16,14 @@ class Enrollment extends Model
         'class_id',
         'enrollment_date',
         'status',
-        'final_grade',
+        'weighted_average',
+        'final_letter_grade',
         'grade_points',
     ];
 
     protected $casts = [
         'enrollment_date' => 'date',
+        'weighted_average' => 'decimal:2',
         'grade_points' => 'decimal:2',
     ];
 

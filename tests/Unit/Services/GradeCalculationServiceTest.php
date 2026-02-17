@@ -211,7 +211,7 @@ class GradeCalculationServiceTest extends TestCase
         $this->service->updateEnrollmentGrade($enrollment->fresh());
 
         $enrollment->refresh();
-        $this->assertSame('A', $enrollment->final_grade);
+        $this->assertSame('A', $enrollment->final_letter_grade);
         $this->assertEquals(4.0, (float) $enrollment->grade_points);
     }
 
