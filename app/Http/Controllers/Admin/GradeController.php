@@ -20,7 +20,7 @@ class GradeController extends Controller
     public function index(Request $request)
     {
         $classes = ClassModel::with(['course', 'term', 'employee'])
-            ->withCount('enrollments')
+            ->withCount(['enrollments', 'assessments'])
             ->latest()
             ->paginate(10)
             ->withQueryString();

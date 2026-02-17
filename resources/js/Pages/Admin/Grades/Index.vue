@@ -117,7 +117,7 @@ function getStatusBadgeClass(status) {
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ cls.teacher ? `${cls.teacher.first_name} ${cls.teacher.last_name}` : 'N/A' }}
+                                            {{ cls.employee ? `${cls.employee.first_name} ${cls.employee.last_name}` : 'N/A' }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
@@ -169,7 +169,7 @@ function getStatusBadgeClass(status) {
                                         {{ cls.course?.name || 'N/A' }} — {{ cls.section_name }}
                                     </h3>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ cls.teacher ? `${cls.teacher.first_name} ${cls.teacher.last_name}` : 'N/A' }}
+                                        {{ cls.employee ? `${cls.employee.first_name} ${cls.employee.last_name}` : 'N/A' }}
                                     </p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         {{ cls.enrollments_count ?? 0 }} students • {{ cls.assessments_count ?? 0 }} assessments
