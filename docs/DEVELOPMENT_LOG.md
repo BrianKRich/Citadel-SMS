@@ -443,8 +443,40 @@ Scaled up all seeders from minimal sample data to realistic volumes for developm
 
 ---
 
+## Bug Fixes
+
+**Date:** February 16, 2026
+
+### Grade Book Index — Teacher & Assessment Count
+
+**Problem:** The Grade Book index page (`admin/grades`) showed "N/A" for all teachers and "0 assessments" for every class.
+
+**Root causes:**
+1. `GradeController::index()` loaded the `employee` relationship, but `Grades/Index.vue` referenced `cls.teacher` — a property that doesn't exist on the serialized class model. Should be `cls.employee`.
+2. `GradeController::index()` called `withCount('enrollments')` but not `withCount('assessments')`, so `assessments_count` was always null/0.
+
+**Fixes:**
+- `GradeController.php:22` — changed `withCount('enrollments')` to `withCount(['enrollments', 'assessments'])`
+- `Grades/Index.vue:120,172` — changed `cls.teacher` to `cls.employee` (both desktop table and mobile card views)
+
+### DatabaseSeeder — Admin Account Preserved on Re-seed
+
+**Problem:** Running `migrate:fresh --seed` on production wiped the admin user account, replacing it with a generic "Test User" that couldn't access admin features.
+
+**Fix:** Updated `DatabaseSeeder.php` to create the admin account (`krmoble@gmail.com`, role `admin`) instead of a generic test user. Re-seeding now always restores the admin login.
+
+### Deploy Workflow — Cache Clearing
+
+**Problem:** GitHub Actions deploy failed with `package:discover` error after manually installing dev deps on the server for seeding. Stale config cache referenced dev-only service providers that `composer install --no-dev` had removed.
+
+**Fix:** Added cache-clearing steps (`config:clear`, `route:clear`, `view:clear`, `event:clear`) to `deploy.yml` before `composer install`, preventing stale cache conflicts.
+
+**Tests:** 66 passing (228 assertions) — no regressions across all fixes.
+
+---
+
 ## Current Status
 
-**Expanded seed data** complete. Phase 3B Step 2 complete. Next: Step 3 (ReportCardService + TranscriptService). Tracked in GitHub Issue #6.
+**Expanded seed data** complete. Bug fixes deployed. Phase 3B Step 2 complete. Next: Step 3 (ReportCardService + TranscriptService). Tracked in GitHub Issue #6.
 
 **Roadmap:** Phase 3 (Issue #6) → 4: Attendance (#5) → 5: Guardian Portal (#4) → 6: Calendar (#3) → 7: Documents (#2) → 8: Reporting (#1)
