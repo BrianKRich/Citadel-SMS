@@ -28,6 +28,12 @@ jobs:
             echo "--- Pulling latest code ---"
             git pull origin main
 
+            echo "--- Clearing stale caches ---"
+            php artisan config:clear
+            php artisan route:clear
+            php artisan view:clear
+            php artisan event:clear
+
             echo "--- Installing PHP dependencies ---"
             composer install --no-dev --optimize-autoloader --no-interaction
 
