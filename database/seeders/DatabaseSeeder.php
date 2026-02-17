@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             CourseSeeder::class,
             StudentSeeder::class,
             ClassSeeder::class,
+            EnrollmentSeeder::class,
         ]);
 
         // Phase 3 seeders

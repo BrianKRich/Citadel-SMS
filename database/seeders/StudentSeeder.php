@@ -91,5 +91,8 @@ class StudentSeeder extends Seeder
         // Link guardians to students
         $student1->guardians()->attach($guardian1->id, ['is_primary' => true]);
         $student2->guardians()->attach($guardian2->id, ['is_primary' => true]);
+
+        // Add 97 more students via factory
+        Student::factory()->count(97)->create();
     }
 }

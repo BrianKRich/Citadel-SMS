@@ -1,7 +1,7 @@
 # Student Management System - Database Architecture
 
-**Version:** 3.0 (Phase 0-3A: Core Grading System)
-**Last Updated:** February 15, 2026
+**Version:** 3.1 (Phase 0-3B: Expanded Seed Data)
+**Last Updated:** February 16, 2026
 **Database:** PostgreSQL 14+
 
 ---
@@ -445,8 +445,9 @@ Student enrollment in classes.
 | class_id | BIGINT | FK, NOT NULL | Class reference |
 | enrollment_date | DATE | NOT NULL | Date enrolled |
 | status | ENUM | DEFAULT 'enrolled' | enrolled, dropped, completed, failed |
-| final_grade | VARCHAR(10) | NULLABLE | Final grade (A, B+, 92, etc.) |
-| grade_points | DECIMAL(5,2) | NULLABLE | Numeric grade |
+| weighted_average | DECIMAL(5,2) | NULLABLE | Calculated weighted average (0-100) |
+| final_letter_grade | VARCHAR(10) | NULLABLE | Final letter grade (A, B, C, D, F) |
+| grade_points | DECIMAL(5,2) | NULLABLE | GPA points for this enrollment |
 | created_at | TIMESTAMP | | Creation timestamp |
 | updated_at | TIMESTAMP | | Last update timestamp |
 
@@ -878,18 +879,24 @@ public function run(): void
         'email' => 'test@example.com',
     ]);
 
+    // Phase 1 seeders
     $this->call([
         CountySeeder::class,              // 1. Georgia counties (reference data)
         DepartmentSeeder::class,          // 2. Departments and roles
-        EmployeeSeeder::class,            // 3. Employees (staff, instructors, counselors)
+        EmployeeSeeder::class,            // 3. 20 teachers + 3 non-teaching staff
         AcademicYearSeeder::class,        // 4. Academic years and terms
-        CourseSeeder::class,              // 5. Course catalog
-        StudentSeeder::class,             // 6. Students with guardians
-        ClassSeeder::class,               // 7. Class sections with schedules
-        GradingScaleSeeder::class,        // 8. Default grading scale (A-F)
-        AssessmentCategorySeeder::class,  // 9. Default assessment categories with weights
-        AssessmentSeeder::class,          // 10. Sample assessments for seeded classes
-        GradeSeeder::class,              // 11. Sample grades for seeded enrollments
+        CourseSeeder::class,              // 5. 20 courses across 10 departments
+        StudentSeeder::class,             // 6. 100 students (3 named + 97 factory)
+        ClassSeeder::class,               // 7. 40 classes (20 Fall + 20 Spring)
+        EnrollmentSeeder::class,          // 8. ~500 enrollments (5 per student)
+    ]);
+
+    // Phase 3 seeders
+    $this->call([
+        GradingScaleSeeder::class,        // 9. Default grading scale (A-F)
+        AssessmentCategorySeeder::class,  // 10. Default assessment categories with weights
+        AssessmentSeeder::class,          // 11. 120 assessments for Fall classes
+        GradeSeeder::class,              // 12. ~2,500 grades for enrolled students
     ]);
 }
 ```
@@ -900,24 +907,32 @@ public function run(): void
 - Current year: 2025-2026
 - Terms: Fall 2025, Spring 2026
 
-**CourseSeeder:**
-- MATH-101 (Algebra I, Mathematics, Beginner, 3 credits)
-- ENG-101 (English Literature, English, Beginner, 3 credits)
-- SCI-101 (General Science, Science, Beginner, 4 credits)
-- HIST-101 (U.S. History, History, Beginner, 3 credits)
-- PE-101 (Physical Education, Physical Education, Beginner, 1 credit)
-- 5 additional courses
+**CourseSeeder (20 courses):**
+- Mathematics: MATH-101 Algebra I, MATH-201 Geometry
+- English: ENG-101 English Literature, ENG-102 English Composition
+- Science: SCI-101 General Science, SCI-201 Biology, SCI-202 Chemistry
+- History: HIST-101 World History, HIST-201 U.S. History
+- Computer Science: CS-101 Intro to Programming, CS-201 Web Development
+- Physical Education: PE-101 Physical Fitness, PE-102 Team Sports
+- Health: HLT-101 Health & Wellness
+- Art: ART-101 Visual Arts, ART-201 Digital Media
+- Music: MUS-101 Music Fundamentals
+- Foreign Language: SPAN-101 Spanish I, SPAN-201 Spanish II
+- Life Skills: LIFE-101 Financial Literacy
 
 **DepartmentSeeder:**
 - 5 departments: Education, Administration, Counseling, Cadre, Health Services
 - Roles per department: Teacher/Instructor, Administrator/Coordinator, Counselor/Case Manager, Drill Instructor/Platoon Sergeant, Nurse/Health Aide
 
-**EmployeeSeeder:**
-- 7 sample employees with auto-generated IDs (EMP-2026-001 through EMP-2026-007):
-  - Marcus Williams — Education / Teacher (Math)
-  - Patricia Johnson — Education / Teacher (English)
-  - David Thompson — Education / Teacher (Science)
-  - Angela Davis — Education / Teacher (Social Studies)
+**EmployeeSeeder (23 employees: 20 teachers + 3 staff):**
+- 20 teachers (Education / Teacher role), each assigned to one course:
+  - Marcus Williams (Math), Patricia Johnson (English), David Thompson (Science), Angela Davis (History)
+  - Karen Lee (Geometry), Thomas Brown (Composition), Linda Garcia (Chemistry), Charles Martinez (Biology)
+  - Jennifer Taylor (U.S. History), Daniel Anderson (CS), Michelle Robinson (Web Dev)
+  - Kevin Clark (PE), Lisa Walker (Team Sports), Brian Hall (Health)
+  - Stephanie Young (Art), Richard King (Digital Media), Amanda Wright (Music)
+  - Maria Hernandez (Spanish I), Christopher Lopez (Spanish II), Nicole Scott (Financial Literacy)
+- 3 non-teaching staff:
   - Robert Harris — Administration / Administrator
   - Sandra Mitchell — Counseling / Counselor
   - James Washington — Cadre / Drill Instructor
@@ -925,26 +940,22 @@ public function run(): void
 **CountySeeder:**
 - All 159 Georgia counties for address/demographic data
 
-**ClassSeeder:**
-- 10 class sections across both terms (5 per term):
-  - Algebra I — Marcus Williams / Room 101 / MWF 8:00–9:00
-  - English Literature — Patricia Johnson / Room 102 / MWF 9:15–10:15
-  - General Science — David Thompson / Room 105 / TTh 8:00–9:30
-  - World History — Angela Davis / Room 103 / TTh 10:00–11:00
-  - Intro to Programming — Marcus Williams / Room 110 / TTh 13:00–14:00
+**ClassSeeder (40 classes: 20 Fall + 20 Spring):**
+- One class per teacher per term (20 unique courses × 2 terms)
+- Each teacher has a unique room and schedule (no conflicts)
 - Fall 2025 classes: status `in_progress`
 - Spring 2026 classes: status `open`
+- Max students: 25–30 per class
 
-**EnrollmentSeeder (Phase 2):**
-- Sample enrollments for students
-- Respects capacity limits
-- No schedule conflicts
-- All with "enrolled" status
+**StudentSeeder (100 students):**
+- 3 named students (John Doe, Emma Smith, Michael Johnson) with guardians, phone numbers, and detailed demographics
+- 97 additional students generated via `Student::factory()`
+- All with status `active`
 
-**StudentSeeder:**
-- 5 sample students with varied statuses
-- Linked guardians with is_primary flags
-- Realistic demographics and contact information
+**EnrollmentSeeder (~500 enrollments):**
+- Each of 100 students enrolled in 5 random Fall 2025 classes
+- Respects `max_students` capacity per class
+- All with status `enrolled` and enrollment date `2025-08-15`
 
 **GradingScaleSeeder (Phase 3A):**
 - Default grading scale: A=90/4.0, B=80/3.0, C=70/2.0, D=60/1.0, F=0/0.0
@@ -954,13 +965,14 @@ public function run(): void
 - 5 global categories (course_id = NULL):
   - Homework (0.15), Quizzes (0.15), Midterm Exam (0.25), Final Exam (0.30), Projects (0.15)
 
-**AssessmentSeeder (Phase 3A):**
-- Sample assessments for seeded classes across categories
-- Mix of draft and published statuses
+**AssessmentSeeder (120 assessments):**
+- 6 assessments per Fall class (Homework 1 & 2, Quiz 1, Midterm, Research Project, Final Exam)
+- 5 published + 1 draft (Final Exam) per class
 
-**GradeSeeder (Phase 3A):**
-- Sample grades for seeded enrollments
-- Triggers grade calculation to populate `final_grade` and `grade_points` on enrollments
+**GradeSeeder (~2,500 grades):**
+- Grades for all enrolled students on all published assessments
+- Random scores (45–100), 15% chance of late submission with 10% penalty
+- Triggers `GradeCalculationService` to populate `weighted_average`, `final_letter_grade`, and `grade_points` on enrollments
 
 ---
 

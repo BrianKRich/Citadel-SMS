@@ -406,8 +406,40 @@ Checks all same-day time slots for the instructor across existing classes in the
 
 ---
 
+## Expanded Seed Data
+
+**Date:** February 16, 2026
+
+### What Was Built
+
+Scaled up all seeders from minimal sample data to realistic volumes for development and demo purposes. Created a new `EnrollmentSeeder` to bridge students and classes with grade data.
+
+**Changes by seeder:**
+
+| Seeder | Before | After |
+|--------|--------|-------|
+| `CourseSeeder` | 5 courses | 20 courses across 10 departments |
+| `EmployeeSeeder` | 4 teachers + 3 staff | 20 teachers + 3 staff (23 total) |
+| `StudentSeeder` | 3 students | 100 students (3 named + 97 factory) |
+| `ClassSeeder` | 10 classes (5+5) | 40 classes (20 Fall + 20 Spring) |
+| `EnrollmentSeeder` | did not exist | ~500 enrollments (5 per student) |
+| `AssessmentSeeder` | auto-covers new classes | 120 assessments (6 × 20 Fall classes) |
+| `GradeSeeder` | auto-covers new enrollments | ~2,500 grades |
+
+**New departments/subjects added:** Mathematics (Geometry), English (Composition), Science (Biology, Chemistry), History (U.S. History), Computer Science (Web Development), Physical Education (Fitness, Team Sports), Health, Art (Visual Arts, Digital Media), Music, Foreign Language (Spanish I & II), Life Skills (Financial Literacy).
+
+**Key design decisions:**
+- Each of 20 teachers teaches exactly 1 course, 1 class per term — no schedule conflicts
+- `EnrollmentSeeder` respects `max_students` capacity per class
+- Factory students use `Student::factory()->count(97)->create()` for realistic Faker-generated data
+- Existing `AssessmentSeeder` and `GradeSeeder` required zero changes — they already loop over all `in_progress` classes and enrolled students
+
+**Tests:** 66 passing (228 assertions) — no regressions.
+
+---
+
 ## Current Status
 
-**Phase 3B Step 2** complete. Next: Step 3 (ReportCardService + TranscriptService). Tracked in GitHub Issue #6.
+**Expanded seed data** complete. Phase 3B Step 2 complete. Next: Step 3 (ReportCardService + TranscriptService). Tracked in GitHub Issue #6.
 
 **Roadmap:** Phase 3 (Issue #6) → 4: Attendance (#5) → 5: Guardian Portal (#4) → 6: Calendar (#3) → 7: Documents (#2) → 8: Reporting (#1)

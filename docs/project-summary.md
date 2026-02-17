@@ -128,12 +128,18 @@ Added the operational layer for managing class sections, schedules, and student 
 
 The project includes comprehensive seed data for development and testing:
 
-- Academic year 2025–2026 with Fall and Spring terms
-- 10 courses across different departments
-- 5 teachers with assignments
-- 20 students with guardian information
-- 12 class sections with schedules
-- Sample enrollments
+| Entity | Count |
+|--------|-------|
+| Students | 100 (3 named + 97 factory-generated) |
+| Teachers | 20 (each teaching 1 unique course) |
+| Non-teaching staff | 3 (administrator, counselor, drill instructor) |
+| Courses | 20 across 10 departments |
+| Classes | 40 (20 Fall in_progress + 20 Spring open) |
+| Enrollments | ~500 (5 Fall classes per student) |
+| Assessments | 120 (6 per Fall class) |
+| Grades | ~2,500 (with weighted averages and letter grades) |
+
+Academic year 2025–2026 with Fall and Spring terms. All grade calculations run automatically via `GradeCalculationService`.
 
 ## Security Features
 
