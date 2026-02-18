@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AssessmentController;
 use App\Http\Controllers\Admin\ClassController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\EnrollmentController;
+use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\GradeController;
 use App\Http\Controllers\Admin\GradingScaleController;
 use App\Http\Controllers\Admin\GuardianController;
@@ -184,6 +185,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [TranscriptController::class, 'index'])->name('admin.transcripts.index');
         Route::get('/{student}', [TranscriptController::class, 'show'])->name('admin.transcripts.show');
         Route::get('/{student}/pdf', [TranscriptController::class, 'pdf'])->name('admin.transcripts.pdf');
+    });
+
+    // Feature settings toggle
+    Route::post('/admin/feature-settings', [AdminController::class, 'updateFeatureSettings'])
+        ->name('admin.feature-settings.update');
+
+    // Phase 4: Attendance (student route BEFORE classModel wildcard)
+    Route::get('admin/attendance/student/{student}', [AttendanceController::class, 'studentHistory'])
+        ->name('admin.attendance.student');
+
+    Route::prefix('admin/attendance')->group(function () {
+        Route::get('/', [AttendanceController::class, 'index'])->name('admin.attendance.index');
+        Route::get('/{classModel}/take', [AttendanceController::class, 'take'])->name('admin.attendance.take');
+        Route::post('/store', [AttendanceController::class, 'store'])->name('admin.attendance.store');
+        Route::get('/{classModel}/summary', [AttendanceController::class, 'classSummary'])->name('admin.attendance.summary');
     });
 });
 

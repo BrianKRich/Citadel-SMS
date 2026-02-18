@@ -110,7 +110,14 @@ function destroy() {
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="flex gap-3 flex-shrink-0">
+                        <div class="flex gap-3 flex-shrink-0 flex-wrap">
+                            <Link
+                                v-if="$page.props.features?.attendance_enabled"
+                                :href="route('admin.attendance.student', student.id)"
+                                class="inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                                View Attendance
+                            </Link>
                             <Link
                                 :href="route('admin.students.edit', student.id)"
                                 class="inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"

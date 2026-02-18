@@ -699,21 +699,23 @@ Flash messages live in Inertia shared props (`$page.props.flash`), not in the pa
 
 ---
 
-## Project Statistics (as of Phase 3D — February 18, 2026)
+## Project Statistics (as of Phase 4 — February 18, 2026)
 
 | Metric | Value |
 |--------|-------|
 | Development period | Feb 8–18, 2026 |
-| Phases completed | Phase 0–2 + 3A + 3B + 3D |
-| Database tables | 22 |
-| Eloquent models | 18 |
-| Admin controllers | 13 |
-| Vue pages | 60 |
+| Phases completed | Phase 0–2 + 3A + 3B + 3D + 4 |
+| Database tables | 23 |
+| Eloquent models | 19 |
+| Admin controllers | 14 |
+| Vue pages | 64 |
 | Vue components | 23 |
 | Blade PDF templates | 2 |
 | Services | 3 (GradeCalculationService, ReportCardService, TranscriptService) |
-| Test files | 22 |
-| Tests passing | 197 (960 assertions) |
+| Seeders | 15 |
+| Factories | 15 |
+| Test files | 23 |
+| Tests passing | 226 (1156 assertions) |
 | Contributors | 1 |
 
 ---
@@ -849,11 +851,101 @@ Three tests each added to `StudentTest.php` and `EmployeeTest.php`:
 
 ---
 
+## Phase 4: Attendance Management with Feature Flag
+
+**Date:** February 18, 2026
+
+### What Was Built
+
+Full attendance tracking behind an admin-controlled feature toggle. When disabled, all attendance routes return 403 and all attendance UI is hidden; existing data is never deleted.
+
+**Database (1 new table):**
+
+| Table | Key Details |
+|-------|-------------|
+| `attendance_records` | FK to `students` (cascadeOnDelete), FK to `classes` (cascadeOnDelete). `date` DATE, `status` ENUM(present/absent/late/excused), `notes` TEXT nullable, `marked_by` FK→users (nullOnDelete). UNIQUE(student_id, class_id, date). |
+
+**Model (1 new):**
+- `AttendanceRecord` — fillable, date cast, BelongsTo: student/classModel/markedBy. Scopes: `forDate()`, `forClass()`, `status()`.
+
+**Controller (1 new — `AttendanceController`):**
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `index` | `GET /admin/attendance` | Paginated class list (select a class to manage attendance) |
+| `take` | `GET /admin/attendance/{classModel}/take?date=` | Bulk entry form; date defaults to today; pre-fills any existing records |
+| `store` | `POST /admin/attendance/store` | `updateOrCreate` per student/class/date; validates status enum |
+| `studentHistory` | `GET /admin/attendance/student/{student}` | Full attendance history for one student, paginated desc by date |
+| `classSummary` | `GET /admin/attendance/{classModel}/summary` | Per-student present/absent/late/excused counts + attendance rate %; date range filter |
+
+Every public method calls `requireAttendanceEnabled()` which does `abort_if(Setting::get(...) !== '1', 403)`.
+
+**Feature flag system:**
+- Stored in `settings` table: key `feature_attendance_enabled`, value `'1'`/`'0'`, type `boolean`.
+- `HandleInertiaRequests::share()` now includes `features.attendance_enabled` (PHP bool → JSON bool) on every page — no `defineProps` needed in pages.
+- Toggle endpoint: `POST /admin/feature-settings` → `AdminController::updateFeatureSettings()`. Validates boolean, calls `Setting::set()`, redirects with flash.
+- Disabling the flag does **not** delete any records — data is preserved.
+
+**Vue Pages (4 new):**
+
+| Page | Purpose |
+|------|---------|
+| `Admin/Attendance/Index.vue` | Class list with Take Attendance + Summary action links per row |
+| `Admin/Attendance/Take.vue` | Color-coded status buttons (green/red/yellow/blue) per student. Date picker triggers full page reload via `router.get()`. Pre-fills existing records. Desktop table + mobile card. |
+| `Admin/Attendance/StudentHistory.vue` | All records for one student. Status badges, paginated, sorted date desc. |
+| `Admin/Attendance/ClassSummary.vue` | Per-student present/absent/late/excused counts + attendance rate %. Date range filter (from/to). Color-coded rate: green ≥90%, yellow ≥75%, red <75%. |
+
+**Dashboard updates:**
+- Feature Settings section with a toggle switch (current state shown inline, updates via `useForm().post()`).
+- Conditional "Attendance" action card — only rendered when `$page.props.features.attendance_enabled` is true.
+
+**Students/Show.vue update:**
+- Conditional "View Attendance" button in the action group — only shown when attendance is enabled.
+
+**Route ordering:** `admin/attendance/student/{student}` declared before the `{classModel}` prefix group to prevent the wildcard from capturing it — same pattern as the trashed routes.
+
+**Seed data (`AttendanceSeeder`):**
+- Enables the feature flag so the UI is live after seeding.
+- Assigns each student a random attendance profile (25% high-attender, 60% average, 15% low) — consistent across all their classes.
+- Generates records only on days each class actually meets (reads the `schedule` JSON: MWF, TTh, or Friday-only as applicable).
+- Walks the full Fall 2025 term (Sep 1 – Dec 20). Bulk inserts in chunks of 500.
+- Produced **17,552 records** (76% present, 9% late, 8% excused, 7% absent).
+
+**Test suite (1 new file — 29 tests, 196 assertions):**
+
+| Scenario group | Tests |
+|----------------|-------|
+| Feature flag: disabled → 403 on all 5 routes | 1 |
+| Feature flag: enabled → routes accessible | 1 |
+| Toggle: enables/disables, persists to settings table | 2 |
+| `features` prop: correct bool in shared props (both states) | 1 |
+| Toggle: requires auth | 1 |
+| Data: records preserved when flag disabled | 1 |
+| Index: auth redirect, renders with filters | 2 |
+| Take: renders enrolled students, pre-fills, defaults to today, uses `?date=` param, excludes dropped | 4 |
+| Store: creates, upserts, saves notes, sets `marked_by`, validates class_id/date/records/status | 7 |
+| Student history: auth redirect, renders | 2 |
+| Class summary: auth redirect, renders counts, date range filter, attendance rate math | 4 |
+| Index search: filter passes through | 1 |
+
+**226 tests passing (1156 assertions) — no regressions.**
+
+### Key Decisions
+
+1. **Feature flag in `settings` table, not `.env`** — Runtime toggle by admin with no server restart. Same infrastructure as theme colors. Shared via `HandleInertiaRequests` so every page gets it without controller boilerplate.
+2. **`requireAttendanceEnabled()` private method, not middleware** — The guard is only needed on attendance routes. A dedicated middleware class would add complexity without benefit for one controller.
+3. **`updateOrCreate` with DB unique constraint as backstop** — Same pattern as `GradeController::store()`. The unique constraint on `(student_id, class_id, date)` prevents double-insertion even if two requests race.
+4. **`marked_by` nullOnDelete** — If the marking user is deleted, the attendance record is preserved with `marked_by = null`. Same as `graded_by` on `grades`.
+5. **Attendance rate = (present + late) / total** — Late arrivals count as attended; absences and excused absences both count against the rate denominator.
+6. **Schedule-aware seeding** — Generating attendance for all weekdays regardless of class schedule would be inaccurate. The seeder reads the JSON `schedule` column to find meeting days per class, producing realistic data (a MWF class gets ~39 dates; a TTh class gets ~26).
+
+---
+
 ## Current Status
 
-**All Phase 1/2/3 frontend fully implemented.** 197 tests passing. No known broken pages or known issues.
+**All Phase 1/2/3/4 fully implemented.** 226 tests passing. No known broken pages or known issues.
 
-**Completed phases:** 0, 1, 2, 3A, 3B, 3D
+**Completed phases:** 0, 1, 2, 3A, 3B, 3D, 4
 
 ---
 
@@ -879,17 +971,6 @@ Track who changed what and when for academic records integrity:
 - Store actor (user ID), action, model type, record ID, before/after values (JSON diff)
 - Admin UI: audit log viewer with filters (model type, actor, date range)
 - Especially important for grade changes — accreditation bodies require audit trails
-
-### Phase 4: Attendance Management
-**GitHub Issue:** #5
-
-Full attendance tracking system:
-- `attendances` table: student_id, class_id, date, status (present/absent/late/excused), notes
-- Daily attendance entry per class (teacher or admin marks attendance)
-- Attendance report per student (total absences, tardies, excused)
-- Attendance summary per class
-- Threshold alerts (e.g., flag students missing more than 10% of sessions)
-- Frontend: attendance entry form, per-student attendance history, class attendance roster
 
 ### Phase 5: Parent/Guardian Portal
 **GitHub Issue:** #4

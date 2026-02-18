@@ -41,5 +41,10 @@ class DatabaseSeeder extends Seeder
             AssessmentSeeder::class,
             GradeSeeder::class,
         ]);
+
+        // Phase 4 seeders
+        $this->call([
+            AttendanceSeeder::class,
+        ]);
     }
 }

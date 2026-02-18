@@ -3,11 +3,25 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import StatCard from '@/Components/Admin/StatCard.vue';
 import AdminActionCard from '@/Components/Admin/AdminActionCard.vue';
-import { Head } from '@inertiajs/vue3';
+import Alert from '@/Components/UI/Alert.vue';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 
 const props = defineProps({
     stats: Object,
 });
+
+const page = usePage();
+
+const featureForm = useForm({
+    attendance_enabled: page.props.features?.attendance_enabled ?? false,
+});
+
+function toggleAttendance() {
+    featureForm.attendance_enabled = !featureForm.attendance_enabled;
+    featureForm.post(route('admin.feature-settings.update'), {
+        preserveScroll: true,
+    });
+}
 </script>
 
 <template>
@@ -22,6 +36,11 @@ const props = defineProps({
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <!-- Flash Messages -->
+                <div v-if="$page.props.flash?.success" class="mb-4">
+                    <Alert type="success" :message="$page.props.flash.success" />
+                </div>
+
                 <!-- Welcome Section -->
                 <div class="mb-8">
                     <PageHeader
@@ -170,6 +189,48 @@ const props = defineProps({
                             color="secondary"
                         />
 
+                        <AdminActionCard
+                            v-if="$page.props.features?.attendance_enabled"
+                            title="Attendance"
+                            description="Track and manage student attendance by class"
+                            icon="✅"
+                            :href="route('admin.attendance.index')"
+                            color="primary"
+                        />
+
+                    </div>
+                </div>
+
+                <!-- Feature Settings -->
+                <div class="mt-8">
+                    <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Feature Settings</h3>
+                    <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">Attendance Tracking</h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    Enable attendance management for all classes.
+                                    {{ $page.props.features?.attendance_enabled ? 'Currently enabled.' : 'Currently disabled.' }}
+                                </p>
+                            </div>
+                            <button
+                                @click="toggleAttendance"
+                                :disabled="featureForm.processing"
+                                :class="[
+                                    $page.props.features?.attendance_enabled
+                                        ? 'bg-primary-600 hover:bg-primary-700'
+                                        : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600',
+                                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50'
+                                ]"
+                            >
+                                <span
+                                    :class="[
+                                        $page.props.features?.attendance_enabled ? 'translate-x-5' : 'translate-x-0',
+                                        'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
+                                    ]"
+                                />
+                            </button>
+                        </div>
                     </div>
                 </div>
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Assessment;
 use App\Models\Enrollment;
 use App\Models\Grade;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -26,5 +27,20 @@ class AdminController extends Controller
         return Inertia::render('Admin/Dashboard', [
             'stats' => $stats,
         ]);
+    }
+
+    public function updateFeatureSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'attendance_enabled' => ['required', 'boolean'],
+        ]);
+
+        Setting::set(
+            'feature_attendance_enabled',
+            $validated['attendance_enabled'] ? '1' : '0',
+            'boolean'
+        );
+
+        return back()->with('success', 'Feature settings updated.');
     }
 }
