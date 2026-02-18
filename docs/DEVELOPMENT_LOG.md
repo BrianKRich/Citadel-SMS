@@ -475,8 +475,61 @@ Scaled up all seeders from minimal sample data to realistic volumes for developm
 
 ---
 
+## Phase 3B Steps 3–7: Services, Controllers, Vue Pages & Tests
+
+**Date:** February 18, 2026
+
+### What Was Built
+
+**Services (2 new):**
+
+| Service | Methods |
+|---------|---------|
+| `ReportCardService` | `getData(Student, Term)` — assembles enrollments, termGpa, cumulativeGpa for a specific term; `generatePdf(Student, Term)` — renders `pdf/report-card` Blade template via DomPDF |
+| `TranscriptService` | `getData(Student, bool)` — groups enrollments by term chronologically with per-term GPA/credits and cumulative totals; `generatePdf(Student, bool)` — renders `pdf/transcript` Blade template with official/unofficial flag |
+
+**Controllers (2 new):**
+
+| Controller | Routes |
+|-----------|--------|
+| `ReportCardController` | `GET /admin/report-cards` (index), `GET /admin/report-cards/{student}` (show, term selectable via `?term_id=X`), `GET /admin/report-cards/{student}/pdf` (PDF download) |
+| `TranscriptController` | `GET /admin/transcripts` (index), `GET /admin/transcripts/{student}` (show, official flag via `?official=1`), `GET /admin/transcripts/{student}/pdf` (PDF download with `?official=1` for official mode) |
+
+**Vue Pages (4 new):**
+
+| Page | Purpose |
+|------|---------|
+| `Admin/ReportCards/Index.vue` | Student list with search + term selector; Preview and Download PDF actions per row |
+| `Admin/ReportCards/Show.vue` | Per-student report card preview; term switcher dropdown; Download PDF button; links to grade history |
+| `Admin/Transcripts/Index.vue` | Student list with search; Unofficial PDF and Official PDF download actions per row |
+| `Admin/Transcripts/Show.vue` | Per-student transcript preview with per-term tables, cumulative summary; official/unofficial badge; PDF download buttons |
+
+**Updates to existing files:**
+- `ClassGrades.vue` — added computed `rankMap` using standard competition ranking (1,1,3) calculated client-side from `weighted_average`; added Rank column (#1, #2, …) to the grade matrix
+- `Dashboard.vue` — added "Report Cards" and "Transcripts" action cards to Quick Actions grid
+
+**Tests (22 new, 2 new test files):**
+
+| File | Tests |
+|------|-------|
+| `Feature/Admin/ReportCardTest.php` | Auth redirect, index renders, search filter, show with term, show uses current term, show filters enrollments by term, PDF download, PDF requires auth, filename contains student ID |
+| `Feature/Admin/TranscriptTest.php` | Auth redirect, index renders, search filter, show renders, official flag, show groups by term, unofficial PDF, official PDF, PDF requires auth, filename contains unofficial/official |
+
+**Total after 3B Steps 3–7: 88 tests, 364 assertions — all passing.**
+
+**Build note:** `npm run build` required after creating new Vue pages so the Vite manifest includes new assets for both production and test environments.
+
+### Key Decisions
+
+1. **Client-side rank calculation** — Class rank computed in `ClassGrades.vue` via a `rankMap` computed property rather than adding it as a server-side prop. The `weighted_average` data is already in the enrollments payload, so no extra DB query needed.
+2. **Transcript groups via Collection operations** — `TranscriptService::getData()` uses Eloquent eager loading + Collection `groupBy/sortBy` rather than raw SQL. Cleaner and matches codebase style.
+3. **PDF controllers return direct download** — No separate preview route for PDFs; the existing Inertia `show` pages serve as preview. The `pdf` route streams the DomPDF output directly with `->download($filename)`.
+4. **`?official=1` flag** — Unofficial transcript is the default; `?official=1` adds signature lines and removes the watermark. Same controller action, same route, different behavior based on boolean flag.
+
+---
+
 ## Current Status
 
-**Expanded seed data** complete. Bug fixes deployed. Phase 3B Step 2 complete. Next: Step 3 (ReportCardService + TranscriptService). Tracked in GitHub Issue #6.
+**Phase 3B complete.** All services, controllers, Vue pages, and tests implemented. 88 tests passing. Next: Phase 3C (CSV grade import/export) or Phase 4 (Attendance). Tracked in GitHub Issue #6.
 
-**Roadmap:** Phase 3 (Issue #6) → 4: Attendance (#5) → 5: Guardian Portal (#4) → 6: Calendar (#3) → 7: Documents (#2) → 8: Reporting (#1)
+**Roadmap:** Phase 3C: CSV Import (#6) → Phase 4: Attendance (#5) → Phase 5: Guardian Portal (#4) → Phase 6: Calendar (#3) → Phase 7: Documents (#2) → Phase 8: Reporting (#1)

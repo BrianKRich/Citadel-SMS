@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\EnrollmentController;
 use App\Http\Controllers\Admin\GradeController;
 use App\Http\Controllers\Admin\GradingScaleController;
 use App\Http\Controllers\Admin\GuardianController;
+use App\Http\Controllers\Admin\ReportCardController;
+use App\Http\Controllers\Admin\TranscriptController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\AdminController;
@@ -148,6 +150,20 @@ Route::middleware('auth')->group(function () {
         Route::get('/enter/{assessment}', [GradeController::class, 'enter'])->name('admin.grades.enter');
         Route::post('/store', [GradeController::class, 'store'])->name('admin.grades.store');
         Route::get('/student/{student}', [GradeController::class, 'studentGrades'])->name('admin.grades.student');
+    });
+
+    // Phase 3B: Report Cards
+    Route::prefix('admin/report-cards')->group(function () {
+        Route::get('/', [ReportCardController::class, 'index'])->name('admin.report-cards.index');
+        Route::get('/{student}', [ReportCardController::class, 'show'])->name('admin.report-cards.show');
+        Route::get('/{student}/pdf', [ReportCardController::class, 'pdf'])->name('admin.report-cards.pdf');
+    });
+
+    // Phase 3B: Transcripts
+    Route::prefix('admin/transcripts')->group(function () {
+        Route::get('/', [TranscriptController::class, 'index'])->name('admin.transcripts.index');
+        Route::get('/{student}', [TranscriptController::class, 'show'])->name('admin.transcripts.show');
+        Route::get('/{student}/pdf', [TranscriptController::class, 'pdf'])->name('admin.transcripts.pdf');
     });
 });
 

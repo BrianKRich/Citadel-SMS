@@ -154,6 +154,22 @@ const props = defineProps({
                             color="accent"
                         />
 
+                        <AdminActionCard
+                            title="Report Cards"
+                            description="View and download per-term report cards for students"
+                            icon="📄"
+                            :href="route('admin.report-cards.index')"
+                            color="primary"
+                        />
+
+                        <AdminActionCard
+                            title="Transcripts"
+                            description="Generate official and unofficial student transcripts"
+                            icon="📜"
+                            :href="route('admin.transcripts.index')"
+                            color="secondary"
+                        />
+
                     </div>
                 </div>
 

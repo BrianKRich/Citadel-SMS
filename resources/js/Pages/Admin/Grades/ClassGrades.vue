@@ -13,6 +13,30 @@ const props = defineProps({
 const assessments = computed(() => props.classModel.assessments || []);
 const enrollments = computed(() => props.classModel.enrollments || []);
 
+// Build class rank map using standard competition ranking (1,1,3)
+const rankMap = computed(() => {
+    const sorted = [...enrollments.value]
+        .filter(e => e.weighted_average !== null && e.weighted_average !== undefined)
+        .sort((a, b) => Number(b.weighted_average) - Number(a.weighted_average));
+
+    const map = {};
+    let rank = 0;
+    let skip = 0;
+    let lastAvg = null;
+
+    sorted.forEach(enrollment => {
+        skip++;
+        const avg = Number(enrollment.weighted_average);
+        if (avg !== lastAvg) {
+            rank = skip;
+            lastAvg = avg;
+        }
+        map[enrollment.id] = rank;
+    });
+
+    return map;
+});
+
 // Build a quick-lookup: gradeMap[enrollmentId][assessmentId] = grade
 const gradeMap = computed(() => {
     const map = {};
@@ -150,6 +174,9 @@ function getLetterGradeBadgeClass(letter) {
                                     <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[70px]">
                                         Grade
                                     </th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 min-w-[60px]">
+                                        Rank
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
@@ -194,6 +221,13 @@ function getLetterGradeBadgeClass(letter) {
                                             class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold"
                                         >
                                             {{ enrollment.final_letter_grade }}
+                                        </span>
+                                        <span v-else class="text-sm text-gray-400">—</span>
+                                    </td>
+                                    <!-- Rank -->
+                                    <td class="px-4 py-4 text-center">
+                                        <span v-if="rankMap[enrollment.id]" class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            #{{ rankMap[enrollment.id] }}
                                         </span>
                                         <span v-else class="text-sm text-gray-400">—</span>
                                     </td>
