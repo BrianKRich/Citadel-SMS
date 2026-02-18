@@ -3,6 +3,9 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\AcademicYear;
+use App\Models\ClassModel;
+use App\Models\Enrollment;
+use App\Models\Student;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -270,5 +273,67 @@ class AcademicYearTest extends TestCase
         $second->refresh();
         $this->assertFalse($first->is_current);
         $this->assertTrue($second->is_current);
+    }
+
+    // ── Guard: cannot delete when students are enrolled ───────────────────────
+
+    public function test_destroy_blocked_when_students_enrolled(): void
+    {
+        $year    = AcademicYear::factory()->create();
+        $term    = Term::factory()->for($year)->create();
+        $class   = ClassModel::factory()->for($year, 'academicYear')->for($term)->create();
+        $student = Student::factory()->create();
+        Enrollment::factory()->for($class, 'class')->for($student)->create(['status' => 'enrolled']);
+
+        $response = $this->actingAs($this->admin())
+            ->delete(route('admin.academic-years.destroy', $year));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('academic_years', ['id' => $year->id]);
+    }
+
+    public function test_destroy_term_blocked_when_students_enrolled(): void
+    {
+        $year    = AcademicYear::factory()->create();
+        $term    = Term::factory()->for($year)->create();
+        $class   = ClassModel::factory()->for($year, 'academicYear')->for($term)->create();
+        $student = Student::factory()->create();
+        Enrollment::factory()->for($class, 'class')->for($student)->create(['status' => 'enrolled']);
+
+        $response = $this->actingAs($this->admin())
+            ->delete(route('admin.academic-years.terms.destroy', [$year, $term]));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('terms', ['id' => $term->id]);
+    }
+
+    public function test_destroy_blocked_when_classes_exist(): void
+    {
+        $year  = AcademicYear::factory()->create();
+        $term  = Term::factory()->for($year)->create();
+        ClassModel::factory()->for($year, 'academicYear')->for($term)->create();
+
+        $response = $this->actingAs($this->admin())
+            ->delete(route('admin.academic-years.destroy', $year));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('academic_years', ['id' => $year->id]);
+    }
+
+    public function test_destroy_term_blocked_when_classes_exist(): void
+    {
+        $year  = AcademicYear::factory()->create();
+        $term  = Term::factory()->for($year)->create();
+        ClassModel::factory()->for($year, 'academicYear')->for($term)->create();
+
+        $response = $this->actingAs($this->admin())
+            ->delete(route('admin.academic-years.terms.destroy', [$year, $term]));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('terms', ['id' => $term->id]);
     }
 }

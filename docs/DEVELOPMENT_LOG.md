@@ -563,7 +563,7 @@ Scaled up all seeders from minimal sample data to realistic volumes for developm
 | `CourseTest.php` | 14 | CRUD, unique `course_code` enforced on create + update (self-exclusion), credits min 0 validation, department + search filters |
 | `EmployeeTest.php` | 14 | CRUD, soft delete, auto-ID `EMP-YYYY-###`, department filter, unique email with self-exclusion, status enum |
 | `GuardianTest.php` | 13 | CRUD (no GuardianFactory — uses `Guardian::create()` directly), student relationship attach on store + sync on update, phone 7-digit minimum, relationship enum |
-| `AcademicYearTest.php` | 18 | CRUD, nested term CRUD (storeTerm / updateTerm / destroyTerm), `setCurrent()` unsets other years, `setCurrentTerm()` scoped to same academic year |
+| `AcademicYearTest.php` | 22 | CRUD, nested term CRUD (storeTerm / updateTerm / destroyTerm), `setCurrent()` unsets other years, `setCurrentTerm()` scoped to same academic year, deletion blocked when enrollments or classes exist |
 | `ClassTest.php` | 13 | CRUD, schedule conflict detection (overlapping time slots rejected), destroy blocked when enrollments exist, capacity reduction below enrolled count rejected |
 | `EnrollmentTest.php` | 10 | Index, create form, enroll success, duplicate enrollment guard, full class guard, non-open class guard, drop updates status, student schedule renders |
 
@@ -699,7 +699,7 @@ Flash messages live in Inertia shared props (`$page.props.flash`), not in the pa
 
 ---
 
-## Project Statistics (as of Phase 4 — February 18, 2026)
+## Project Statistics (as of Phase 4 + Bug Fixes — February 18, 2026)
 
 | Metric | Value |
 |--------|-------|
@@ -715,7 +715,7 @@ Flash messages live in Inertia shared props (`$page.props.flash`), not in the pa
 | Seeders | 15 |
 | Factories | 15 |
 | Test files | 23 |
-| Tests passing | 226 (1156 assertions) |
+| Tests passing | 230 (1168 assertions) |
 | Contributors | 1 |
 
 ---
@@ -941,9 +941,34 @@ Every public method calls `requireAttendanceEnabled()` which does `abort_if(Sett
 
 ---
 
+## Bug Fix: Term & Academic Year Deletion Guard
+
+**Date:** February 18, 2026
+**Commit:** `(this commit)`
+
+### Problem
+
+Deleting a term (or academic year) that had classes and enrolled students threw an unhandled 500 Server Error. Both `destroyTerm()` and `destroy()` called `$model->delete()` with no pre-flight check. The `classes.term_id` and `classes.academic_year_id` FKs are `onDelete('restrict')`, so PostgreSQL raised a constraint violation which Laravel surfaced as a 500.
+
+### Fix
+
+Added two-stage guard to both `destroyTerm()` and `destroy()` in `AcademicYearController`:
+
+1. **Enrollment check (primary):** Counts enrollments in any class belonging to the term/year via `Enrollment::whereHas('class', ...)`. If any exist, returns a user-friendly flash error:
+   > *"Cannot delete 'Fall 2025' — 500 students are enrolled in its classes."*
+
+2. **Class check (fallback):** Even with zero enrollments, a term with classes still can't be deleted due to the FK. Returns:
+   > *"Cannot delete 'Fall 2025' — 20 classes are assigned to it. Delete those classes first."*
+
+Both flash messages use `back()->with('error', ...)` — already rendered by `AcademicYears/Show.vue` and `Index.vue`.
+
+**4 new tests added** (enrollment-blocked and class-blocked variants for both `destroy` and `destroyTerm`). **230 tests, 1168 assertions — no regressions.**
+
+---
+
 ## Current Status
 
-**All Phase 1/2/3/4 fully implemented.** 226 tests passing. No known broken pages or known issues.
+**All Phase 1/2/3/4 fully implemented.** 230 tests passing. No known broken pages or known issues.
 
 **Completed phases:** 0, 1, 2, 3A, 3B, 3D, 4
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
+use App\Models\Enrollment;
 use App\Models\Term;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -132,6 +133,16 @@ class AcademicYearController extends Controller
      */
     public function destroy(AcademicYear $academicYear)
     {
+        $enrollmentCount = Enrollment::whereHas('class', fn ($q) => $q->where('academic_year_id', $academicYear->id))->count();
+        if ($enrollmentCount > 0) {
+            return back()->with('error', "Cannot delete \"{$academicYear->name}\" — {$enrollmentCount} " . str('student')->plural($enrollmentCount) . " are enrolled in its classes.");
+        }
+
+        $classCount = $academicYear->classes()->count();
+        if ($classCount > 0) {
+            return back()->with('error', "Cannot delete \"{$academicYear->name}\" — {$classCount} " . str('class')->plural($classCount) . " are assigned to it. Delete those classes first.");
+        }
+
         $name = $academicYear->name;
         $academicYear->delete();
 
@@ -198,6 +209,16 @@ class AcademicYearController extends Controller
      */
     public function destroyTerm(AcademicYear $academicYear, Term $term)
     {
+        $enrollmentCount = Enrollment::whereHas('class', fn ($q) => $q->where('term_id', $term->id))->count();
+        if ($enrollmentCount > 0) {
+            return back()->with('error', "Cannot delete \"{$term->name}\" — {$enrollmentCount} " . str('student')->plural($enrollmentCount) . " are enrolled in its classes.");
+        }
+
+        $classCount = $term->classes()->count();
+        if ($classCount > 0) {
+            return back()->with('error', "Cannot delete \"{$term->name}\" — {$classCount} " . str('class')->plural($classCount) . " are assigned to it. Delete those classes first.");
+        }
+
         $name = $term->name;
         $term->delete();
 
