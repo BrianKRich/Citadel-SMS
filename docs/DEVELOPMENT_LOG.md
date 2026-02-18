@@ -751,6 +751,42 @@ One-line change. No page-level edits needed — the fix propagates to every page
 
 ---
 
+## Bug Fix: User Management — Delete Button & Flash Alerts
+
+**Date:** February 18, 2026
+**Commit:** `36fe132`
+
+### Problem
+
+Deleting a user from the User Management page failed silently in two ways:
+
+**1. Flash error message never displayed**
+
+`Users/Index.vue` read flash from the paginated prop — the same broken pattern fixed earlier on other index pages:
+```js
+const showSuccess = ref(!!props.users.flash?.success);
+const showError   = ref(!!props.users.flash?.error);
+```
+Flash lives in Inertia shared props (`$page.props.flash`), not inside the paginated data object. When the server returned "You cannot delete your own account!", the ref was always `false` and the error alert never appeared.
+
+**2. Desktop delete button showed no disabled state**
+
+The delete button used `:disabled="user.id === $page.props.auth.user.id"` to prevent self-deletion, but had no disabled CSS classes on the desktop table row:
+```vue
+<button class="text-red-600 hover:text-red-900" :disabled="...">Delete</button>
+```
+The button appeared fully active even for the logged-in user's own row. The mobile card view already had `disabled:bg-gray-300 disabled:cursor-not-allowed`, but the desktop version did not.
+
+### Fixes
+
+- Replaced `showSuccess`/`showError` refs with `v-if="$page.props.flash?.success"` directly in template
+- Added `disabled:text-gray-300 disabled:cursor-not-allowed` to the desktop delete button
+- Removed unused `DangerButton` import and `ref` import
+
+**191 tests passing — no regressions.**
+
+---
+
 ## Current Status
 
 **All Phase 1/2/3 frontend fully implemented.** 191 tests passing. No known broken pages.
