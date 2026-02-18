@@ -10,6 +10,8 @@ class ThemeController extends Controller
 {
     public function index()
     {
+        abort_if(Setting::get('feature_theme_enabled', '1') !== '1', 403);
+
         $theme = [
             'primary_color' => Setting::get('theme_primary_color', '#6366f1'),
             'secondary_color' => Setting::get('theme_secondary_color', '#8b5cf6'),
@@ -25,6 +27,7 @@ class ThemeController extends Controller
 
     public function update(Request $request)
     {
+        abort_if(Setting::get('feature_theme_enabled', '1') !== '1', 403);
         $validated = $request->validate([
             'primary_color' => 'required|string',
             'secondary_color' => 'required|string',

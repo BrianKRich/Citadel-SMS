@@ -12,15 +12,22 @@ const props = defineProps({
 
 const page = usePage();
 
-const featureForm = useForm({
+const attendanceForm = useForm({
     attendance_enabled: page.props.features?.attendance_enabled ?? false,
 });
 
+const themeForm = useForm({
+    theme_enabled: page.props.features?.theme_enabled ?? true,
+});
+
 function toggleAttendance() {
-    featureForm.attendance_enabled = !featureForm.attendance_enabled;
-    featureForm.post(route('admin.feature-settings.update'), {
-        preserveScroll: true,
-    });
+    attendanceForm.attendance_enabled = !attendanceForm.attendance_enabled;
+    attendanceForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
+}
+
+function toggleTheme() {
+    themeForm.theme_enabled = !themeForm.theme_enabled;
+    themeForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
 }
 </script>
 
@@ -53,12 +60,7 @@ function toggleAttendance() {
                 <div class="mb-8">
                     <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">User Statistics</h3>
                     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                        <StatCard
-                            title="Total Users"
-                            :value="stats.total_users"
-                            icon="👥"
-                        />
-
+                        <StatCard title="Total Users" :value="stats.total_users" icon="👥" />
                         <StatCard
                             title="New Today"
                             :value="stats.users_today"
@@ -66,18 +68,8 @@ function toggleAttendance() {
                             trend="up"
                             :trend-value="stats.users_today > 0 ? '+' + stats.users_today : '0'"
                         />
-
-                        <StatCard
-                            title="This Week"
-                            :value="stats.users_this_week"
-                            icon="📊"
-                        />
-
-                        <StatCard
-                            title="This Month"
-                            :value="stats.users_this_month"
-                            icon="📈"
-                        />
+                        <StatCard title="This Week" :value="stats.users_this_week" icon="📊" />
+                        <StatCard title="This Month" :value="stats.users_this_month" icon="📈" />
                     </div>
                 </div>
 
@@ -85,31 +77,83 @@ function toggleAttendance() {
                 <div class="mb-8">
                     <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Grade Statistics</h3>
                     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                        <StatCard
-                            title="Total Assessments"
-                            :value="stats.total_assessments"
-                            icon="📝"
-                        />
-
-                        <StatCard
-                            title="Grades This Week"
-                            :value="stats.grades_this_week"
-                            icon="✅"
-                        />
-
-                        <StatCard
-                            title="Average GPA"
-                            :value="stats.average_gpa || '—'"
-                            icon="🎓"
-                        />
+                        <StatCard title="Total Assessments" :value="stats.total_assessments" icon="📝" />
+                        <StatCard title="Grades This Week" :value="stats.grades_this_week" icon="✅" />
+                        <StatCard title="Average GPA" :value="stats.average_gpa || '—'" icon="🎓" />
                     </div>
                 </div>
 
-                <!-- Admin Actions -->
+                <!-- Quick Actions -->
                 <div>
                     <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Quick Actions</h3>
                     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+
+                        <!-- Feature Settings card — inline toggles -->
+                        <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+                            <div class="mb-5 flex items-start space-x-4">
+                                <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-2xl dark:bg-gray-700">
+                                    ⚙️
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Feature Settings</h3>
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Enable or disable application features</p>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <!-- Attendance toggle -->
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Attendance Tracking</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Track student attendance by class</p>
+                                    </div>
+                                    <button
+                                        @click="toggleAttendance"
+                                        :disabled="attendanceForm.processing"
+                                        :class="[
+                                            $page.props.features?.attendance_enabled
+                                                ? 'bg-primary-600 hover:bg-primary-700'
+                                                : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600',
+                                            'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50'
+                                        ]"
+                                    >
+                                        <span
+                                            :class="[
+                                                $page.props.features?.attendance_enabled ? 'translate-x-5' : 'translate-x-0',
+                                                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
+                                            ]"
+                                        />
+                                    </button>
+                                </div>
+
+                                <!-- Theme toggle -->
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Theme Settings</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Customize colors and appearance</p>
+                                    </div>
+                                    <button
+                                        @click="toggleTheme"
+                                        :disabled="themeForm.processing"
+                                        :class="[
+                                            $page.props.features?.theme_enabled
+                                                ? 'bg-primary-600 hover:bg-primary-700'
+                                                : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600',
+                                            'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50'
+                                        ]"
+                                    >
+                                        <span
+                                            :class="[
+                                                $page.props.features?.theme_enabled ? 'translate-x-5' : 'translate-x-0',
+                                                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
+                                            ]"
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <AdminActionCard
+                            v-if="$page.props.features?.theme_enabled"
                             title="Theme Settings"
                             description="Customize colors and appearance of your application"
                             icon="🎨"
@@ -198,39 +242,6 @@ function toggleAttendance() {
                             color="primary"
                         />
 
-                    </div>
-                </div>
-
-                <!-- Feature Settings -->
-                <div class="mt-8">
-                    <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Feature Settings</h3>
-                    <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800 p-6">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">Attendance Tracking</h4>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    Enable attendance management for all classes.
-                                    {{ $page.props.features?.attendance_enabled ? 'Currently enabled.' : 'Currently disabled.' }}
-                                </p>
-                            </div>
-                            <button
-                                @click="toggleAttendance"
-                                :disabled="featureForm.processing"
-                                :class="[
-                                    $page.props.features?.attendance_enabled
-                                        ? 'bg-primary-600 hover:bg-primary-700'
-                                        : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600',
-                                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50'
-                                ]"
-                            >
-                                <span
-                                    :class="[
-                                        $page.props.features?.attendance_enabled ? 'translate-x-5' : 'translate-x-0',
-                                        'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
-                                    ]"
-                                />
-                            </button>
-                        </div>
                     </div>
                 </div>
 

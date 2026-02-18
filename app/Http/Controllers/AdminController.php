@@ -32,14 +32,17 @@ class AdminController extends Controller
     public function updateFeatureSettings(Request $request)
     {
         $validated = $request->validate([
-            'attendance_enabled' => ['required', 'boolean'],
+            'attendance_enabled' => ['sometimes', 'boolean'],
+            'theme_enabled'      => ['sometimes', 'boolean'],
         ]);
 
-        Setting::set(
-            'feature_attendance_enabled',
-            $validated['attendance_enabled'] ? '1' : '0',
-            'boolean'
-        );
+        if (array_key_exists('attendance_enabled', $validated)) {
+            Setting::set('feature_attendance_enabled', $validated['attendance_enabled'] ? '1' : '0', 'boolean');
+        }
+
+        if (array_key_exists('theme_enabled', $validated)) {
+            Setting::set('feature_theme_enabled', $validated['theme_enabled'] ? '1' : '0', 'boolean');
+        }
 
         return back()->with('success', 'Feature settings updated.');
     }
