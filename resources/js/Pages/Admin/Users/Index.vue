@@ -4,16 +4,12 @@ import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
-import DangerButton from '@/Components/DangerButton.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
 
 const props = defineProps({
     users: Object,
 });
 
-const showSuccess = ref(!!props.users.flash?.success);
-const showError = ref(!!props.users.flash?.error);
 
 const deleteUser = (userId) => {
     if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
@@ -43,20 +39,11 @@ const getRoleBadgeClass = (role) => {
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <!-- Alerts -->
-                <div v-if="showSuccess" class="mb-4">
-                    <Alert
-                        type="success"
-                        :message="$page.props.flash.success"
-                        @dismiss="showSuccess = false"
-                    />
+                <div v-if="$page.props.flash?.success" class="mb-4">
+                    <Alert type="success" :message="$page.props.flash.success" />
                 </div>
-
-                <div v-if="showError" class="mb-4">
-                    <Alert
-                        type="error"
-                        :message="$page.props.flash.error"
-                        @dismiss="showError = false"
-                    />
+                <div v-if="$page.props.flash?.error" class="mb-4">
+                    <Alert type="error" :message="$page.props.flash.error" />
                 </div>
 
                 <Card>
@@ -127,7 +114,7 @@ const getRoleBadgeClass = (role) => {
                                         </Link>
                                         <button
                                             @click="deleteUser(user.id)"
-                                            class="text-red-600 hover:text-red-900"
+                                            class="text-red-600 hover:text-red-900 disabled:text-gray-300 disabled:cursor-not-allowed"
                                             :disabled="user.id === $page.props.auth.user.id"
                                         >
                                             Delete
