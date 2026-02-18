@@ -3,12 +3,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     students: Object,
-    filters: Object,
-    trashedCount: Number,
 });
 
 const getStatusBadgeClass = (status) => {
@@ -21,15 +19,25 @@ const getStatusBadgeClass = (status) => {
     };
     return classes[status] || classes.inactive;
 };
+
+const restore = (student) => {
+    router.post(route('admin.students.restore', student.id));
+};
+
+const forceDelete = (student) => {
+    if (confirm(`Permanently delete ${student.first_name} ${student.last_name}? This cannot be undone.`)) {
+        router.delete(route('admin.students.force-delete', student.id));
+    }
+};
 </script>
 
 <template>
-    <Head title="Student Management" />
+    <Head title="Deleted Students" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Student Management
+                Deleted Students
             </h2>
         </template>
 
@@ -46,27 +54,26 @@ const getStatusBadgeClass = (status) => {
                 <Card>
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                         <PageHeader
-                            title="Students"
-                            :description="`Manage all ${students.total} student records`"
+                            title="Deleted Students"
+                            :description="`${students.total} deleted record(s)`"
                         />
 
-                        <div class="sm:ml-auto flex items-center gap-4">
+                        <div class="sm:ml-auto">
                             <Link
-                                v-if="trashedCount > 0"
-                                :href="route('admin.students.trashed')"
+                                :href="route('admin.students.index')"
                                 class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                             >
-                                Deleted ({{ trashedCount }})
+                                &larr; Back to Students
                             </Link>
-                            <Link
-                                :href="route('admin.students.create')"
-                                class="inline-flex w-full sm:w-auto items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700"
-                            >+ Add New Student</Link>
                         </div>
                     </div>
 
+                    <div v-if="students.total === 0" class="py-12 text-center text-gray-500 dark:text-gray-400">
+                        No deleted students found.
+                    </div>
+
                     <!-- Desktop Table View -->
-                    <div class="hidden md:block overflow-x-auto">
+                    <div v-else class="hidden md:block overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-800">
                                 <tr>
@@ -83,7 +90,7 @@ const getStatusBadgeClass = (status) => {
                                         Status
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                        Enrolled
+                                        Deleted
                                     </th>
                                     <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Actions
@@ -116,17 +123,17 @@ const getStatusBadgeClass = (status) => {
                                         </span>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ new Date(student.enrollment_date).toLocaleDateString() }}
+                                        {{ new Date(student.deleted_at).toLocaleDateString() }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                        <Link
-                                            :href="route('admin.students.show', student.id)"
-                                            class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-4"
-                                        >View</Link>
-                                        <Link
-                                            :href="route('admin.students.edit', student.id)"
+                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium space-x-3">
+                                        <button
+                                            @click="restore(student)"
                                             class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
-                                        >Edit</Link>
+                                        >Restore</button>
+                                        <button
+                                            @click="forceDelete(student)"
+                                            class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                                        >Delete Forever</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -134,7 +141,7 @@ const getStatusBadgeClass = (status) => {
                     </div>
 
                     <!-- Mobile Card View -->
-                    <div class="md:hidden space-y-4">
+                    <div v-if="students.total > 0" class="md:hidden space-y-4">
                         <div
                             v-for="student in students.data"
                             :key="student.id"
@@ -158,24 +165,24 @@ const getStatusBadgeClass = (status) => {
                             </div>
 
                             <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                                Enrolled {{ new Date(student.enrollment_date).toLocaleDateString() }}
+                                Deleted {{ new Date(student.deleted_at).toLocaleDateString() }}
                             </div>
 
                             <div class="flex gap-2">
-                                <Link
-                                    :href="route('admin.students.show', student.id)"
+                                <button
+                                    @click="restore(student)"
                                     class="flex-1 text-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 min-h-[44px] flex items-center justify-center"
-                                >View</Link>
-                                <Link
-                                    :href="route('admin.students.edit', student.id)"
-                                    class="flex-1 text-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-700 min-h-[44px] flex items-center justify-center"
-                                >Edit</Link>
+                                >Restore</button>
+                                <button
+                                    @click="forceDelete(student)"
+                                    class="flex-1 text-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 min-h-[44px] flex items-center justify-center"
+                                >Delete Forever</button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Pagination -->
-                    <div v-if="students.links.length > 3" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 sm:px-6">
+                    <div v-if="students.links && students.links.length > 3" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 sm:px-6">
                         <div class="flex flex-1 justify-between sm:hidden">
                             <Link
                                 v-if="students.prev_page_url"
@@ -201,7 +208,7 @@ const getStatusBadgeClass = (status) => {
                                     <span class="font-medium">{{ students.to }}</span>
                                     of
                                     <span class="font-medium">{{ students.total }}</span>
-                                    students
+                                    deleted students
                                 </p>
                             </div>
                             <div>

@@ -699,22 +699,21 @@ Flash messages live in Inertia shared props (`$page.props.flash`), not in the pa
 
 ---
 
-## Project Statistics (as of Full Frontend Implementation — February 18, 2026)
+## Project Statistics (as of Phase 3D — February 18, 2026)
 
 | Metric | Value |
 |--------|-------|
-| Total commits | 59 |
 | Development period | Feb 8–18, 2026 |
-| Phases completed | Phase 0–2 + 3A + 3B (all steps) |
+| Phases completed | Phase 0–2 + 3A + 3B + 3D |
 | Database tables | 22 |
 | Eloquent models | 18 |
 | Admin controllers | 13 |
-| Vue pages | 58 (all full UI — no stubs remaining) |
+| Vue pages | 60 |
 | Vue components | 23 |
 | Blade PDF templates | 2 |
 | Services | 3 (GradeCalculationService, ReportCardService, TranscriptService) |
 | Test files | 22 |
-| Tests passing | 191 (926 assertions) |
+| Tests passing | 197 (960 assertions) |
 | Contributors | 1 |
 
 ---
@@ -787,12 +786,74 @@ The button appeared fully active even for the logged-in user's own row. The mobi
 
 ---
 
+## Phase 3D: Soft Delete Restore UI & EnrollmentController Fix
+
+**Date:** February 18, 2026
+
+### What Was Built
+
+Admins can now view, restore, and permanently delete soft-deleted students and employees. Previously these records were unrecoverable without direct database access. A long-standing bug in `EnrollmentController` that caused teacher names to disappear when an employee was soft-deleted was also fixed.
+
+**EnrollmentController fix (`class.employee` eager-load):**
+
+Both `index()` and `studentSchedule()` previously used a flat eager-load that the global SoftDelete scope filtered out:
+```php
+->with(['student', 'class.course', 'class.employee', 'class.term'])
+```
+Replaced with a closure that bypasses the soft-delete scope on the employee relationship:
+```php
+->with([
+    'student',
+    'class.course',
+    'class.employee' => fn($q) => $q->withTrashed(),
+    'class.term',
+])
+```
+Teacher names in enrollment lists and student schedule views now remain visible even after the employee record is soft-deleted.
+
+**New routes (6):**
+
+Added before their respective resource routes (so `trashed` isn't swallowed by `{student}/{employee}` binding):
+- `GET  admin/students/trashed` → `admin.students.trashed`
+- `POST admin/students/{student}/restore` → `admin.students.restore` (with `withTrashed()`)
+- `DELETE admin/students/{student}/force-delete` → `admin.students.force-delete` (with `withTrashed()`)
+- Same three for employees
+
+**New controller methods (6 — 3 per controller):**
+
+`StudentController` and `EmployeeController` each received:
+- `trashed()` — paginates `onlyTrashed()` records, renders `Admin/Students/Trashed` or `Admin/Employees/Trashed`
+- `restore()` — calls `$model->restore()`, redirects back to trashed list with flash
+- `forceDelete()` — deletes photo from storage if present, calls `$model->forceDelete()`
+
+The `index()` action on both controllers now also passes `trashedCount` so the index page can show a "Deleted (N)" link.
+
+**New Vue pages (2):**
+- `resources/js/Pages/Admin/Students/Trashed.vue`
+- `resources/js/Pages/Admin/Employees/Trashed.vue`
+
+Both pages follow the existing Index page layout: desktop table + mobile card view, flash alerts, pagination. Each row has **Restore** (POST) and **Delete Forever** (DELETE with `confirm()` dialog) action buttons. A back-link returns to the main index.
+
+**Index page updates:**
+
+`Students/Index.vue` and `Employees/Index.vue` each received a new `trashedCount` prop. When `trashedCount > 0` a "Deleted (N)" link appears next to the Add button, linking to the trashed view.
+
+**New tests (6):**
+
+Three tests each added to `StudentTest.php` and `EmployeeTest.php`:
+- `test_trashed_index_shows_deleted_*` — soft-deletes a record, GETs the trashed list, asserts it appears
+- `test_restore_recovers_soft_deleted_*` — soft-deletes, POSTs restore, asserts `deleted_at` is null
+- `test_force_delete_permanently_removes_*` — soft-deletes, sends DELETE, asserts record is gone from DB entirely
+
+**197 tests passing (960 assertions) — no regressions.**
+
+---
+
 ## Current Status
 
-**All Phase 1/2/3 frontend fully implemented.** 191 tests passing. No known broken pages.
+**All Phase 1/2/3 frontend fully implemented.** 197 tests passing. No known broken pages or known issues.
 
-**Known issues:**
-- `EnrollmentController::index()` and `::studentSchedule()` reference `class.teacher` in eager-load; tests work around this by not creating enrollments. Low-priority since the frontend now accesses `enrollment.class.employee` correctly.
+**Completed phases:** 0, 1, 2, 3A, 3B, 3D
 
 ---
 
@@ -809,14 +870,6 @@ Bulk data intake to reduce manual entry burden:
 - Import enrollment data from external systems
 - Export any index page to CSV/Excel (students, employees, courses, classes, enrollments, grades)
 - Downloadable grade reports and transcript exports as CSV
-
-### Phase 3D: Soft Delete Restore UI
-**No existing issue**
-
-Student and Employee models use `SoftDeletes` but there is no admin UI to view or restore soft-deleted records. Needed for accidental-deletion recovery:
-- "Deleted Students" view with restore and permanent-delete actions
-- "Deleted Employees" view with same actions
-- `EnrollmentController` cleanup: fix `class.teacher` → `class.employee` eager-load reference (low-priority bug noted above)
 
 ### Phase 3E: Audit Logging
 **No existing issue**
@@ -889,3 +942,46 @@ As data volume grows, these improvements will become necessary:
 - **N+1 prevention audit:** Verify all index query eager-loads cover every relationship accessed in Vue templates.
 - **Staging environment:** No staging server currently exists. Push to main deploys directly to production. A staging branch + environment would de-risk deployments.
 - **Database backups:** No automated backup strategy is documented. Production PostgreSQL should have scheduled pg_dump exports to S3 or Lightsail snapshots.
+
+---
+
+## Future Ideas & Enhancements
+
+The following ideas are captured for long-term consideration. They are not yet assigned to a phase or issue.
+
+### User Experience
+- Add keyboard shortcuts for common actions
+- Enhance mobile responsiveness across all pages
+
+### Student Management
+- Implement student progress tracking with visual dashboards
+- Create student profile completion percentage tracker
+- Department-specific note-taking system: each department can add and view notes on student records, with access filtered to that department's focus area (e.g., Medical sees only medical notes, Education sees only education notes)
+
+### Department-Specific Dashboards
+- Create dedicated dashboards for: Medical, Admissions, Counseling, Post-Residential, Education, and Cadre
+- Each dashboard provides department-specific access to student data aligned with that department's responsibilities
+- Role-based data filtering so each department only sees relevant information
+- Key metrics and visualizations specific to each department's focus area
+
+### Administrative Features
+- Role-based access control improvements beyond current admin/user split
+- Integration with Cadet Tracker (external system)
+- NGB-specific data element capture
+
+### Security Enhancements
+- Two-factor authentication support
+- Enhanced password policies and reset flow
+- Session management improvements
+- Data encryption for sensitive fields
+
+### Integration Possibilities
+- SSO (Single Sign-On) integration
+- Calendar API integration for scheduling
+- Email platform integration for communications
+
+### Development Process
+- Automated code quality checks and linting
+- CI/CD pipeline enhancements
+- Better documentation generation tools
+- Expanded automated testing suite

@@ -42,6 +42,7 @@ class EmployeeController extends Controller
             'employees' => $employees,
             'departments' => $departments,
             'filters' => $request->only(['search', 'department_id', 'status']),
+            'trashedCount' => Employee::onlyTrashed()->count(),
         ]);
     }
 
@@ -177,5 +178,45 @@ class EmployeeController extends Controller
 
         return redirect()->route('admin.employees.index')
             ->with('success', "Employee {$employeeId} deleted successfully.");
+    }
+
+    /**
+     * Display soft-deleted employees
+     */
+    public function trashed()
+    {
+        $employees = Employee::onlyTrashed()
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
+
+        return Inertia::render('Admin/Employees/Trashed', [
+            'employees' => $employees,
+        ]);
+    }
+
+    /**
+     * Restore a soft-deleted employee
+     */
+    public function restore(Employee $employee)
+    {
+        $employee->restore();
+
+        return redirect()->route('admin.employees.trashed')
+            ->with('success', "Employee {$employee->employee_id} restored successfully.");
+    }
+
+    /**
+     * Permanently delete an employee
+     */
+    public function forceDelete(Employee $employee)
+    {
+        if ($employee->photo) {
+            Storage::disk('public')->delete($employee->photo);
+        }
+        $employee->forceDelete();
+
+        return redirect()->route('admin.employees.trashed')
+            ->with('success', 'Employee permanently deleted.');
     }
 }

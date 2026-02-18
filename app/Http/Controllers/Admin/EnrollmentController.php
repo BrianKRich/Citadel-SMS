@@ -18,7 +18,12 @@ class EnrollmentController extends Controller
     public function index(Request $request)
     {
         $enrollments = Enrollment::query()
-            ->with(['student', 'class.course', 'class.employee', 'class.term'])
+            ->with([
+                'student',
+                'class.course',
+                'class.employee' => fn($q) => $q->withTrashed(),
+                'class.term',
+            ])
             ->when($request->student_id, function ($query, $studentId) {
                 $query->student($studentId);
             })
@@ -161,7 +166,11 @@ class EnrollmentController extends Controller
     public function studentSchedule(Student $student)
     {
         $enrollments = $student->enrollments()
-            ->with(['class.course', 'class.employee', 'class.term'])
+            ->with([
+                'class.course',
+                'class.employee' => fn($q) => $q->withTrashed(),
+                'class.term',
+            ])
             ->enrolled()
             ->get();
 

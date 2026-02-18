@@ -9,6 +9,7 @@ const props = defineProps({
     employees: Object,
     departments: Array,
     filters: Object,
+    trashedCount: Number,
 });
 
 const getStatusBadgeClass = (status) => {
@@ -48,7 +49,14 @@ const getStatusBadgeClass = (status) => {
                             :description="`Manage all ${employees.total} employee profiles`"
                         />
 
-                        <div class="sm:ml-auto">
+                        <div class="sm:ml-auto flex items-center gap-4">
+                            <Link
+                                v-if="trashedCount > 0"
+                                :href="route('admin.employees.trashed')"
+                                class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                                Deleted ({{ trashedCount }})
+                            </Link>
                             <Link
                                 :href="route('admin.employees.create')"
                                 class="inline-flex w-full sm:w-auto items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700"

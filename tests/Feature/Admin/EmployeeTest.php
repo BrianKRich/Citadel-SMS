@@ -216,4 +216,43 @@ class EmployeeTest extends TestCase
         $response->assertRedirect(route('admin.employees.index'));
         $this->assertSoftDeleted('employees', ['id' => $employee->id]);
     }
+
+    // ── Trashed ───────────────────────────────────────────────────────────────
+
+    public function test_trashed_index_shows_deleted_employees(): void
+    {
+        $employee = Employee::factory()->create(['first_name' => 'Deleted']);
+        $employee->delete();
+
+        $this->actingAs($this->admin())
+            ->get(route('admin.employees.trashed'))
+            ->assertInertia(fn (Assert $p) => $p
+                ->component('Admin/Employees/Trashed')
+                ->where('employees.total', 1)
+            );
+    }
+
+    public function test_restore_recovers_soft_deleted_employee(): void
+    {
+        $employee = Employee::factory()->create();
+        $employee->delete();
+
+        $response = $this->actingAs($this->admin())
+            ->post(route('admin.employees.restore', $employee->id));
+
+        $response->assertRedirect(route('admin.employees.trashed'));
+        $this->assertDatabaseHas('employees', ['id' => $employee->id, 'deleted_at' => null]);
+    }
+
+    public function test_force_delete_permanently_removes_employee(): void
+    {
+        $employee = Employee::factory()->create();
+        $employee->delete();
+
+        $response = $this->actingAs($this->admin())
+            ->delete(route('admin.employees.force-delete', $employee->id));
+
+        $response->assertRedirect(route('admin.employees.trashed'));
+        $this->assertDatabaseMissing('employees', ['id' => $employee->id]);
+    }
 }

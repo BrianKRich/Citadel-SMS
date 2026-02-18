@@ -232,4 +232,43 @@ class StudentTest extends TestCase
             ->where('students.total', 0)
         );
     }
+
+    // ── Trashed ───────────────────────────────────────────────────────────────
+
+    public function test_trashed_index_shows_deleted_students(): void
+    {
+        $student = Student::factory()->create(['first_name' => 'Deleted']);
+        $student->delete();
+
+        $this->actingAs($this->admin())
+            ->get(route('admin.students.trashed'))
+            ->assertInertia(fn (Assert $p) => $p
+                ->component('Admin/Students/Trashed')
+                ->where('students.total', 1)
+            );
+    }
+
+    public function test_restore_recovers_soft_deleted_student(): void
+    {
+        $student = Student::factory()->create();
+        $student->delete();
+
+        $response = $this->actingAs($this->admin())
+            ->post(route('admin.students.restore', $student->id));
+
+        $response->assertRedirect(route('admin.students.trashed'));
+        $this->assertDatabaseHas('students', ['id' => $student->id, 'deleted_at' => null]);
+    }
+
+    public function test_force_delete_permanently_removes_student(): void
+    {
+        $student = Student::factory()->create();
+        $student->delete();
+
+        $response = $this->actingAs($this->admin())
+            ->delete(route('admin.students.force-delete', $student->id));
+
+        $response->assertRedirect(route('admin.students.trashed'));
+        $this->assertDatabaseMissing('students', ['id' => $student->id]);
+    }
 }

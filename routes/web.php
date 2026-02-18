@@ -55,6 +55,16 @@ Route::middleware('auth')->group(function () {
     ]);
 
     // Phase 1: Student & Course Management
+    // Student trash management (must precede resource route to avoid {student} binding)
+    Route::get('admin/students/trashed', [StudentController::class, 'trashed'])
+        ->name('admin.students.trashed');
+    Route::post('admin/students/{student}/restore', [StudentController::class, 'restore'])
+        ->name('admin.students.restore')
+        ->withTrashed();
+    Route::delete('admin/students/{student}/force-delete', [StudentController::class, 'forceDelete'])
+        ->name('admin.students.force-delete')
+        ->withTrashed();
+
     Route::resource('admin/students', StudentController::class)->names([
         'index' => 'admin.students.index',
         'create' => 'admin.students.create',
@@ -84,6 +94,16 @@ Route::middleware('auth')->group(function () {
         'update' => 'admin.courses.update',
         'destroy' => 'admin.courses.destroy',
     ]);
+
+    // Employee trash management (must precede resource route to avoid {employee} binding)
+    Route::get('admin/employees/trashed', [EmployeeController::class, 'trashed'])
+        ->name('admin.employees.trashed');
+    Route::post('admin/employees/{employee}/restore', [EmployeeController::class, 'restore'])
+        ->name('admin.employees.restore')
+        ->withTrashed();
+    Route::delete('admin/employees/{employee}/force-delete', [EmployeeController::class, 'forceDelete'])
+        ->name('admin.employees.force-delete')
+        ->withTrashed();
 
     Route::resource('admin/employees', EmployeeController::class)->names([
         'index' => 'admin.employees.index',

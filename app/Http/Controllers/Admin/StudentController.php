@@ -36,6 +36,7 @@ class StudentController extends Controller
         return Inertia::render('Admin/Students/Index', [
             'students' => $students,
             'filters' => $request->only(['search', 'status']),
+            'trashedCount' => Student::onlyTrashed()->count(),
         ]);
     }
 
@@ -188,5 +189,45 @@ class StudentController extends Controller
 
         return redirect()->route('admin.students.index')
             ->with('success', "Student {$studentId} deleted successfully.");
+    }
+
+    /**
+     * Display soft-deleted students
+     */
+    public function trashed()
+    {
+        $students = Student::onlyTrashed()
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
+
+        return Inertia::render('Admin/Students/Trashed', [
+            'students' => $students,
+        ]);
+    }
+
+    /**
+     * Restore a soft-deleted student
+     */
+    public function restore(Student $student)
+    {
+        $student->restore();
+
+        return redirect()->route('admin.students.trashed')
+            ->with('success', "Student {$student->student_id} restored successfully.");
+    }
+
+    /**
+     * Permanently delete a student
+     */
+    public function forceDelete(Student $student)
+    {
+        if ($student->photo) {
+            Storage::disk('public')->delete($student->photo);
+        }
+        $student->forceDelete();
+
+        return redirect()->route('admin.students.trashed')
+            ->with('success', 'Student permanently deleted.');
     }
 }
