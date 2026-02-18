@@ -56,6 +56,7 @@ class Term extends Model
     {
         static::where('academic_year_id', $this->academic_year_id)
             ->update(['is_current' => false]);
-        $this->update(['is_current' => true]);
+        static::where('id', $this->id)->update(['is_current' => true]);
+        $this->is_current = true;
     }
 }

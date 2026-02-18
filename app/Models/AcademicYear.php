@@ -53,6 +53,7 @@ class AcademicYear extends Model
     public function setCurrent()
     {
         static::query()->update(['is_current' => false]);
-        $this->update(['is_current' => true]);
+        static::query()->where('id', $this->id)->update(['is_current' => true]);
+        $this->is_current = true;
     }
 }
