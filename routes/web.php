@@ -188,6 +188,8 @@ Route::middleware('auth')->group(function () {
     });
 
     // Feature settings toggle
+    Route::get('/admin/feature-settings', [AdminController::class, 'featureSettings'])
+        ->name('admin.feature-settings.index');
     Route::post('/admin/feature-settings', [AdminController::class, 'updateFeatureSettings'])
         ->name('admin.feature-settings.update');
 

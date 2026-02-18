@@ -29,6 +29,11 @@ class AdminController extends Controller
         ]);
     }
 
+    public function featureSettings()
+    {
+        return Inertia::render('Admin/FeatureSettings');
+    }
+
     public function updateFeatureSettings(Request $request)
     {
         $validated = $request->validate([

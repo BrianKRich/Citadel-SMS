@@ -4,31 +4,11 @@ import PageHeader from '@/Components/UI/PageHeader.vue';
 import StatCard from '@/Components/Admin/StatCard.vue';
 import AdminActionCard from '@/Components/Admin/AdminActionCard.vue';
 import Alert from '@/Components/UI/Alert.vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 
 const props = defineProps({
     stats: Object,
 });
-
-const page = usePage();
-
-const attendanceForm = useForm({
-    attendance_enabled: page.props.features?.attendance_enabled ?? false,
-});
-
-const themeForm = useForm({
-    theme_enabled: page.props.features?.theme_enabled ?? true,
-});
-
-function toggleAttendance() {
-    attendanceForm.attendance_enabled = !attendanceForm.attendance_enabled;
-    attendanceForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
-}
-
-function toggleTheme() {
-    themeForm.theme_enabled = !themeForm.theme_enabled;
-    themeForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
-}
 </script>
 
 <template>
@@ -87,70 +67,6 @@ function toggleTheme() {
                 <div>
                     <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Quick Actions</h3>
                     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-
-                        <!-- Feature Settings card — inline toggles -->
-                        <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-                            <div class="mb-5 flex items-start space-x-4">
-                                <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-2xl dark:bg-gray-700">
-                                    ⚙️
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Feature Settings</h3>
-                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Enable or disable application features</p>
-                                </div>
-                            </div>
-                            <div class="space-y-4">
-                                <!-- Attendance toggle -->
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Attendance Tracking</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">Track student attendance by class</p>
-                                    </div>
-                                    <button
-                                        @click="toggleAttendance"
-                                        :disabled="attendanceForm.processing"
-                                        :class="[
-                                            $page.props.features?.attendance_enabled
-                                                ? 'bg-primary-600 hover:bg-primary-700'
-                                                : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600',
-                                            'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50'
-                                        ]"
-                                    >
-                                        <span
-                                            :class="[
-                                                $page.props.features?.attendance_enabled ? 'translate-x-5' : 'translate-x-0',
-                                                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
-                                            ]"
-                                        />
-                                    </button>
-                                </div>
-
-                                <!-- Theme toggle -->
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Theme Settings</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">Customize colors and appearance</p>
-                                    </div>
-                                    <button
-                                        @click="toggleTheme"
-                                        :disabled="themeForm.processing"
-                                        :class="[
-                                            $page.props.features?.theme_enabled
-                                                ? 'bg-primary-600 hover:bg-primary-700'
-                                                : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600',
-                                            'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50'
-                                        ]"
-                                    >
-                                        <span
-                                            :class="[
-                                                $page.props.features?.theme_enabled ? 'translate-x-5' : 'translate-x-0',
-                                                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
-                                            ]"
-                                        />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
 
                         <AdminActionCard
                             v-if="$page.props.features?.theme_enabled"
@@ -230,6 +146,14 @@ function toggleTheme() {
                             description="Generate official and unofficial student transcripts"
                             icon="📜"
                             :href="route('admin.transcripts.index')"
+                            color="secondary"
+                        />
+
+                        <AdminActionCard
+                            title="Feature Settings"
+                            description="Enable or disable application features"
+                            icon="⚙️"
+                            :href="route('admin.feature-settings.index')"
                             color="secondary"
                         />
 
