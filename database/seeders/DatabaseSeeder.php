@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\County;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,8 +13,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Skip if already seeded — safe to re-run on every deploy
-        if (User::where('email', 'krmoble@gmail.com')->exists()) {
+        // Skip if already seeded — counties are static reference data seeded first,
+        // so their presence reliably indicates the DB has been seeded before.
+        if (County::count() > 0) {
             $this->command->info('Database already seeded — skipping.');
             return;
         }
