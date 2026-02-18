@@ -722,7 +722,7 @@ Flash messages live in Inertia shared props (`$page.props.flash`), not in the pa
 ## Bug Fix: Card Dark Mode Background
 
 **Date:** February 18, 2026
-**Commit:** (pending)
+**Commit:** `12b32eb`
 
 ### Problem
 
@@ -758,4 +758,98 @@ One-line change. No page-level edits needed — the fix propagates to every page
 **Known issues:**
 - `EnrollmentController::index()` and `::studentSchedule()` reference `class.teacher` in eager-load; tests work around this by not creating enrollments. Low-priority since the frontend now accesses `enrollment.class.employee` correctly.
 
-**Roadmap:** Phase 3C: CSV Import (#6) → Phase 4: Attendance (#5) → Phase 5: Guardian Portal (#4) → Phase 6: Calendar (#3) → Phase 7: Documents (#2) → Phase 8: Reporting (#1)
+---
+
+## Planned Roadmap
+
+The following phases are planned in priority order. GitHub issue numbers are noted where issues exist.
+
+### Phase 3C: CSV Import & Bulk Operations
+**GitHub Issue:** #6 (update to Phase 3C milestone)
+
+Bulk data intake to reduce manual entry burden:
+- Import students from CSV/Excel (validate headers, detect duplicates, report errors)
+- Import grades in bulk for a given assessment
+- Import enrollment data from external systems
+- Export any index page to CSV/Excel (students, employees, courses, classes, enrollments, grades)
+- Downloadable grade reports and transcript exports as CSV
+
+### Phase 3D: Soft Delete Restore UI
+**No existing issue**
+
+Student and Employee models use `SoftDeletes` but there is no admin UI to view or restore soft-deleted records. Needed for accidental-deletion recovery:
+- "Deleted Students" view with restore and permanent-delete actions
+- "Deleted Employees" view with same actions
+- `EnrollmentController` cleanup: fix `class.teacher` → `class.employee` eager-load reference (low-priority bug noted above)
+
+### Phase 3E: Audit Logging
+**No existing issue**
+
+Track who changed what and when for academic records integrity:
+- Log all create/update/delete events on Student, Employee, Grade, Enrollment models
+- Store actor (user ID), action, model type, record ID, before/after values (JSON diff)
+- Admin UI: audit log viewer with filters (model type, actor, date range)
+- Especially important for grade changes — accreditation bodies require audit trails
+
+### Phase 4: Attendance Management
+**GitHub Issue:** #5
+
+Full attendance tracking system:
+- `attendances` table: student_id, class_id, date, status (present/absent/late/excused), notes
+- Daily attendance entry per class (teacher or admin marks attendance)
+- Attendance report per student (total absences, tardies, excused)
+- Attendance summary per class
+- Threshold alerts (e.g., flag students missing more than 10% of sessions)
+- Frontend: attendance entry form, per-student attendance history, class attendance roster
+
+### Phase 5: Parent/Guardian Portal
+**GitHub Issue:** #4
+
+Non-admin facing pages for guardians to view their student's information:
+- Separate role: `guardian` (currently only `admin` and default user exist)
+- Guardian login linked to their associated student(s) via the existing `guardians` + `student_guardian` relationship
+- View-only pages: student profile, current schedule, grades by term, report card PDF download, attendance summary
+- No write access — read-only portal
+- Email notification opt-in for grade updates and attendance alerts
+
+### Phase 6: Academic Calendar
+**GitHub Issue:** #3
+
+Structured calendar for the school year:
+- `calendar_events` table: title, type (holiday/exam/event), date, term_id
+- Admin CRUD for calendar events
+- Frontend calendar view (monthly grid)
+- Integration with attendance (auto-mark excused on school holidays)
+- iCal export for personal calendar sync
+
+### Phase 7: Document Management
+**GitHub Issue:** #2
+
+Store and associate documents with students and employees:
+- `documents` table: model_type, model_id, category, filename, storage_path, uploaded_by, uploaded_at
+- Categories: enrollment agreement, IEP, medical form, disciplinary record, certificate, etc.
+- Admin upload/download/delete UI per student and per employee
+- Access control: admin only, or guardian-accessible for specific categories
+- Storage: `Storage::disk('public')` or S3 for production
+
+### Phase 8: Reporting & Analytics
+**GitHub Issue:** #1
+
+Dashboard-level insights beyond the current StatCards:
+- GPA distribution chart (histogram)
+- Enrollment trends by term
+- Attendance rate summary by class and by student
+- Class performance comparison (average grade per course)
+- At-risk student report (failing grades + high absenteeism)
+- Export any report as PDF or CSV
+- Potential: dedicated reporting role with read-only access to all analytics
+
+### Performance & Infrastructure (No Phase Number)
+**No existing issue**
+
+As data volume grows, these improvements will become necessary:
+- **Search performance:** Current `LIKE '%query%'` queries on all index pages will degrade at scale. Consider PostgreSQL `tsvector` full-text search or a search index on `name`, `student_id`, `course_code` columns.
+- **Query caching:** Frequently-read reference data (terms, academic years, active courses) can be cached with `Cache::remember()` to reduce DB round trips.
+- **N+1 prevention audit:** Verify all index query eager-loads cover every relationship accessed in Vue templates.
+- **Staging environment:** No staging server currently exists. Push to main deploys directly to production. A staging branch + environment would de-risk deployments.
+- **Database backups:** No automated backup strategy is documented. Production PostgreSQL should have scheduled pg_dump exports to S3 or Lightsail snapshots.
