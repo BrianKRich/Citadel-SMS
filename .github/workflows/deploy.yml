@@ -34,8 +34,8 @@ jobs:
             php artisan view:clear
             php artisan event:clear
 
-            echo "--- Installing PHP dependencies ---"
-            composer install --no-dev --optimize-autoloader --no-interaction
+            echo "--- Installing PHP dependencies (with dev for seeding) ---"
+            composer install --optimize-autoloader --no-interaction
 
             echo "--- Building frontend assets ---"
             npm ci --prefer-offline --legacy-peer-deps
@@ -43,6 +43,12 @@ jobs:
 
             echo "--- Running database migrations ---"
             php artisan migrate --force
+
+            echo "--- Seeding database (idempotent — skips if already seeded) ---"
+            php artisan db:seed --force
+
+            echo "--- Removing dev dependencies ---"
+            composer install --no-dev --optimize-autoloader --no-interaction
 
             echo "--- Rebuilding application caches ---"
             php artisan config:cache

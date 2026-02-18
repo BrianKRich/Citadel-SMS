@@ -13,7 +13,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Skip if already seeded — safe to re-run on every deploy
+        if (User::where('email', 'krmoble@gmail.com')->exists()) {
+            $this->command->info('Database already seeded — skipping.');
+            return;
+        }
 
         User::factory()->create([
             'name' => 'Keith Rich',
