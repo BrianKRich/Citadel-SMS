@@ -18,7 +18,7 @@ defineProps({
 <template>
     <div
         :class="[
-            'overflow-hidden bg-white',
+            'overflow-hidden bg-white dark:bg-gray-800',
             shadow ? 'shadow-sm' : '',
             rounded ? 'sm:rounded-lg' : '',
             padding,

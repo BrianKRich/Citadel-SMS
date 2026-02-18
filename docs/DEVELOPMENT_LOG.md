@@ -719,6 +719,38 @@ Flash messages live in Inertia shared props (`$page.props.flash`), not in the pa
 
 ---
 
+## Bug Fix: Card Dark Mode Background
+
+**Date:** February 18, 2026
+**Commit:** (pending)
+
+### Problem
+
+All form labels, section headings, field hints, and data display text across every Create, Edit, and Show page were nearly invisible in dark mode.
+
+**Root cause:** `Card.vue` defined `bg-white` but had no `dark:bg-gray-800` variant. In dark mode the card stayed white, while all text inside used `dark:text-gray-100/200/300/400` — colors designed for dark backgrounds. Light gray text on a white card produces a contrast ratio as low as 1.07:1 (virtually invisible).
+
+**Affected classes (examples from a single Create page):**
+- `dark:text-gray-100` — section headings: #F3F4F6 on white = 1.07:1
+- `dark:text-gray-300` — form labels: #D1D5DB on white = 1.28:1
+- `dark:text-gray-400` — placeholder/hint text: #9CA3AF on white = 2.32:1
+
+All 47 instances in Students/Create.vue alone were affected, and every other Create/Edit/Show page had the same problem since they all use the Card component.
+
+### Fix
+
+Added `dark:bg-gray-800` to `Card.vue`:
+
+```vue
+'overflow-hidden bg-white dark:bg-gray-800',
+```
+
+One-line change. No page-level edits needed — the fix propagates to every page that uses `<Card>`. Tables inside cards already had their own `dark:bg-gray-700/800/900` variants on thead/tbody, so those continue to render correctly against the new card background.
+
+**191 tests passing — no regressions.**
+
+---
+
 ## Current Status
 
 **All Phase 1/2/3 frontend fully implemented.** 191 tests passing. No known broken pages.
