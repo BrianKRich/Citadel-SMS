@@ -33,7 +33,7 @@ const form = useForm({
 });
 
 function submit() {
-    form.patch(route('admin.students.update', props.student.id));
+    form.patch(route('admin.students.update', props.student.id), { forceFormData: true });
 }
 </script>
 

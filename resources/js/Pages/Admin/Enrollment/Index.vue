@@ -3,7 +3,12 @@
 
     <AuthenticatedLayout>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Alert />
+            <div v-if="$page.props.flash?.success" class="mb-4">
+                <Alert type="success" :message="$page.props.flash.success" />
+            </div>
+            <div v-if="$page.props.flash?.error" class="mb-4">
+                <Alert type="error" :message="$page.props.flash.error" />
+            </div>
 
             <Card>
                 <div class="p-6">

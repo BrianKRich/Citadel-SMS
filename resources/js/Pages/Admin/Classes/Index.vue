@@ -3,16 +3,11 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
 
 const props = defineProps({
     classes: Object,
 });
-
-const showSuccess = ref(!!props.classes.flash?.success);
-const showError = ref(!!props.classes.flash?.error);
 
 const getStatusBadgeClass = (status) => {
     const classes = {
@@ -38,20 +33,11 @@ const getStatusBadgeClass = (status) => {
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <!-- Alerts -->
-                <div v-if="showSuccess" class="mb-4">
-                    <Alert
-                        type="success"
-                        :message="$page.props.flash.success"
-                        @dismiss="showSuccess = false"
-                    />
+                <div v-if="$page.props.flash?.success" class="mb-4">
+                    <Alert type="success" :message="$page.props.flash.success" />
                 </div>
-
-                <div v-if="showError" class="mb-4">
-                    <Alert
-                        type="error"
-                        :message="$page.props.flash.error"
-                        @dismiss="showError = false"
-                    />
+                <div v-if="$page.props.flash?.error" class="mb-4">
+                    <Alert type="error" :message="$page.props.flash.error" />
                 </div>
 
                 <Card>
@@ -62,9 +48,10 @@ const getStatusBadgeClass = (status) => {
                         />
 
                         <div class="sm:ml-auto">
-                            <PrimaryButton class="w-full sm:w-auto">
-                                + Add New Class
-                            </PrimaryButton>
+                            <Link
+                                :href="route('admin.classes.create')"
+                                class="inline-flex w-full sm:w-auto items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700"
+                            >+ Add New Class</Link>
                         </div>
                     </div>
 
@@ -113,7 +100,7 @@ const getStatusBadgeClass = (status) => {
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ classItem.teacher ? `${classItem.teacher.first_name} ${classItem.teacher.last_name}` : 'N/A' }}
+                                            {{ classItem.employee ? `${classItem.employee.first_name} ${classItem.employee.last_name}` : 'N/A' }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
@@ -135,12 +122,14 @@ const getStatusBadgeClass = (status) => {
                                         </span>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                        <button class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-4">
-                                            View
-                                        </button>
-                                        <button class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">
-                                            Edit
-                                        </button>
+                                        <Link
+                                            :href="route('admin.classes.show', classItem.id)"
+                                            class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-4"
+                                        >View</Link>
+                                        <Link
+                                            :href="route('admin.classes.edit', classItem.id)"
+                                            class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
+                                        >Edit</Link>
                                     </td>
                                 </tr>
                             </tbody>
@@ -160,7 +149,7 @@ const getStatusBadgeClass = (status) => {
                                         {{ classItem.course?.name || 'N/A' }} - {{ classItem.section_name }}
                                     </h3>
                                     <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                        {{ classItem.teacher ? `${classItem.teacher.first_name} ${classItem.teacher.last_name}` : 'N/A' }}
+                                        {{ classItem.employee ? `${classItem.employee.first_name} ${classItem.employee.last_name}` : 'N/A' }}
                                     </p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         {{ classItem.term?.name || 'N/A' }} • {{ classItem.room || 'No room' }}
@@ -175,12 +164,14 @@ const getStatusBadgeClass = (status) => {
                             </div>
 
                             <div class="flex gap-2">
-                                <button class="flex-1 text-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 min-h-[44px] flex items-center justify-center">
-                                    View
-                                </button>
-                                <button class="flex-1 text-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-700 min-h-[44px] flex items-center justify-center">
-                                    Edit
-                                </button>
+                                <Link
+                                    :href="route('admin.classes.show', classItem.id)"
+                                    class="flex-1 text-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 min-h-[44px] flex items-center justify-center"
+                                >View</Link>
+                                <Link
+                                    :href="route('admin.classes.edit', classItem.id)"
+                                    class="flex-1 text-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-700 min-h-[44px] flex items-center justify-center"
+                                >Edit</Link>
                             </div>
                         </div>
                     </div>

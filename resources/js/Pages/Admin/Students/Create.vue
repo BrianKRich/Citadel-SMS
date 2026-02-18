@@ -29,7 +29,7 @@ const form = useForm({
 });
 
 function submit() {
-    form.post(route('admin.students.store'));
+    form.post(route('admin.students.store'), { forceFormData: true });
 }
 </script>
 

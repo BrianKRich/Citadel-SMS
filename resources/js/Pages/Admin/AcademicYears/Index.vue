@@ -3,16 +3,15 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     academic_years: Object,
 });
 
-const showSuccess = ref(!!props.academic_years.flash?.success);
-const showError = ref(!!props.academic_years.flash?.error);
+function setCurrent(yearId) {
+    router.post(route('admin.academic-years.set-current', yearId));
+}
 </script>
 
 <template>
@@ -28,20 +27,11 @@ const showError = ref(!!props.academic_years.flash?.error);
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <!-- Alerts -->
-                <div v-if="showSuccess" class="mb-4">
-                    <Alert
-                        type="success"
-                        :message="$page.props.flash.success"
-                        @dismiss="showSuccess = false"
-                    />
+                <div v-if="$page.props.flash?.success" class="mb-4">
+                    <Alert type="success" :message="$page.props.flash.success" />
                 </div>
-
-                <div v-if="showError" class="mb-4">
-                    <Alert
-                        type="error"
-                        :message="$page.props.flash.error"
-                        @dismiss="showError = false"
-                    />
+                <div v-if="$page.props.flash?.error" class="mb-4">
+                    <Alert type="error" :message="$page.props.flash.error" />
                 </div>
 
                 <Card>
@@ -52,9 +42,10 @@ const showError = ref(!!props.academic_years.flash?.error);
                         />
 
                         <div class="sm:ml-auto">
-                            <PrimaryButton class="w-full sm:w-auto">
-                                + Add New Academic Year
-                            </PrimaryButton>
+                            <Link
+                                :href="route('admin.academic-years.create')"
+                                class="inline-flex w-full sm:w-auto items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700"
+                            >+ Add New Academic Year</Link>
                         </div>
                     </div>
 
@@ -83,15 +74,15 @@ const showError = ref(!!props.academic_years.flash?.error);
                                     </p>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 text-sm font-medium">
-                                        Edit
-                                    </button>
+                                    <Link
+                                        :href="route('admin.academic-years.edit', year.id)"
+                                        class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 text-sm font-medium"
+                                    >Edit</Link>
                                     <button
                                         v-if="!year.is_current"
+                                        @click="setCurrent(year.id)"
                                         class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 text-sm font-medium"
-                                    >
-                                        Set Current
-                                    </button>
+                                    >Set Current</button>
                                 </div>
                             </div>
 

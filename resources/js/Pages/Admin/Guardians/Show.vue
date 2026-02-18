@@ -27,7 +27,12 @@ function deleteGuardian() {
 
         <div class="py-12">
             <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
-                <Alert />
+                <div v-if="$page.props.flash?.success" class="mb-4">
+                    <Alert type="success" :message="$page.props.flash.success" />
+                </div>
+                <div v-if="$page.props.flash?.error" class="mb-4">
+                    <Alert type="error" :message="$page.props.flash.error" />
+                </div>
 
                 <!-- Top actions -->
                 <div class="mb-6 flex items-center justify-between">
