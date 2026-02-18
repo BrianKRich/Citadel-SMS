@@ -158,7 +158,10 @@ Academic year 2025–2026 with Fall and Spring terms. All grade calculations run
 | Phase 0 | Theme System | Complete |
 | Phase 1 | Student & Course Foundation | Complete |
 | Phase 2 | Class Scheduling & Enrollment | Complete |
-| Phase 3 | Grading & Assessments | In Progress (3A complete, 3B planned) |
+| Phase 3A | Core Grading System | Complete |
+| Phase 3B | Report Cards, Transcripts & Class Rank | Complete |
+| Frontend | Full CRUD UI for all Phase 1/2 modules | Complete |
+| Phase 3C | CSV Import | Planned |
 | Phase 4 | Attendance Management | Planned |
 | Phase 5 | Parent/Guardian Portal | Planned |
 | Phase 6 | Academic Calendar | Planned |
@@ -169,7 +172,9 @@ Academic year 2025–2026 with Fall and Spring terms. All grade calculations run
 
 | Metric | Value |
 |--------|-------|
-| Total Commits | 45 |
-| Development Period | Feb 8–12, 2026 |
-| Phases Completed | 3 (Phase 0–2) |
+| Total Commits | 59 |
+| Development Period | Feb 8–18, 2026 |
+| Phases Completed | Phase 0–2, 3A, 3B + full frontend |
+| Vue Pages | 58 (all complete — no stubs) |
+| Tests Passing | 191 (926 assertions) |
 | Contributors | 1 |
