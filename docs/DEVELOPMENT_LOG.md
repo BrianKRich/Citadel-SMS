@@ -800,8 +800,8 @@ The button appeared fully active even for the logged-in user's own row. The mobi
 
 The following phases are planned in priority order. GitHub issue numbers are noted where issues exist.
 
-### Phase 3C: CSV Import & Bulk Operations
-**GitHub Issue:** #6 (update to Phase 3C milestone)
+### Phase 3C: CSV Import & Bulk Operations *(Deferred)*
+**GitHub Issue:** #11 (labeled `future`)
 
 Bulk data intake to reduce manual entry burden:
 - Import students from CSV/Excel (validate headers, detect duplicates, report errors)

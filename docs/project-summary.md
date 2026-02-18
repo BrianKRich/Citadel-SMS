@@ -161,7 +161,7 @@ Academic year 2025–2026 with Fall and Spring terms. All grade calculations run
 | Phase 3A | Core Grading System | Complete |
 | Phase 3B | Report Cards, Transcripts & Class Rank | Complete |
 | Frontend | Full CRUD UI for all Phase 1/2/3 modules | Complete |
-| Phase 3C | CSV Import & Bulk Data Operations | Planned |
+| Phase 3C | CSV Import & Bulk Data Operations | Deferred |
 | Phase 3D | Soft Delete Restore UI & EnrollmentController Fix | Planned |
 | Phase 3E | Audit Logging for Academic Records | Planned |
 | Phase 4 | Attendance Management | Planned |
