@@ -699,7 +699,7 @@ Flash messages live in Inertia shared props (`$page.props.flash`), not in the pa
 
 ---
 
-## Project Statistics (as of Phase 4 + Bug Fixes — February 18, 2026)
+## Project Statistics (as of Phase 4 — February 18, 2026)
 
 | Metric | Value |
 |--------|-------|
@@ -715,7 +715,7 @@ Flash messages live in Inertia shared props (`$page.props.flash`), not in the pa
 | Seeders | 15 |
 | Factories | 15 |
 | Test files | 23 |
-| Tests passing | 230 (1168 assertions) |
+| Tests passing | 226 (1156 assertions) |
 | Contributors | 1 |
 
 ---
@@ -944,7 +944,7 @@ Every public method calls `requireAttendanceEnabled()` which does `abort_if(Sett
 ## Bug Fix: Term & Academic Year Deletion Guard
 
 **Date:** February 18, 2026
-**Commit:** `(this commit)`
+**Commit:** `78ec43a`
 
 ### Problem
 
@@ -966,9 +966,95 @@ Both flash messages use `back()->with('error', ...)` — already rendered by `Ac
 
 ---
 
+## Bug Fix: Deploy Seed Idempotency
+
+**Date:** February 18, 2026
+**Commit:** `97db0a1`
+
+### Problem
+
+The first deploy after auto-seeding was added to `deploy.yml` crashed with a PostgreSQL unique constraint violation on `counties.name`. The idempotency guard in `DatabaseSeeder` checked for a specific admin user email (`krmoble@gmail.com`), but the production database had been seeded via a different path — counties were already present but that exact user was not, so the guard passed and `CountySeeder` attempted a duplicate bulk insert.
+
+### Fix
+
+Changed the guard from checking for a specific user email to checking `County::count() > 0`. Counties are static Georgia reference data (159 rows) that are always seeded first. Their presence reliably indicates the database has been fully seeded.
+
+```php
+if (County::count() > 0) {
+    $this->command->info('Database already seeded — skipping.');
+    return;
+}
+```
+
+---
+
+## Feature Settings Card & Theme Feature Flag
+
+**Date:** February 18, 2026
+**Commit:** `7e1da8a`
+
+### What Was Built
+
+Extended the feature flag system (introduced in Phase 4 for attendance) to cover Theme Settings, and moved all feature toggles into a dedicated card in the Quick Actions dashboard grid.
+
+**Feature Settings card (`Dashboard.vue`):**
+- Replaced the separate "Feature Settings" section at the bottom of the dashboard with an inline card inside the Quick Actions grid
+- Card contains toggle rows for every feature flag — currently Attendance Tracking and Theme Settings
+- Each toggle POSTs independently to `admin.feature-settings.update` using its own `useForm` instance, so disabling one feature doesn't affect the other's in-flight state
+
+**Theme feature flag (`feature_theme_enabled`):**
+- Stored in `settings` table, key `feature_theme_enabled`, default `'1'` (on) so existing installs require no migration
+- Shared via `HandleInertiaRequests` as `$page.props.features.theme_enabled` (PHP bool → JSON bool) alongside `attendance_enabled`
+- `ThemeController::index()` and `update()` both call `abort_if(Setting::get('feature_theme_enabled', '1') !== '1', 403)`
+- Theme Settings action card in Quick Actions is conditional: `v-if="$page.props.features?.theme_enabled"`
+- The public `/api/theme` endpoint is **not** gated — colors still apply site-wide regardless of the flag
+
+**`AdminController::updateFeatureSettings()`:**
+- Validation changed from `required|boolean` (single field) to `sometimes|boolean` per field, allowing each toggle to POST only its own field to the shared endpoint
+- Each flag is updated independently via `array_key_exists()` check
+
+### Key Decision
+
+**Default-on for theme:** Attendance defaults to off (no row = disabled) because it's a major new workflow. Theme defaults to on (no row = enabled) because it's existing functionality — a fresh install with no settings row must still allow theme configuration.
+
+### Tests
+
+`ThemeTest.php` (new, 7 tests):
+- `theme_enabled_by_default` — shared prop is `true` with no settings row
+- `toggle_disables_theme` / `toggle_enables_theme` — DB persists correctly
+- `features_prop_reflects_theme_flag` — prop flips when flag changes
+- `theme_page_blocked_when_disabled` — `GET /admin/theme` returns 403
+- `theme_update_blocked_when_disabled` — `POST /admin/theme` returns 403
+- `theme_page_accessible_when_enabled` — 200 when flag is on
+
+**237 tests, 1205 assertions — no regressions.**
+
+---
+
+## Project Statistics (as of February 18, 2026 — Post-Phase 4 Bug Fixes)
+
+| Metric | Value |
+|--------|-------|
+| Development period | Feb 8–18, 2026 |
+| Phases completed | Phase 0–2 + 3A + 3B + 3D + 4 |
+| Database tables | 23 |
+| Eloquent models | 19 |
+| Admin controllers | 14 |
+| Vue pages | 64 |
+| Vue components | 23 |
+| Blade PDF templates | 2 |
+| Services | 3 (GradeCalculationService, ReportCardService, TranscriptService) |
+| Seeders | 15 |
+| Factories | 15 |
+| Test files | 24 |
+| Tests passing | 237 (1205 assertions) |
+| Contributors | 1 |
+
+---
+
 ## Current Status
 
-**All Phase 1/2/3/4 fully implemented.** 230 tests passing. No known broken pages or known issues.
+**All Phase 1/2/3/4 fully implemented.** 237 tests passing. No known broken pages or known issues.
 
 **Completed phases:** 0, 1, 2, 3A, 3B, 3D, 4
 
@@ -989,7 +1075,7 @@ Bulk data intake to reduce manual entry burden:
 - Downloadable grade reports and transcript exports as CSV
 
 ### Phase 3E: Audit Logging
-**No existing issue**
+**GitHub Issue:** #13
 
 Track who changed what and when for academic records integrity:
 - Log all create/update/delete events on Student, Employee, Grade, Enrollment models
@@ -1040,7 +1126,7 @@ Dashboard-level insights beyond the current StatCards:
 - Potential: dedicated reporting role with read-only access to all analytics
 
 ### Performance & Infrastructure (No Phase Number)
-**No existing issue**
+**GitHub Issue:** #14
 
 As data volume grows, these improvements will become necessary:
 - **Search performance:** Current `LIKE '%query%'` queries on all index pages will degrade at scale. Consider PostgreSQL `tsvector` full-text search or a search index on `name`, `student_id`, `course_code` columns.
