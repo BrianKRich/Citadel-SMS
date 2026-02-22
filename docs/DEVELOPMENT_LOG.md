@@ -1301,6 +1301,7 @@ Added `dark:` variants throughout:
 The following phases are planned in priority order. GitHub issue numbers are noted where issues exist.
 
 ### Phase 3G: Custom Reports *(Plan Ready)*
+**GitHub Issue:** #15
 
 Admins can define, save, and run reusable reports across all data categories without developer help:
 - Pick a category (Student, Employee, Course, Class, Enrollment, Grade, Attendance)
