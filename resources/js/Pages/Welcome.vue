@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useTheme } from '@/composables/useTheme';
+import { useDarkMode } from '@/composables/useDarkMode';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import TextInput from '@/Components/TextInput.vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -20,8 +21,9 @@ defineProps({
     },
 });
 
-// Initialize theme
+// Initialize theme and dark mode
 useTheme();
+useDarkMode();
 
 const form = useForm({
     email: '',
