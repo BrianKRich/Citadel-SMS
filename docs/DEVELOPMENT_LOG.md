@@ -1300,14 +1300,20 @@ Because this runs before any stylesheet or Vue bundle loads, the `dark` class is
 
 ---
 
-## UX: Dashboard Card Order — Custom Fields Adjacent to Feature Settings
+## UX: Dashboard — Admin Config Cards Pinned to Bottom Row
 
 **Date:** February 22, 2026
-**Commit:** `b9b56c3`
+**Commits:** `b9b56c3`, `e5d2fcb`
 
-Moved the Custom Fields action card in the Quick Actions grid to sit immediately before the Feature Settings card. Both are administrative configuration tools and grouping them together improves discoverability. Previous order had Audit Log between them.
+The Quick Actions grid is split into two independent grids to guarantee Audit Log, Custom Fields, and Feature Settings always appear as a fixed bottom row, regardless of which conditional cards (Theme Settings, Attendance) are currently visible.
 
-**New trailing order:** … Audit Log → Custom Fields → Feature Settings
+**Before:** All cards in a single `lg:grid-cols-3` grid. Conditional cards (`v-if`) shifted every card's grid position, making it impossible to pin the admin config cards to the bottom row.
+
+**After:** Two grids:
+1. **Main grid** (`lg:grid-cols-3`) — all operational + conditional cards. Conditional cards may shift positions within this grid freely.
+2. **Admin config row** (`sm:grid-cols-3`, `mt-5`) — exactly 3 cards, always: Audit Log | Custom Fields | Feature Settings. Never affected by conditional card visibility above it.
+
+**Order in admin config row:** Audit Log → Custom Fields → Feature Settings
 
 ---
 
