@@ -23,7 +23,7 @@ const submit = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
+            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                 Create User
             </h2>
         </template>
@@ -40,10 +40,10 @@ const submit = () => {
 
                     <UserForm :form="form" @submit="submit" />
 
-                    <div class="mt-6 border-t border-gray-200 pt-6">
+                    <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
                         <Link
                             :href="route('admin.users.index')"
-                            class="text-sm text-gray-600 hover:text-gray-900"
+                            class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
                         >
                             ← Back to Users
                         </Link>

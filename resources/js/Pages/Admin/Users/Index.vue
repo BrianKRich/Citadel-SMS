@@ -21,8 +21,8 @@ const deleteUser = (userId) => {
 
 const getRoleBadgeClass = (role) => {
     return role === 'admin'
-        ? 'bg-purple-100 text-purple-800'
-        : 'bg-gray-100 text-gray-800';
+        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
 };
 </script>
 
@@ -31,7 +31,7 @@ const getRoleBadgeClass = (role) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
+            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                 User Management
             </h2>
         </template>
@@ -62,35 +62,35 @@ const getRoleBadgeClass = (role) => {
 
                     <!-- Desktop Table View -->
                     <div class="hidden md:block overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                         Name
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                         Email
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                         Role
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                         Joined
                                     </th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                <tr v-for="user in users.data" :key="user.id" class="hover:bg-gray-50">
+                            <tbody class="divide-y divide-gray-200 bg-white dark:bg-gray-800 dark:divide-gray-700">
+                                <tr v-for="user in users.data" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td class="whitespace-nowrap px-6 py-4">
-                                        <div class="text-sm font-medium text-gray-900">
+                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                             {{ user.name }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
-                                        <div class="text-sm text-gray-500">
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">
                                             {{ user.email }}
                                         </div>
                                     </td>
@@ -102,19 +102,19 @@ const getRoleBadgeClass = (role) => {
                                             {{ user.role }}
                                         </span>
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                         {{ new Date(user.created_at).toLocaleDateString() }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                         <Link
                                             :href="route('admin.users.edit', user.id)"
-                                            class="text-indigo-600 hover:text-indigo-900 mr-4"
+                                            class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4"
                                         >
                                             Edit
                                         </Link>
                                         <button
                                             @click="deleteUser(user.id)"
-                                            class="text-red-600 hover:text-red-900 disabled:text-gray-300 disabled:cursor-not-allowed"
+                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 disabled:text-gray-300 dark:disabled:text-gray-600 disabled:cursor-not-allowed"
                                             :disabled="user.id === $page.props.auth.user.id"
                                         >
                                             Delete
@@ -130,14 +130,14 @@ const getRoleBadgeClass = (role) => {
                         <div
                             v-for="user in users.data"
                             :key="user.id"
-                            class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm"
                         >
                             <div class="flex items-start justify-between mb-3">
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="text-base font-semibold text-gray-900 truncate">
+                                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
                                         {{ user.name }}
                                     </h3>
-                                    <p class="text-sm text-gray-500 truncate">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
                                         {{ user.email }}
                                     </p>
                                 </div>
@@ -149,7 +149,7 @@ const getRoleBadgeClass = (role) => {
                                 </span>
                             </div>
 
-                            <div class="text-xs text-gray-500 mb-3">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">
                                 Joined {{ new Date(user.created_at).toLocaleDateString() }}
                             </div>
 
@@ -163,7 +163,7 @@ const getRoleBadgeClass = (role) => {
                                 <button
                                     @click="deleteUser(user.id)"
                                     :disabled="user.id === $page.props.auth.user.id"
-                                    class="flex-1 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed min-h-[44px]"
+                                    class="flex-1 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed min-h-[44px]"
                                 >
                                     Delete
                                 </button>
@@ -172,26 +172,26 @@ const getRoleBadgeClass = (role) => {
                     </div>
 
                     <!-- Pagination -->
-                    <div v-if="users.links.length > 3" class="mt-4 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                    <div v-if="users.links.length > 3" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 sm:px-6">
                         <div class="flex flex-1 justify-between sm:hidden">
                             <Link
                                 v-if="users.prev_page_url"
                                 :href="users.prev_page_url"
-                                class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                class="relative inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
                             >
                                 Previous
                             </Link>
                             <Link
                                 v-if="users.next_page_url"
                                 :href="users.next_page_url"
-                                class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
                             >
                                 Next
                             </Link>
                         </div>
                         <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                             <div>
-                                <p class="text-sm text-gray-700">
+                                <p class="text-sm text-gray-700 dark:text-gray-300">
                                     Showing
                                     <span class="font-medium">{{ users.from }}</span>
                                     to
@@ -210,8 +210,8 @@ const getRoleBadgeClass = (role) => {
                                         :class="[
                                             link.active
                                                 ? 'z-10 bg-indigo-600 text-white'
-                                                : 'bg-white text-gray-500 hover:bg-gray-50',
-                                            'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300',
+                                                : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600',
+                                            'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 dark:ring-gray-600',
                                         ]"
                                         v-html="link.label"
                                     />
