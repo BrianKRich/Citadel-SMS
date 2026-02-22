@@ -1267,6 +1267,50 @@ Added `dark:` variants throughout:
 
 ---
 
+## Bug Fix: Dark Mode Flash on Landing Page
+
+**Date:** February 22, 2026
+**Commit:** `2fe9218`
+
+### Problem
+
+The landing page (`/`) displayed in light mode on every fresh page load, then correctly switched to dark mode after visiting the dashboard and returning. The issue did not affect any other page.
+
+**Root causes (two):**
+1. `Welcome.vue` called `useTheme()` but not `useDarkMode()`. Dark mode was only initialized inside `AuthenticatedLayout`, so on the unauthenticated landing page the composable was never called and `loadPreference()` never ran.
+2. Even where `useDarkMode()` *is* called, it runs in `onMounted()` — after the browser has already painted the page in light mode. This produces a visible flash of white on any page before Vue hydrates.
+
+### Fix
+
+**`resources/views/app.blade.php`** — Added a small inline `<script>` in the `<head>` that executes synchronously before any CSS is applied:
+
+```js
+(function() {
+    var saved = localStorage.getItem('darkMode');
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (saved === 'true' || (saved === null && prefersDark)) {
+        document.documentElement.classList.add('dark');
+    }
+})();
+```
+
+Because this runs before any stylesheet or Vue bundle loads, the `dark` class is present on `<html>` from the very first paint — no flash on any page, including the landing page.
+
+**`resources/js/Pages/Welcome.vue`** — Added `useDarkMode()` call alongside the existing `useTheme()` so dark mode state is reactive on the landing page (supports system-preference changes while the page is open).
+
+---
+
+## UX: Dashboard Card Order — Custom Fields Adjacent to Feature Settings
+
+**Date:** February 22, 2026
+**Commit:** `b9b56c3`
+
+Moved the Custom Fields action card in the Quick Actions grid to sit immediately before the Feature Settings card. Both are administrative configuration tools and grouping them together improves discoverability. Previous order had Audit Log between them.
+
+**New trailing order:** … Audit Log → Custom Fields → Feature Settings
+
+---
+
 ## Project Statistics (as of February 22, 2026)
 
 | Metric | Value |
@@ -1299,6 +1343,21 @@ Added `dark:` variants throughout:
 ## Planned Roadmap
 
 The following phases are planned in priority order. GitHub issue numbers are noted where issues exist.
+
+### Phase 7: Document Management *(Plan Ready — Next Up)*
+**GitHub Issue:** #2
+
+Upload, categorize, and retrieve documents for students, employees, and the institution:
+- Per-entity document cards on Student and Employee Show pages (upload, download, delete)
+- Institution-wide document library (policies, handbooks, forms) in the global Documents index
+- Private storage (`local` disk) — all downloads gated via authenticated controller route
+- File types: PDF, Word, Excel, images — 10 MB max
+- Categories per entity type (IEP, medical form, certificate, contract, policy, etc.)
+- Feature flag (`feature_documents_enabled`) with toggle on Feature Settings page
+- Dashboard card (conditional on flag)
+- ~18 tests
+
+Full implementation plan saved at `/home/keith/.claude/plans/recursive-gathering-prism.md`.
 
 ### Phase 3G: Custom Reports *(Plan Ready)*
 **GitHub Issue:** #15
