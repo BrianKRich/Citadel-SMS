@@ -36,8 +36,9 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'features' => [
-                'attendance_enabled' => Setting::get('feature_attendance_enabled', '0') === '1',
-                'theme_enabled'      => Setting::get('feature_theme_enabled', '1') === '1',
+                'attendance_enabled'      => Setting::get('feature_attendance_enabled', '0') === '1',
+                'theme_enabled'           => Setting::get('feature_theme_enabled', '0') === '1',
+                'recent_activity_enabled' => Setting::get('feature_recent_activity_enabled', '0') === '1',
             ],
         ];
     }

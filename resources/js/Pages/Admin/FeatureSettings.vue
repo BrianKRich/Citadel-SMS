@@ -11,7 +11,11 @@ const attendanceForm = useForm({
 });
 
 const themeForm = useForm({
-    theme_enabled: page.props.features?.theme_enabled ?? true,
+    theme_enabled: page.props.features?.theme_enabled ?? false,
+});
+
+const recentActivityForm = useForm({
+    recent_activity_enabled: page.props.features?.recent_activity_enabled ?? false,
 });
 
 function toggleAttendance() {
@@ -22,6 +26,11 @@ function toggleAttendance() {
 function toggleTheme() {
     themeForm.theme_enabled = !themeForm.theme_enabled;
     themeForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
+}
+
+function toggleRecentActivity() {
+    recentActivityForm.recent_activity_enabled = !recentActivityForm.recent_activity_enabled;
+    recentActivityForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
 }
 
 const features = [
@@ -40,6 +49,14 @@ const features = [
         enabled: () => page.props.features?.theme_enabled,
         processing: () => themeForm.processing,
         toggle: toggleTheme,
+    },
+    {
+        key: 'recent_activity',
+        label: 'Recent Activity Panel',
+        description: 'Show the Recent Activity section on the admin dashboard. Disable to keep the dashboard more compact.',
+        enabled: () => page.props.features?.recent_activity_enabled,
+        processing: () => recentActivityForm.processing,
+        toggle: toggleRecentActivity,
     },
 ];
 </script>

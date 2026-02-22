@@ -17,6 +17,11 @@ class ThemeTest extends TestCase
         return User::factory()->create(['role' => 'admin']);
     }
 
+    private function enableTheme(): void
+    {
+        Setting::set('feature_theme_enabled', '1', 'boolean');
+    }
+
     private function disableTheme(): void
     {
         Setting::set('feature_theme_enabled', '0', 'boolean');
@@ -24,12 +29,12 @@ class ThemeTest extends TestCase
 
     // ── Feature flag ─────────────────────────────────────────────────────────
 
-    public function test_theme_enabled_by_default(): void
+    public function test_theme_disabled_by_default(): void
     {
         $this->actingAs($this->admin())
             ->get(route('admin.dashboard'))
             ->assertInertia(fn (Assert $page) => $page
-                ->where('features.theme_enabled', true)
+                ->where('features.theme_enabled', false)
             );
     }
 
@@ -65,6 +70,8 @@ class ThemeTest extends TestCase
     public function test_features_prop_reflects_theme_flag(): void
     {
         $user = $this->admin();
+
+        $this->enableTheme();
 
         $this->actingAs($user)
             ->get(route('admin.dashboard'))
