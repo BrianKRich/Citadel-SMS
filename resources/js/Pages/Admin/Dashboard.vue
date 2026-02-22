@@ -150,20 +150,20 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
-                            title="Feature Settings"
-                            description="Enable or disable application features"
-                            icon="⚙️"
-                            :href="route('admin.feature-settings.index')"
-                            color="secondary"
-                        />
-
-                        <AdminActionCard
                             v-if="$page.props.features?.attendance_enabled"
                             title="Attendance"
                             description="Track and manage student attendance by class"
                             icon="✅"
                             :href="route('admin.attendance.index')"
                             color="primary"
+                        />
+
+                        <AdminActionCard
+                            title="Feature Settings"
+                            description="Enable or disable application features"
+                            icon="⚙️"
+                            :href="route('admin.feature-settings.index')"
+                            color="secondary"
                         />
 
                     </div>
