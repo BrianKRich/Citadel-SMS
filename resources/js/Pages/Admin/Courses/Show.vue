@@ -4,10 +4,12 @@ import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     course: Object,
+    customFields: { type: Array, default: () => [] },
 });
 
 function destroy() {
@@ -144,6 +146,11 @@ function destroy() {
                             </tbody>
                         </table>
                     </div>
+                </Card>
+
+                <!-- Custom Fields -->
+                <Card v-if="customFields.length" class="mt-6">
+                    <CustomFieldsSection :fields="customFields" :readonly="true" />
                 </Card>
 
                 <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">

@@ -4,7 +4,12 @@ import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
+
+const props = defineProps({
+    customFields: { type: Array, default: () => [] },
+});
 
 const form = useForm({
     course_code: '',
@@ -14,6 +19,7 @@ const form = useForm({
     department: '',
     level: '',
     is_active: true,
+    custom_field_values: {},
 });
 
 function submit() {
@@ -150,6 +156,13 @@ function submit() {
                             </label>
                             <p v-if="form.errors.is_active" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.is_active }}</p>
                         </div>
+
+                        <!-- Custom Fields -->
+                        <CustomFieldsSection
+                            v-if="customFields.length"
+                            :fields="customFields"
+                            v-model="form.custom_field_values"
+                        />
 
                         <!-- Button Row -->
                         <div class="flex items-center gap-4">

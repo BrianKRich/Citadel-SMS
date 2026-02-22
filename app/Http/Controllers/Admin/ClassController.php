@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\SavesCustomFieldValues;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
+use App\Models\CustomField;
 use App\Models\ClassModel;
 use App\Models\Course;
 use App\Models\Employee;
@@ -13,6 +15,8 @@ use Inertia\Inertia;
 
 class ClassController extends Controller
 {
+    use SavesCustomFieldValues;
+
     /**
      * Display a listing of classes
      */
@@ -65,6 +69,7 @@ class ClassController extends Controller
             'courses' => $courses,
             'employees' => $employees,
             'academicYears' => $academicYears,
+            'customFields' => CustomField::forEntity('Class')->active()->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -105,6 +110,8 @@ class ClassController extends Controller
 
         $class = ClassModel::create($validated);
 
+        $this->saveCustomFieldValues($request, 'Class', $class->id);
+
         return redirect()->route('admin.classes.show', $class)
             ->with('success', 'Class created successfully.');
     }
@@ -126,6 +133,7 @@ class ClassController extends Controller
 
         return Inertia::render('Admin/Classes/Show', [
             'class' => $class,
+            'customFields' => CustomField::forEntityWithValues('Class', $class->id),
         ]);
     }
 
@@ -143,6 +151,7 @@ class ClassController extends Controller
             'courses' => $courses,
             'employees' => $employees,
             'academicYears' => $academicYears,
+            'customFields' => CustomField::forEntity('Class')->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -191,6 +200,8 @@ class ClassController extends Controller
         }
 
         $class->update($validated);
+
+        $this->saveCustomFieldValues($request, 'Class', $class->id);
 
         return redirect()->route('admin.classes.show', $class)
             ->with('success', 'Class updated successfully.');

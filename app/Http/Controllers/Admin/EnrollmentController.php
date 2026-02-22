@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\SavesCustomFieldValues;
 use App\Http\Controllers\Controller;
+use App\Models\CustomField;
 use App\Models\ClassModel;
 use App\Models\Enrollment;
 use App\Models\Student;
@@ -12,6 +14,8 @@ use Inertia\Inertia;
 
 class EnrollmentController extends Controller
 {
+    use SavesCustomFieldValues;
+
     /**
      * Display a listing of enrollments
      */
@@ -81,6 +85,7 @@ class EnrollmentController extends Controller
             'terms' => $terms,
             'classes' => $classes,
             'selectedTermId' => $request->term_id,
+            'customFields' => CustomField::forEntity('Enrollment')->active()->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -132,12 +137,14 @@ class EnrollmentController extends Controller
         }
 
         // Create enrollment
-        Enrollment::create([
+        $enrollment = Enrollment::create([
             'student_id' => $student->id,
             'class_id' => $class->id,
             'enrollment_date' => $validated['enrollment_date'] ?? now(),
             'status' => 'enrolled',
         ]);
+
+        $this->saveCustomFieldValues($request, 'Enrollment', $enrollment->id);
 
         return redirect()->route('admin.enrollment.index')
             ->with('success', "Successfully enrolled {$student->full_name} in {$class->course->name}.");

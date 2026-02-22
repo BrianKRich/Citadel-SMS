@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\SavesCustomFieldValues;
 use App\Http\Controllers\Controller;
+use App\Models\CustomField;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +13,7 @@ use Inertia\Inertia;
 
 class StudentController extends Controller
 {
+    use SavesCustomFieldValues;
     /**
      * Display a listing of students with search and filtering
      */
@@ -45,7 +48,9 @@ class StudentController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/Students/Create');
+        return Inertia::render('Admin/Students/Create', [
+            'customFields' => CustomField::forEntity('Student')->active()->orderBy('sort_order')->get(),
+        ]);
     }
 
     /**
@@ -96,6 +101,8 @@ class StudentController extends Controller
             $student->phoneNumbers()->create(['area_code' => $emergencyAreaCode, 'number' => $emergencyPhone, 'type' => 'emergency']);
         }
 
+        $this->saveCustomFieldValues($request, 'Student', $student->id);
+
         return redirect()->route('admin.students.show', $student)
             ->with('success', "Student {$student->student_id} created successfully.");
     }
@@ -109,6 +116,7 @@ class StudentController extends Controller
 
         return Inertia::render('Admin/Students/Show', [
             'student' => $student,
+            'customFields' => CustomField::forEntityWithValues('Student', $student->id),
         ]);
     }
 
@@ -119,6 +127,7 @@ class StudentController extends Controller
     {
         return Inertia::render('Admin/Students/Edit', [
             'student' => $student,
+            'customFields' => CustomField::forEntity('Student')->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -174,6 +183,8 @@ class StudentController extends Controller
         if ($emergencyPhone) {
             $student->phoneNumbers()->create(['area_code' => $emergencyAreaCode, 'number' => $emergencyPhone, 'type' => 'emergency']);
         }
+
+        $this->saveCustomFieldValues($request, 'Student', $student->id);
 
         return redirect()->route('admin.students.show', $student)
             ->with('success', 'Student updated successfully.');

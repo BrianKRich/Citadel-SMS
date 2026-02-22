@@ -4,10 +4,12 @@ import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     student: Object,
+    customFields: { type: Array, default: () => [] },
 });
 
 const form = useForm({
@@ -30,6 +32,7 @@ const form = useForm({
     status: props.student.status ?? '',
     photo: null,
     notes: props.student.notes ?? '',
+    custom_field_values: {},
 });
 
 function submit() {
@@ -432,6 +435,13 @@ function submit() {
                                 </p>
                             </div>
                         </div>
+
+                        <!-- Custom Fields -->
+                        <CustomFieldsSection
+                            v-if="customFields.length"
+                            :fields="customFields"
+                            v-model="form.custom_field_values"
+                        />
 
                         <!-- Submit -->
                         <div class="flex items-center gap-4">

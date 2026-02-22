@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\SavesCustomFieldValues;
 use App\Http\Controllers\Controller;
+use App\Models\CustomField;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -10,6 +12,8 @@ use Inertia\Inertia;
 
 class CourseController extends Controller
 {
+    use SavesCustomFieldValues;
+
     /**
      * Display a listing of courses
      */
@@ -58,7 +62,9 @@ class CourseController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/Courses/Create');
+        return Inertia::render('Admin/Courses/Create', [
+            'customFields' => CustomField::forEntity('Course')->active()->orderBy('sort_order')->get(),
+        ]);
     }
 
     /**
@@ -78,6 +84,8 @@ class CourseController extends Controller
 
         $course = Course::create($validated);
 
+        $this->saveCustomFieldValues($request, 'Course', $course->id);
+
         return redirect()->route('admin.courses.show', $course)
             ->with('success', "Course {$course->course_code} created successfully.");
     }
@@ -91,6 +99,7 @@ class CourseController extends Controller
 
         return Inertia::render('Admin/Courses/Show', [
             'course' => $course,
+            'customFields' => CustomField::forEntityWithValues('Course', $course->id),
         ]);
     }
 
@@ -101,6 +110,7 @@ class CourseController extends Controller
     {
         return Inertia::render('Admin/Courses/Edit', [
             'course' => $course,
+            'customFields' => CustomField::forEntity('Course')->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -120,6 +130,8 @@ class CourseController extends Controller
         ]);
 
         $course->update($validated);
+
+        $this->saveCustomFieldValues($request, 'Course', $course->id);
 
         return redirect()->route('admin.courses.show', $course)
             ->with('success', 'Course updated successfully.');

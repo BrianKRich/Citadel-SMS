@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\SavesCustomFieldValues;
 use App\Http\Controllers\Controller;
+use App\Models\CustomField;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeRole;
@@ -16,6 +18,8 @@ use Inertia\Inertia;
 
 class EmployeeController extends Controller
 {
+    use SavesCustomFieldValues;
+
     public function index(Request $request)
     {
         $query = Employee::with(['user', 'department', 'role', 'phoneNumbers']);
@@ -52,6 +56,7 @@ class EmployeeController extends Controller
 
         return Inertia::render('Admin/Employees/Create', [
             'departments' => $departments,
+            'customFields' => CustomField::forEntity('Employee')->active()->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -102,6 +107,8 @@ class EmployeeController extends Controller
             $employee->phoneNumbers()->create(['area_code' => $phoneAreaCode, 'number' => $phone, 'type' => 'primary', 'is_primary' => true]);
         }
 
+        $this->saveCustomFieldValues($request, 'Employee', $employee->id);
+
         return redirect()->route('admin.employees.show', $employee)
             ->with('success', "Employee {$employee->employee_id} created successfully.");
     }
@@ -112,6 +119,7 @@ class EmployeeController extends Controller
 
         return Inertia::render('Admin/Employees/Show', [
             'employee' => $employee,
+            'customFields' => CustomField::forEntityWithValues('Employee', $employee->id),
         ]);
     }
 
@@ -122,6 +130,7 @@ class EmployeeController extends Controller
         return Inertia::render('Admin/Employees/Edit', [
             'employee' => $employee->load(['user', 'department', 'role']),
             'departments' => $departments,
+            'customFields' => CustomField::forEntity('Employee')->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -166,6 +175,8 @@ class EmployeeController extends Controller
                 'email' => $validated['email'],
             ]);
         }
+
+        $this->saveCustomFieldValues($request, 'Employee', $employee->id);
 
         return redirect()->route('admin.employees.show', $employee)
             ->with('success', 'Employee updated successfully.');

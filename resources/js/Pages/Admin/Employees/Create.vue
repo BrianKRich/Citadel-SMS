@@ -4,11 +4,13 @@ import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
 
 const props = defineProps({
     departments: Array,
+    customFields: { type: Array, default: () => [] },
 });
 
 const form = useForm({
@@ -26,6 +28,7 @@ const form = useForm({
     status: 'active',
     create_user_account: false,
     password: '',
+    custom_field_values: {},
 });
 
 const selectedDepartment = computed(() =>
@@ -329,6 +332,13 @@ function submit() {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Custom Fields -->
+                        <CustomFieldsSection
+                            v-if="customFields.length"
+                            :fields="customFields"
+                            v-model="form.custom_field_values"
+                        />
 
                         <!-- Form Actions -->
                         <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">

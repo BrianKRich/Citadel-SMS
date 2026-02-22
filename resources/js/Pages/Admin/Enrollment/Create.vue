@@ -108,6 +108,13 @@
                             </p>
                         </div>
 
+                        <!-- Custom Fields -->
+                        <CustomFieldsSection
+                            v-if="customFields.length"
+                            :fields="customFields"
+                            v-model="form.custom_field_values"
+                        />
+
                         <!-- Actions -->
                         <div class="flex items-center justify-end gap-4 pt-2">
                             <Link
@@ -133,6 +140,7 @@ import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
@@ -141,12 +149,14 @@ const props = defineProps({
     terms: Array,
     classes: Array,
     selectedTermId: [Number, String, null],
+    customFields: { type: Array, default: () => [] },
 });
 
 const form = useForm({
     student_id: '',
     class_id: '',
     enrollment_date: new Date().toISOString().substring(0, 10),
+    custom_field_values: {},
 });
 
 const termFilter = ref(props.selectedTermId ?? '');

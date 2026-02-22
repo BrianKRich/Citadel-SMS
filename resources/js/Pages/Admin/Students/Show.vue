@@ -4,10 +4,12 @@ import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     student: Object,
+    customFields: { type: Array, default: () => [] },
 });
 
 function getStatusBadgeClass(status) {
@@ -273,6 +275,11 @@ function destroy() {
                             </tbody>
                         </table>
                     </div>
+                </Card>
+
+                <!-- Custom Fields -->
+                <Card v-if="customFields.length">
+                    <CustomFieldsSection :fields="customFields" :readonly="true" />
                 </Card>
 
                 <!-- Back Link -->

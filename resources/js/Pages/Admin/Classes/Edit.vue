@@ -4,6 +4,7 @@ import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { computed, watch, ref } from 'vue';
 
@@ -11,6 +12,7 @@ const props = defineProps({
     courses: Array,
     employees: Array,
     academicYears: Array,
+    customFields: { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -26,6 +28,7 @@ const form = useForm({
     max_students: cls.value?.max_students ?? 30,
     status: cls.value?.status ?? 'open',
     schedule: cls.value?.schedule ? JSON.parse(JSON.stringify(cls.value.schedule)) : [],
+    custom_field_values: {},
 });
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -288,6 +291,13 @@ function submit() {
                                 <p v-if="form.errors.schedule" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.schedule }}</p>
                             </div>
                         </div>
+
+                        <!-- Custom Fields -->
+                        <CustomFieldsSection
+                            v-if="customFields.length"
+                            :fields="customFields"
+                            v-model="form.custom_field_values"
+                        />
 
                         <!-- Button Row -->
                         <div class="flex items-center gap-4 pt-2">
