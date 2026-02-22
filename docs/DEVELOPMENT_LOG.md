@@ -1052,17 +1052,265 @@ Extended the feature flag system (introduced in Phase 4 for attendance) to cover
 
 ---
 
+## Feature Settings: Dedicated Page & Recent Activity Toggle
+
+**Date:** February 20–21, 2026
+**Commits:** `c31cc24`, `d6e49cc`, `d359970`
+
+### What Was Built
+
+**Dedicated Feature Settings page** (`/admin/feature-settings`):
+- Moved feature toggles out of the dashboard card into a full-page management UI
+- `FeatureSettingsController::index()` and `update()` handle display and persistence
+- Quick Actions card on dashboard links to the dedicated page instead of embedding toggles inline
+- Feature Settings card moved to last position in Quick Actions grid (least frequently visited)
+
+**Recent Activity toggle** (`feature_recent_activity_enabled`):
+- New feature flag stored in `settings` table
+- Controls visibility of the Recent Activity sidebar/section on the dashboard
+- When disabled, the activity feed is hidden from all admin views
+
+**Default state changes:**
+- Theme Settings and Recent Activity both now default to **off** (opt-in)
+- Attendance remains off by default (unchanged)
+- Fresh installs show a clean dashboard until features are intentionally enabled
+
+### Tests
+
+`FeatureSettingsTest.php` — 7 tests covering the dedicated page, all three toggle flags, and auth protection.
+
+---
+
+## Phase 3E: Audit Logging
+
+**Date:** February 21, 2026
+**Commits:** `b5a56df` (Phase 3E), `0f60fe9` (Purge with immutable history)
+
+### What Was Built
+
+**Database (2 new tables):**
+
+| Table | Key Details |
+|-------|-------------|
+| `audit_logs` | Polymorphic: `auditable_type` / `auditable_id`. `action` (created/updated/deleted). `user_id` FK → users (nullOnDelete). `old_values` JSON nullable, `new_values` JSON nullable. Index on `auditable_type`/`auditable_id`. |
+| `audit_log_purges` | Immutable purge history: `purged_by` FK→users, `reason` TEXT, `records_purged` INTEGER, `oldest_record_date`, `newest_record_date`, `purged_at`. Never deleted. |
+
+**Model (1 new — `AuditLog`):**
+- Polymorphic (`auditable()` morphTo)
+- BelongsTo `user`
+- `scopeForModel()`, `scopeForAction()`, `scopeDateRange()`, `scopeForUser()`
+- `getChangeSummary()` — computes human-readable diff between `old_values` and `new_values`
+
+**Observers (5 — one per audited model):**
+
+| Observer | Triggers |
+|----------|----------|
+| `StudentObserver` | created, updated, deleted |
+| `EmployeeObserver` | created, updated, deleted |
+| `GradeObserver` | created, updated, deleted |
+| `EnrollmentObserver` | created, updated, deleted |
+| `CustomFieldValueObserver` | created, updated, deleted |
+
+Registered in `AppServiceProvider`. Each observer calls `AuditLog::create()` with `Auth::id()`, action, model reference, and before/after JSON snapshots.
+
+**Controller (`AuditLogController`):**
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `index` | `GET /admin/audit-log` | Paginated log with filters: model type, action, user, date range |
+| `purge` | `POST /admin/audit-log/purge` | Requires `reason`; deletes records older than 30 days; writes immutable entry to `audit_log_purges` |
+
+**Purge design (immutable history):**
+- Purge requires a mandatory `reason` field — prevents accidental or undocumented deletion
+- Each purge writes a sealed record to `audit_log_purges` (no `deleted_at`, no soft-delete, no user-facing delete route)
+- The purge log is visible in the admin UI but cannot be modified or erased via the application
+
+**Vue Pages (1 new — `Admin/AuditLog/Index.vue`):**
+- Filter bar: model type select, action select, user select, date-from/date-to
+- Desktop table: timestamp, user, action badge, model type, record ID, change summary
+- Mobile card layout
+- "Purge Old Records" modal with required reason textarea and confirmation
+- Pagination
+
+**Dashboard update:**
+- `AuditLog` action card added to Quick Actions grid
+
+**Tests (1 new file — 18 tests):**
+
+| Scenario | Tests |
+|----------|-------|
+| Auth redirect | 1 |
+| Index renders | 1 |
+| Filters (model_type, action, user, date_from, date_to) | 5 |
+| Observer fires on each audited model (Student, Employee, Grade, Enrollment) | 8 |
+| Purge: requires reason, deletes old records only, creates immutable purge log entry | 3 |
+
+**255 tests passing (1292 assertions) — no regressions.**
+
+### Key Decisions
+
+1. **Polymorphic `auditable` over separate tables** — One `audit_logs` table handles all model types without per-model log tables. Filter by `auditable_type = 'App\Models\Student'` to scope results.
+2. **JSON snapshots vs. diff-only** — Storing full `old_values` + `new_values` on every update (rather than just the diff) preserves the complete record state at each point in time. Slightly more storage, but avoids reconstructing historical state from incremental diffs.
+3. **Immutable purge log** — The `audit_log_purges` table has no application-level delete route. Even admins cannot erase the purge history, maintaining a complete chain of custody for compliance purposes.
+4. **30-day purge window** — Only records older than 30 days can be purged. Recent activity is always preserved to support operational review.
+5. **`nullOnDelete` on `user_id`** — If the acting user is deleted, the audit log entry is preserved with `user_id = null` (shown as "System" or "Deleted User" in the UI).
+
+---
+
+## Phase 3F: Custom Fields
+
+**Date:** February 22, 2026
+**Commit:** `775fde5`
+
+### What Was Built
+
+Admin-defined custom fields (EAV pattern) that extend Student, Employee, Course, Class, and Enrollment entities without schema changes. Admins define fields in a dedicated admin section; fields appear on entity Create/Edit forms and Show pages.
+
+**Database (2 new tables):**
+
+| Table | Key Details |
+|-------|-------------|
+| `custom_fields` | `entity_type` (Student/Employee/Course/Class/Enrollment), `label`, `name` (snake_case, auto-generated, unique per entity_type), `field_type` (text/textarea/number/date/boolean/select), `options` JSON nullable, `is_active` boolean, `sort_order` integer. Unique: `(entity_type, name)`. |
+| `custom_field_values` | FK `custom_field_id` (cascadeOnDelete), `entity_type`, `entity_id` (unsignedBigInteger). Unique: `(custom_field_id, entity_type, entity_id)`. |
+
+**Models (2 new):**
+
+- `CustomField` — casts `options` to array, `is_active` to boolean. Scopes: `forEntity()`, `active()`. Static method `forEntityWithValues(entityType, entityId)` — bulk-loads active fields and their values for a given entity in two queries, attaching value as `$field->pivot_value`.
+- `CustomFieldValue` — fillable, BelongsTo `CustomField`.
+
+**Name generation** — `Str::slug($label, '_')` (not `Str::snake`) correctly handles acronyms: "Has IEP" → `has_iep` (not `has_i_e_p`). Collision appends `_2`, `_3`, etc.
+
+**Controller (`CustomFieldController`):**
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `index` | `GET /admin/custom-fields` | All fields grouped by entity_type |
+| `create` | `GET /admin/custom-fields/create` | Create form |
+| `store` | `POST /admin/custom-fields` | Validate + create; generate `name` |
+| `edit` | `GET /admin/custom-fields/{id}/edit` | Edit form |
+| `update` | `PUT /admin/custom-fields/{id}` | Update; regenerate name if label changed |
+| `destroy` | `DELETE /admin/custom-fields/{id}` | Hard delete; cascades to values |
+| `toggle` | `POST /admin/custom-fields/{id}/toggle` | Flip `is_active` |
+
+**Key bug found and fixed:** `options: []` (empty array from non-select forms) silently failed `min:1` validation but the error was invisible because the options error block is only rendered when `field_type === 'select'`. Fixed by removing `min:1` from shared rules and adding a manual check: `if ($validated['field_type'] === 'select' && empty($validated['options'])) return back()->withErrors(...)`.
+
+**Trait (`SavesCustomFieldValues`):**
+
+Shared across all 5 entity controllers. `saveCustomFieldValues(Request, entityType, entityId)` loops over `custom_field_values` input, validates field existence and ownership, calls `CustomFieldValue::updateOrCreate()`.
+
+**Reusable Vue component (`CustomFieldsSection.vue`):**
+- Props: `fields`, `modelValue`, `readonly`
+- **Edit/Create mode:** shows all fields; inactive fields show admin toggle but no input
+- **Readonly mode (Show pages):** hides inactive fields; shows `pivot_value`
+- Inline toggle calls `router.post(route('admin.custom-fields.toggle', field.id))` with `preserveScroll: true`
+- All 6 field types rendered: text, textarea, number, date, boolean (toggle), select (dropdown)
+
+**Vue Pages (3 new):**
+- `Admin/CustomFields/Index.vue` — fields grouped by entity; color-coded type badge; Active/Inactive toggle badge; Edit link; Delete with confirm showing value count
+- `Admin/CustomFields/Create.vue` — dynamic options list for select; live `namePreview` computed
+- `Admin/CustomFields/Edit.vue` — same as Create; shows current `field.name` with → new name preview if label changed
+
+**Modified files (12):**
+- 5 entity controllers: `StudentController`, `EmployeeController`, `CourseController`, `ClassController`, `EnrollmentController` — added `SavesCustomFieldValues` trait, custom field loading for create/edit/show
+- 10 entity Vue pages: Create, Edit, Show for Student, Employee, Course, Class, Enrollment — added `CustomFieldsSection` component
+- `Dashboard.vue` — Custom Fields action card (icon 🏷️)
+- `routes/web.php` — toggle route before resource to prevent wildcard collision
+
+**Tests (1 new file — 23 tests):**
+
+| Scenario group | Tests |
+|----------------|-------|
+| Auth redirect | 1 |
+| Index renders | 1 |
+| Create/Edit forms render | 2 |
+| Store: creates field, generates name, validates entity/type/label, select requires options | 5 |
+| Update: updates field, regenerates name on label change | 2 |
+| Destroy: deletes field and cascades values | 1 |
+| Toggle: flips is_active | 1 |
+| Values saved on entity create/update | 4 |
+| Values visible on entity show | 2 |
+| Name generation: slug-based, collision suffix | 2 |
+| Options cleared for non-select types | 2 |
+
+**263 tests passing (1352 assertions) — no regressions.**
+
+### Key Decisions
+
+1. **EAV over schema migration** — Adding `custom_fields` + `custom_field_values` tables enables arbitrary fields without ALTER TABLE on entity tables. Trade-off: values are stored as TEXT (cast on read), not typed columns. Acceptable for the current use case.
+2. **`Str::slug($label, '_')` not `Str::snake()`** — `Str::snake('Has IEP')` produces `has_i_e_p` (treats each uppercase letter as a word boundary). `Str::slug` with `_` separator produces `has_iep` — the expected result.
+3. **`cf_{id}` prefix convention** — Reserved for future Custom Reports feature (Phase 3G), where custom field columns in saved reports use `cf_{id}` keys to distinguish from native columns without additional DB tables.
+4. **`forEntityWithValues()` bulk loading** — Loads all active fields + their values for a given entity in two queries (one for fields, one for values), then maps in PHP. Avoids N+1 on Show pages.
+5. **`SavesCustomFieldValues` as a trait** — Identical logic needed in 5 controllers. Trait avoids code duplication without adding a service layer for a relatively simple operation.
+
+---
+
+## Bug Fix: Dark Mode — User Management Pages
+
+**Date:** February 22, 2026
+**Commit:** `6d80b70`
+
+### Problem
+
+`Users/Index.vue`, `Users/Create.vue`, `Users/Edit.vue`, and `Components/Users/UserForm.vue` were missing all `dark:` Tailwind variant classes. The User Management section displayed white backgrounds and nearly invisible text in dark mode.
+
+### Fix
+
+Added `dark:` variants throughout:
+- `<thead>`: `dark:bg-gray-700`; `<tbody>`: `dark:bg-gray-800 dark:divide-gray-700`
+- Row hover: `dark:hover:bg-gray-700`; column headers: `dark:text-gray-300`
+- Name/date text: `dark:text-gray-100` / `dark:text-gray-400`
+- Role badges: `dark:bg-purple-900 dark:text-purple-200` / `dark:bg-gray-700 dark:text-gray-200`
+- Edit/Delete links: `dark:text-indigo-400` / `dark:text-red-400` with dark hover states
+- Mobile cards: `dark:bg-gray-800 dark:border-gray-700`
+- Pagination section and links: full dark mode support
+- Role `<select>` in `UserForm.vue`: `dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200`
+
+---
+
+## Project Statistics (as of February 22, 2026)
+
+| Metric | Value |
+|--------|-------|
+| Development period | Feb 8–22, 2026 |
+| Phases completed | Phase 0–2 + 3A + 3B + 3D + 3E + 3F + 4 |
+| Database tables | 27 |
+| Eloquent models | 22 |
+| Admin controllers | 17 |
+| Vue pages | 69 |
+| Vue components | 25 |
+| Blade PDF templates | 2 |
+| Services | 3 (GradeCalculationService, ReportCardService, TranscriptService) |
+| Seeders | 16 |
+| Factories | 16 |
+| Test files | 27 |
+| Tests passing | 263 (1352 assertions) |
+| Contributors | 1 |
+
+---
+
 ## Current Status
 
-**All Phase 1/2/3/4 fully implemented.** 237 tests passing. No known broken pages or known issues.
+**Phases 0–2, 3A, 3B, 3D, 3E, 3F, and 4 fully implemented.** 263 tests passing. No known broken pages or known issues.
 
-**Completed phases:** 0, 1, 2, 3A, 3B, 3D, 4
+**Completed phases:** 0, 1, 2, 3A, 3B, 3D, 3E, 3F, 4
 
 ---
 
 ## Planned Roadmap
 
 The following phases are planned in priority order. GitHub issue numbers are noted where issues exist.
+
+### Phase 3G: Custom Reports *(Plan Ready)*
+
+Admins can define, save, and run reusable reports across all data categories without developer help:
+- Pick a category (Student, Employee, Course, Class, Enrollment, Grade, Attendance)
+- Select columns via checkboxes — native fields + Phase 3F custom fields (`cf_{id}` prefix)
+- Set baked-in filters per report (status, date range, term, etc.)
+- Name and save reports; shared across all admins
+- Run reports: paginated on-screen results
+- Export as PDF (landscape, letter, DomPDF)
+
+Full implementation plan saved at `/home/keith/.claude/plans/recursive-gathering-prism.md`.
 
 ### Phase 3C: CSV Import & Bulk Operations *(Deferred)*
 **GitHub Issue:** #11 (labeled `future`)
@@ -1073,15 +1321,6 @@ Bulk data intake to reduce manual entry burden:
 - Import enrollment data from external systems
 - Export any index page to CSV/Excel (students, employees, courses, classes, enrollments, grades)
 - Downloadable grade reports and transcript exports as CSV
-
-### Phase 3E: Audit Logging
-**GitHub Issue:** #13
-
-Track who changed what and when for academic records integrity:
-- Log all create/update/delete events on Student, Employee, Grade, Enrollment models
-- Store actor (user ID), action, model type, record ID, before/after values (JSON diff)
-- Admin UI: audit log viewer with filters (model type, actor, date range)
-- Especially important for grade changes — accreditation bodies require audit trails
 
 ### Phase 5: Parent/Guardian Portal
 **GitHub Issue:** #4
