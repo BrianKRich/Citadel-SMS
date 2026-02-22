@@ -159,19 +159,19 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
-                            title="Custom Fields"
-                            description="Define additional fields for students, courses, and more"
-                            icon="🏷️"
-                            :href="route('admin.custom-fields.index')"
-                            color="secondary"
-                        />
-
-                        <AdminActionCard
                             title="Audit Log"
                             description="Review who changed what and when"
                             icon="🔍"
                             :href="route('admin.audit-log.index')"
                             color="accent"
+                        />
+
+                        <AdminActionCard
+                            title="Custom Fields"
+                            description="Define additional fields for students, courses, and more"
+                            icon="🏷️"
+                            :href="route('admin.custom-fields.index')"
+                            color="secondary"
                         />
 
                         <AdminActionCard
