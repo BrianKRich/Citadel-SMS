@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ClassController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\EnrollmentController;
 use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\GradeController;
 use App\Http\Controllers\Admin\GradingScaleController;
 use App\Http\Controllers\Admin\GuardianController;
@@ -192,6 +193,11 @@ Route::middleware('auth')->group(function () {
         ->name('admin.feature-settings.index');
     Route::post('/admin/feature-settings', [AdminController::class, 'updateFeatureSettings'])
         ->name('admin.feature-settings.update');
+
+    // Phase 3E: Audit Log
+    Route::get('admin/audit-log', [AuditLogController::class, 'index'])->name('admin.audit-log.index');
+    Route::delete('admin/audit-log', [AuditLogController::class, 'purge'])->name('admin.audit-log.purge');
+    Route::get('admin/audit-log/{auditLog}', [AuditLogController::class, 'show'])->name('admin.audit-log.show');
 
     // Phase 4: Attendance (student route BEFORE classModel wildcard)
     Route::get('admin/attendance/student/{student}', [AttendanceController::class, 'studentHistory'])

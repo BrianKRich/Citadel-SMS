@@ -2,6 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Employee;
+use App\Models\Enrollment;
+use App\Models\Grade;
+use App\Models\Student;
+use App\Observers\EmployeeObserver;
+use App\Observers\EnrollmentObserver;
+use App\Observers\GradeObserver;
+use App\Observers\StudentObserver;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,5 +29,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        Student::observe(StudentObserver::class);
+        Employee::observe(EmployeeObserver::class);
+        Grade::observe(GradeObserver::class);
+        Enrollment::observe(EnrollmentObserver::class);
     }
 }

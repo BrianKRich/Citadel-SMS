@@ -159,6 +159,14 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
+                            title="Audit Log"
+                            description="Review who changed what and when"
+                            icon="🔍"
+                            :href="route('admin.audit-log.index')"
+                            color="accent"
+                        />
+
+                        <AdminActionCard
                             title="Feature Settings"
                             description="Enable or disable application features"
                             icon="⚙️"
@@ -170,7 +178,7 @@ const props = defineProps({
                 </div>
 
                 <!-- Recent Activity (Placeholder) -->
-                <div class="mt-8">
+                <div v-if="$page.props.features?.recent_activity_enabled" class="mt-8">
                     <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Recent Activity</h3>
                     <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
                         <div class="p-6 text-center text-gray-500 dark:text-gray-400">
