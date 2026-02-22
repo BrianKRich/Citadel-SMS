@@ -66,6 +66,8 @@ const props = defineProps({
                 <!-- Quick Actions -->
                 <div>
                     <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Quick Actions</h3>
+
+                    <!-- Main actions grid (conditional cards shift positions here, that's fine) -->
                     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
                         <AdminActionCard
@@ -157,6 +159,11 @@ const props = defineProps({
                             :href="route('admin.attendance.index')"
                             color="primary"
                         />
+
+                    </div>
+
+                    <!-- Admin config row — always pinned as the bottom row, always 3 columns -->
+                    <div class="mt-5 grid gap-5 sm:grid-cols-3">
 
                         <AdminActionCard
                             title="Audit Log"
