@@ -173,11 +173,11 @@ function destroy() {
                     </p>
                 </Card>
 
-                <!-- Card 3: Teaching Schedule -->
-                <Card class="mb-6">
+                <!-- Card 3: Teaching Schedule (only shown when classes are assigned) -->
+                <Card v-if="employee.classes && employee.classes.length > 0" class="mb-6">
                     <PageHeader title="Teaching Schedule" description="Classes currently assigned to this employee." />
 
-                    <div v-if="employee.classes && employee.classes.length > 0" class="overflow-x-auto">
+                    <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-800">
                                 <tr>
@@ -235,9 +235,6 @@ function destroy() {
                         </table>
                     </div>
 
-                    <p v-else class="text-sm text-gray-400 dark:text-gray-500 italic">
-                        No classes assigned.
-                    </p>
                 </Card>
 
                 <!-- Custom Fields -->

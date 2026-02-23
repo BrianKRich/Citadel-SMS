@@ -13,10 +13,11 @@ const props = defineProps({
 });
 
 const form = useForm({
+    _method: 'patch',
     first_name: props.student.first_name ?? '',
     last_name: props.student.last_name ?? '',
     middle_name: props.student.middle_name ?? '',
-    date_of_birth: props.student.date_of_birth ?? '',
+    date_of_birth: props.student.date_of_birth ? props.student.date_of_birth.substring(0, 10) : '',
     gender: props.student.gender ?? '',
     email: props.student.email ?? '',
     phone_area_code: '',
@@ -28,7 +29,7 @@ const form = useForm({
     emergency_contact_name: props.student.emergency_contact_name ?? '',
     emergency_phone_area_code: '',
     emergency_contact_phone: props.student.emergency_contact_phone ?? '',
-    enrollment_date: props.student.enrollment_date ?? '',
+    enrollment_date: props.student.enrollment_date ? props.student.enrollment_date.substring(0, 10) : '',
     status: props.student.status ?? '',
     photo: null,
     notes: props.student.notes ?? '',
@@ -36,7 +37,7 @@ const form = useForm({
 });
 
 function submit() {
-    form.patch(route('admin.students.update', props.student.id), { forceFormData: true });
+    form.post(route('admin.students.update', props.student.id), { forceFormData: true });
 }
 </script>
 

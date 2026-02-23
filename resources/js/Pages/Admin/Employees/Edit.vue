@@ -15,6 +15,7 @@ const props = defineProps({
 });
 
 const form = useForm({
+    _method: 'patch',
     first_name: props.employee.first_name ?? '',
     last_name: props.employee.last_name ?? '',
     email: props.employee.email ?? '',
@@ -45,7 +46,7 @@ watch(() => form.department_id, (newVal, oldVal) => {
 });
 
 function submit() {
-    form.patch(route('admin.employees.update', props.employee.id), { forceFormData: true });
+    form.post(route('admin.employees.update', props.employee.id), { forceFormData: true });
 }
 </script>
 

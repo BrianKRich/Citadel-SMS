@@ -76,12 +76,8 @@ const hasDiff = computed(() => diffRows.value.length > 0);
                                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ log.user?.name ?? 'System' }}</dd>
                             </div>
                             <div>
-                                <dt class="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Model</dt>
-                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ log.auditable_type_short }} #{{ log.auditable_id }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Subject</dt>
-                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ log.subject_label }}</dd>
+                                <dt class="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Record</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ log.auditable_type_short }} — {{ log.subject_label }}</dd>
                             </div>
                             <div>
                                 <dt class="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">When</dt>
