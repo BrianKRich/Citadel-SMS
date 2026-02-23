@@ -125,8 +125,8 @@ function destroy() {
                         <div>
                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</dt>
                             <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                                <span v-if="employee.phoneNumbers && employee.phoneNumbers.length">
-                                    ({{ employee.phoneNumbers[0].area_code }}) {{ employee.phoneNumbers[0].number }}
+                                <span v-if="employee.phone_numbers && employee.phone_numbers.length">
+                                    ({{ employee.phone_numbers[0].area_code }}) {{ employee.phone_numbers[0].number }}
                                 </span>
                                 <span v-else class="text-gray-400 dark:text-gray-500">Not provided</span>
                             </dd>
@@ -135,14 +135,14 @@ function destroy() {
                         <div>
                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Hire Date</dt>
                             <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                                {{ employee.hire_date ?? 'Not recorded' }}
+                                {{ employee.hire_date ? employee.hire_date.substring(0, 10) : 'Not recorded' }}
                             </dd>
                         </div>
 
                         <div>
                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Date of Birth</dt>
                             <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                                {{ employee.date_of_birth ?? 'Not recorded' }}
+                                {{ employee.date_of_birth ? employee.date_of_birth.substring(0, 10) : 'Not recorded' }}
                             </dd>
                         </div>
 

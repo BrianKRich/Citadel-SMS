@@ -128,7 +128,7 @@ class EmployeeController extends Controller
         $departments = Department::with('roles')->orderBy('name')->get();
 
         return Inertia::render('Admin/Employees/Edit', [
-            'employee' => $employee->load(['user', 'department', 'role']),
+            'employee' => $employee->load(['user', 'department', 'role', 'phoneNumbers']),
             'departments' => $departments,
             'customFields' => CustomField::forEntity('Employee')->orderBy('sort_order')->get(),
         ]);
