@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import UserForm from '@/Components/Users/UserForm.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -34,6 +35,12 @@ const submit = () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
+                <Breadcrumb :items="[
+                    { label: 'Dashboard', href: route('admin.dashboard') },
+                    { label: 'Users', href: route('admin.users.index') },
+                    { label: 'Edit User' },
+                ]" />
+
                 <Card>
                     <div class="mb-6">
                         <PageHeader

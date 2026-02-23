@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -92,6 +93,12 @@ function getLetterGradeBadgeClass(letter) {
 
         <div class="py-12">
             <div class="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
+                <Breadcrumb :items="[
+                    { label: 'Dashboard', href: route('admin.dashboard') },
+                    { label: 'Grade Management', href: route('admin.grades.index') },
+                    { label: 'Class Grades' },
+                ]" />
+
                 <div v-if="$page.props.flash?.success" class="mb-4 max-w-7xl mx-auto">
                     <div class="rounded-md bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 p-4">
                         <p class="text-sm text-green-800 dark:text-green-300">{{ $page.props.flash.success }}</p>

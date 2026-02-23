@@ -5,6 +5,7 @@ import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
 
@@ -60,6 +61,11 @@ function submit() {
 
         <div class="py-12">
             <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
+                <Breadcrumb :items="[
+                    { label: 'Dashboard', href: route('admin.dashboard') },
+                    { label: 'Employees', href: route('admin.employees.index') },
+                    { label: 'Add Employee' },
+                ]" />
 
                 <div v-if="$page.props.flash?.success" class="mb-4">
                     <Alert type="success" :message="$page.props.flash.success" />

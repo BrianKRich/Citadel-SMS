@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -51,6 +52,12 @@ function getRateClass(rate) {
 
         <div class="py-12">
             <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
+                <Breadcrumb :items="[
+                    { label: 'Dashboard', href: route('admin.dashboard') },
+                    { label: 'Attendance', href: route('admin.attendance.index') },
+                    { label: 'Class Summary' },
+                ]" />
+
                 <!-- Class Info + Date Filter -->
                 <Card class="mb-6">
                     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">

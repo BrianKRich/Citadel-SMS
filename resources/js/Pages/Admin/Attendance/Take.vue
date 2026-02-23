@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
@@ -76,6 +77,12 @@ function getStatusButtonClass(status, selected) {
 
         <div class="py-12">
             <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
+                <Breadcrumb :items="[
+                    { label: 'Dashboard', href: route('admin.dashboard') },
+                    { label: 'Attendance', href: route('admin.attendance.index') },
+                    { label: 'Take Attendance' },
+                ]" />
+
                 <div v-if="$page.props.flash?.success" class="mb-4">
                     <Alert type="success" :message="$page.props.flash.success" />
                 </div>

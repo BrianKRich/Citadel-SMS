@@ -3,6 +3,12 @@
 
     <AuthenticatedLayout>
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <Breadcrumb :items="[
+                { label: 'Dashboard', href: route('admin.dashboard') },
+                { label: 'Enrollment', href: route('admin.enrollment.index') },
+                { label: 'Student Schedule' },
+            ]" />
+
             <div v-if="$page.props.flash?.success" class="mb-4">
                 <Alert type="success" :message="$page.props.flash.success" />
             </div>
@@ -175,6 +181,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
 const props = defineProps({

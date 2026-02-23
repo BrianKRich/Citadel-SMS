@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -48,6 +49,11 @@ function getStatusBadgeClass(status) {
 
         <div class="py-12">
             <div class="mx-auto max-w-5xl sm:px-6 lg:px-8 space-y-6">
+                <Breadcrumb :items="[
+                    { label: 'Dashboard', href: route('admin.dashboard') },
+                    { label: 'Grade Management', href: route('admin.grades.index') },
+                    { label: 'Student Grades' },
+                ]" />
 
                 <!-- Student Summary Card -->
                 <Card>

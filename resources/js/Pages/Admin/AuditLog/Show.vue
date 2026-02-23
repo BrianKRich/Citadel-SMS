@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -47,6 +48,11 @@ const hasDiff = computed(() => diffRows.value.length > 0);
 
         <div class="py-6">
             <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+                <Breadcrumb :items="[
+                    { label: 'Dashboard', href: route('admin.dashboard') },
+                    { label: 'Audit Log', href: route('admin.audit-log.index') },
+                    { label: 'Entry' },
+                ]" />
 
                 <!-- Back link -->
                 <div class="mb-6">

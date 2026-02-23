@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
@@ -34,6 +35,13 @@ function submit() {
 
         <div class="py-12">
             <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
+                <Breadcrumb :items="[
+                    { label: 'Dashboard', href: route('admin.dashboard') },
+                    { label: 'Academic Years', href: route('admin.academic-years.index') },
+                    { label: academicYear.name, href: route('admin.academic-years.show', academicYear.id) },
+                    { label: 'Edit' },
+                ]" />
+
                 <div v-if="$page.props.flash?.error" class="mb-4">
                     <Alert type="error" :message="$page.props.flash.error" />
                 </div>

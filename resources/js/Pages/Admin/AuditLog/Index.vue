@@ -21,7 +21,7 @@ const form = ref({
 });
 
 const modelTypes = [
-    { value: '', label: 'All Models' },
+    { value: '', label: 'All Types' },
     { value: 'Student', label: 'Student' },
     { value: 'Employee', label: 'Employee' },
     { value: 'Grade', label: 'Grade' },
@@ -115,7 +115,7 @@ function olderThanLabel(val) {
                 <div class="mb-6 rounded-lg bg-white p-4 shadow dark:bg-gray-800">
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Model</label>
+                            <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Record Type</label>
                             <select v-model="form.model_type"
                                 class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
                                 <option v-for="m in modelTypes" :key="m.value" :value="m.value">{{ m.label }}</option>
@@ -222,8 +222,8 @@ function olderThanLabel(val) {
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">When</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">Actor</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">Action</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">Model</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">Subject</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">Record Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">Record</th>
                                 <th class="px-6 py-3"></th>
                             </tr>
                         </thead>

@@ -20,6 +20,8 @@ class AuditLog extends Model
         'new_values',
     ];
 
+    protected $appends = ['auditable_type_short'];
+
     protected $casts = [
         'old_values' => 'array',
         'new_values' => 'array',

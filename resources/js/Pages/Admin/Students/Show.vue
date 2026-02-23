@@ -5,6 +5,7 @@ import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -60,6 +61,12 @@ function destroy() {
 
         <div class="py-12">
             <div class="mx-auto max-w-5xl sm:px-6 lg:px-8 space-y-6">
+                <Breadcrumb :items="[
+                    { label: 'Dashboard', href: route('admin.dashboard') },
+                    { label: 'Students', href: route('admin.students.index') },
+                    { label: `${student.first_name} ${student.last_name}` },
+                ]" />
+
                 <div v-if="$page.props.flash?.success" class="mb-4">
                     <Alert type="success" :message="$page.props.flash.success" />
                 </div>
