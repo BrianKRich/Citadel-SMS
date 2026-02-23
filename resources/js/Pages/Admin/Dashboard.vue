@@ -128,6 +128,7 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
+                            v-if="$page.props.features?.grades_enabled"
                             title="Grade Management"
                             description="Enter grades, manage assessments, and view student performance"
                             icon="📊"
@@ -136,6 +137,7 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
+                            v-if="$page.props.features?.report_cards_enabled"
                             title="Report Cards"
                             description="View and download per-term report cards for students"
                             icon="📄"

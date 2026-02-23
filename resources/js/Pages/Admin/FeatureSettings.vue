@@ -18,6 +18,14 @@ const recentActivityForm = useForm({
     recent_activity_enabled: page.props.features?.recent_activity_enabled ?? false,
 });
 
+const gradesForm = useForm({
+    grades_enabled: page.props.features?.grades_enabled ?? false,
+});
+
+const reportCardsForm = useForm({
+    report_cards_enabled: page.props.features?.report_cards_enabled ?? false,
+});
+
 function toggleAttendance() {
     attendanceForm.attendance_enabled = !attendanceForm.attendance_enabled;
     attendanceForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
@@ -31,6 +39,16 @@ function toggleTheme() {
 function toggleRecentActivity() {
     recentActivityForm.recent_activity_enabled = !recentActivityForm.recent_activity_enabled;
     recentActivityForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
+}
+
+function toggleGrades() {
+    gradesForm.grades_enabled = !gradesForm.grades_enabled;
+    gradesForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
+}
+
+function toggleReportCards() {
+    reportCardsForm.report_cards_enabled = !reportCardsForm.report_cards_enabled;
+    reportCardsForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
 }
 
 const features = [
@@ -57,6 +75,22 @@ const features = [
         enabled: () => page.props.features?.recent_activity_enabled,
         processing: () => recentActivityForm.processing,
         toggle: toggleRecentActivity,
+    },
+    {
+        key: 'grades',
+        label: 'Grade Management',
+        description: 'Show the Grade Management card in Quick Actions. When disabled, grades and assessments are still accessible through class pages.',
+        enabled: () => page.props.features?.grades_enabled,
+        processing: () => gradesForm.processing,
+        toggle: toggleGrades,
+    },
+    {
+        key: 'report_cards',
+        label: 'Report Cards',
+        description: 'Show the Report Cards card in Quick Actions. When disabled, report cards are still accessible from individual student records.',
+        enabled: () => page.props.features?.report_cards_enabled,
+        processing: () => reportCardsForm.processing,
+        toggle: toggleReportCards,
     },
 ];
 </script>
