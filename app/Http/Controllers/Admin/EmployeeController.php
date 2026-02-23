@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\SavesCustomFieldValues;
 use App\Http\Controllers\Controller;
+use App\Models\ClassModel;
 use App\Models\CustomField;
 use App\Models\Department;
 use App\Models\Employee;
@@ -162,7 +163,14 @@ class EmployeeController extends Controller
             $validated['photo'] = $request->file('photo')->store('employees/photos', 'public');
         }
 
+        $roleChanged       = $employee->role_id !== (int) $validated['role_id'];
+        $departmentChanged = $employee->department_id !== (int) $validated['department_id'];
+
         $employee->update($validated);
+
+        if ($roleChanged || $departmentChanged) {
+            $employee->classes()->update(['employee_id' => null]);
+        }
 
         $employee->phoneNumbers()->delete();
         if ($phone) {
@@ -180,6 +188,15 @@ class EmployeeController extends Controller
 
         return redirect()->route('admin.employees.show', $employee)
             ->with('success', 'Employee updated successfully.');
+    }
+
+    public function removeClass(Employee $employee, ClassModel $class)
+    {
+        abort_unless($class->employee_id === $employee->id, 404);
+        $class->update(['employee_id' => null]);
+
+        return redirect()->route('admin.employees.show', $employee)
+            ->with('success', "Removed from \"{$class->course->name} — {$class->section_name}\".");
     }
 
     public function destroy(Employee $employee)

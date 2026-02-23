@@ -22,6 +22,14 @@ function getStatusBadgeClass(status) {
     return classes[status] || 'bg-gray-100 text-gray-800';
 }
 
+function removeClass(classId) {
+    if (confirm('Remove this employee from the class? The class will remain but have no assigned teacher.')) {
+        router.delete(route('admin.employees.remove-class', { employee: props.employee.id, class: classId }), {
+            preserveScroll: true,
+        });
+    }
+}
+
 function destroy() {
     if (confirm('Are you sure? This will soft-delete the employee.')) {
         router.delete(route('admin.employees.destroy', props.employee.id));
@@ -205,6 +213,7 @@ function destroy() {
                                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Status
                                     </th>
+                                    <th class="px-4 py-3"></th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
@@ -235,6 +244,14 @@ function destroy() {
                                         >
                                             {{ cls.status?.replace('_', ' ') ?? '—' }}
                                         </span>
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-3 text-right">
+                                        <button
+                                            @click="removeClass(cls.id)"
+                                            class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                        >
+                                            Remove
+                                        </button>
                                     </td>
                                 </tr>
                             </tbody>

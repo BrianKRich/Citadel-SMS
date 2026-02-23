@@ -108,6 +108,9 @@ Route::middleware('auth')->group(function () {
         ->name('admin.employees.force-delete')
         ->withTrashed();
 
+    Route::delete('admin/employees/{employee}/classes/{class}', [EmployeeController::class, 'removeClass'])
+        ->name('admin.employees.remove-class');
+
     Route::resource('admin/employees', EmployeeController::class)->names([
         'index' => 'admin.employees.index',
         'create' => 'admin.employees.create',

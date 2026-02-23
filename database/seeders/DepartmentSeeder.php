@@ -10,7 +10,7 @@ class DepartmentSeeder extends Seeder
     public function run(): void
     {
         $data = [
-            'Education' => ['Teacher', 'Instructor'],
+            'Education' => ['Teacher', 'Instructor', 'Para-Pro'],
             'Administration' => ['Administrator', 'Coordinator'],
             'Counseling' => ['Counselor', 'Case Manager'],
             'Cadre' => ['Drill Instructor', 'Platoon Sergeant'],
