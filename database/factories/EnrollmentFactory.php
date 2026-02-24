@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\ClassModel;
+use App\Models\CohortCourse;
 use App\Models\Enrollment;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -18,7 +18,7 @@ class EnrollmentFactory extends Factory
     {
         return [
             'student_id' => Student::factory(),
-            'class_id' => ClassModel::factory(),
+            'cohort_course_id' => CohortCourse::factory(),
             'enrollment_date' => fake()->date('Y-m-d', 'now'),
             'status' => 'enrolled',
         ];

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AttendanceRecord;
-use App\Models\ClassModel;
+use App\Models\CohortCourse;
 use App\Models\Enrollment;
 use App\Models\Setting;
 use App\Models\Student;
@@ -22,41 +22,41 @@ class AttendanceController extends Controller
     {
         $this->requireAttendanceEnabled();
 
-        $query = ClassModel::with(['course', 'term', 'employee'])
+        $query = CohortCourse::with(['course', 'cohort.class', 'employee'])
             ->withCount(['enrollments']);
 
         if ($search = $request->input('search')) {
             $query->search($search);
         }
 
-        $classes = $query->latest()->paginate(10)->withQueryString();
+        $cohortCourses = $query->latest()->paginate(10)->withQueryString();
 
         return Inertia::render('Admin/Attendance/Index', [
-            'classes' => $classes,
-            'filters' => $request->only(['search']),
+            'cohortCourses' => $cohortCourses,
+            'filters'       => $request->only(['search']),
         ]);
     }
 
-    public function take(Request $request, ClassModel $classModel)
+    public function take(Request $request, CohortCourse $cohortCourse)
     {
         $this->requireAttendanceEnabled();
 
         $date = $request->input('date', today()->toDateString());
 
         $enrollments = Enrollment::with('student')
-            ->where('class_id', $classModel->id)
+            ->where('cohort_course_id', $cohortCourse->id)
             ->where('status', 'enrolled')
             ->get();
 
-        $existingRecords = AttendanceRecord::where('class_id', $classModel->id)
+        $existingRecords = AttendanceRecord::where('cohort_course_id', $cohortCourse->id)
             ->whereDate('date', $date)
             ->get()
             ->keyBy('student_id');
 
-        $classModel->load(['course', 'term']);
+        $cohortCourse->load(['course', 'cohort.class']);
 
         return Inertia::render('Admin/Attendance/Take', [
-            'classModel'      => $classModel,
+            'cohortCourse'    => $cohortCourse,
             'enrollments'     => $enrollments,
             'existingRecords' => $existingRecords,
             'date'            => $date,
@@ -68,7 +68,7 @@ class AttendanceController extends Controller
         $this->requireAttendanceEnabled();
 
         $validated = $request->validate([
-            'class_id'             => ['required', 'exists:classes,id'],
+            'cohort_course_id'     => ['required', 'exists:cohort_courses,id'],
             'date'                 => ['required', 'date'],
             'records'              => ['required', 'array', 'min:1'],
             'records.*.student_id' => ['required', 'exists:students,id'],
@@ -79,9 +79,9 @@ class AttendanceController extends Controller
         foreach ($validated['records'] as $record) {
             AttendanceRecord::updateOrCreate(
                 [
-                    'student_id' => $record['student_id'],
-                    'class_id'   => $validated['class_id'],
-                    'date'       => $validated['date'],
+                    'student_id'       => $record['student_id'],
+                    'cohort_course_id' => $validated['cohort_course_id'],
+                    'date'             => $validated['date'],
                 ],
                 [
                     'status'    => $record['status'],
@@ -98,7 +98,7 @@ class AttendanceController extends Controller
     {
         $this->requireAttendanceEnabled();
 
-        $records = AttendanceRecord::with('classModel.course')
+        $records = AttendanceRecord::with('cohortCourse.course')
             ->where('student_id', $student->id)
             ->orderByDesc('date')
             ->paginate(20)
@@ -110,22 +110,22 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function classSummary(Request $request, ClassModel $classModel)
+    public function classSummary(Request $request, CohortCourse $cohortCourse)
     {
         $this->requireAttendanceEnabled();
 
-        $classModel->load(['course', 'term']);
+        $cohortCourse->load(['course', 'cohort.class']);
 
         $dateFrom = $request->input('date_from');
         $dateTo   = $request->input('date_to');
 
         $enrollments = Enrollment::with('student')
-            ->where('class_id', $classModel->id)
+            ->where('cohort_course_id', $cohortCourse->id)
             ->where('status', 'enrolled')
             ->get();
 
-        $summaries = $enrollments->map(function ($enrollment) use ($classModel, $dateFrom, $dateTo) {
-            $query = AttendanceRecord::where('class_id', $classModel->id)
+        $summaries = $enrollments->map(function ($enrollment) use ($cohortCourse, $dateFrom, $dateTo) {
+            $query = AttendanceRecord::where('cohort_course_id', $cohortCourse->id)
                 ->where('student_id', $enrollment->student_id);
 
             if ($dateFrom) {
@@ -143,20 +143,20 @@ class AttendanceController extends Controller
             $excused = $records->where('status', 'excused')->count();
 
             return [
-                'student'           => $enrollment->student,
-                'total'             => $total,
-                'present'           => $present,
-                'absent'            => $absent,
-                'late'              => $late,
-                'excused'           => $excused,
-                'attendance_rate'   => $total > 0 ? round(($present + $late) / $total * 100, 1) : null,
+                'student'         => $enrollment->student,
+                'total'           => $total,
+                'present'         => $present,
+                'absent'          => $absent,
+                'late'            => $late,
+                'excused'         => $excused,
+                'attendance_rate' => $total > 0 ? round(($present + $late) / $total * 100, 1) : null,
             ];
         });
 
         return Inertia::render('Admin/Attendance/ClassSummary', [
-            'classModel' => $classModel,
-            'summaries'  => $summaries,
-            'filters'    => $request->only(['date_from', 'date_to']),
+            'cohortCourse' => $cohortCourse,
+            'summaries'    => $summaries,
+            'filters'      => $request->only(['date_from', 'date_to']),
         ]);
     }
 }

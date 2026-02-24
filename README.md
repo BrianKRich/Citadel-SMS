@@ -13,7 +13,7 @@ A full-stack web application for managing student information, academic records,
 | Bridge | Inertia.js (no REST API layer) |
 | Database | PostgreSQL |
 | Build | Vite + Tailwind CSS |
-| Testing | PHPUnit (334 tests, 1728 assertions) |
+| Testing | PHPUnit (368 tests, 1927 assertions) |
 | Deploy | AWS Lightsail via GitHub Actions CI/CD |
 
 ---
@@ -37,9 +37,8 @@ A full-stack web application for managing student information, academic records,
 
 ### Phase 2 — Class Scheduling & Enrollment
 - Class sections with JSON schedule, room, capacity, instructor assignment
-- Schedule conflict detection (same instructor, overlapping time slots)
 - Enrollment management with status tracking (enrolled/dropped/completed/failed)
-- Capacity enforcement and academic year/term organization
+- Capacity enforcement and academic year organization
 
 ### Phase 3A — Grading & Assessments
 - Assessment types with weighted grading
@@ -49,7 +48,7 @@ A full-stack web application for managing student information, academic records,
 ### Phase 3B — Report Cards & Transcripts
 - PDF report card generation (DomPDF, Blade templates)
 - Transcript PDF generation
-- Term-based grade summaries
+- Cohort-based grade summaries
 
 ### Phase 3D — Soft Delete Restore UI
 - Trashed Students and Trashed Employees index pages
@@ -100,6 +99,23 @@ A full-stack web application for managing student information, academic records,
 - `Trainer` role added to all six departments (Education, Administration, Counseling, Cadre, Health Services, Operations)
 - Feature flag: `feature_staff_training_enabled`
 - Dashboard quick-action card
+
+### Phase 9 — Academic Structure Reorganization
+- **New hierarchy:** AcademicYear → Class → Cohort (Alpha/Bravo) → CohortCourse → Enrollment
+- **Cohorts** auto-created (Alpha + Bravo) when a Class is saved
+- **CohortCourse** (Course Assignment): links a catalog course to a cohort with instructor, room, schedule, capacity, and status
+- **Instructor types:** Staff (live employee search), Technical College, or University (institution dropdown)
+- **Educational Institutions** lookup table for colleges and universities used as external instructors
+- **Enrollment** updated to reference `cohort_course_id` instead of `class_id`
+- **Report Cards & Transcripts** updated to cohort-based GPA calculations
+- Dashboard **Institutions** card added
+- 34 new/updated tests; 368 total passing
+
+### Phase 9 UI Improvements
+- **Create Class form:** cohort section dropdown (Alpha/Bravo) with start/end date fields per cohort
+- **Class Show page:** cohort view selector dropdown (Both / Alpha / Bravo / unselected); Remove Course button per row with enrollment guard
+- **CohortCourse Show page:** "+ Enroll Student" button pre-populates the enrollment form with the course pre-selected
+- **Enrollment Create form:** supports `?cohort_course_id=` query param for pre-selection
 
 ### Cross-Cutting
 - **Breadcrumb navigation** on all admin child pages
@@ -190,13 +206,13 @@ composer run dev
 php artisan test
 
 # Run a specific test class
-php artisan test --filter DocumentTest
+php artisan test --filter CohortCourseTest
 
 # Clear config cache first (recommended)
 composer run test
 ```
 
-**Current status:** 334 tests, 1728 assertions, all passing.
+**Current status:** 368 tests, 1927 assertions, all passing.
 
 ---
 
@@ -209,7 +225,10 @@ composer run test
 | `/admin/students` | Student management |
 | `/admin/employees` | Employee management |
 | `/admin/courses` | Course catalog |
-| `/admin/classes` | Class scheduling |
+| `/admin/classes` | Class management |
+| `/admin/cohort-courses` | Course assignments (cohort → course → instructor) |
+| `/admin/institutions` | Educational institutions (colleges & universities) |
+| `/admin/enrollment` | Student enrollment |
 | `/admin/documents` | Document library |
 | `/admin/training-courses` | Training course catalog |
 | `/admin/training-records` | Staff training completion records |
@@ -224,23 +243,23 @@ composer run test
 ```
 app/
 ├── Http/Controllers/Admin/    # Feature controllers
-├── Models/                    # Eloquent models (26)
+├── Models/                    # Eloquent models (29)
 ├── Observers/                 # Audit log observers
 └── Http/Middleware/           # HandleInertiaRequests (shared props)
 
 resources/js/
-├── Pages/Admin/               # Vue page components (79)
+├── Pages/Admin/               # Vue page components (87+)
 ├── Components/UI/             # Reusable UI components
 ├── Components/Users/          # User form components
 ├── Layouts/                   # AuthenticatedLayout, GuestLayout
 └── composables/               # useTheme.js, useDarkMode.js
 
 database/
-├── migrations/                # 33 tables
-├── seeders/                   # 16 seeders
-└── factories/                 # 19 factories
+├── migrations/                # 38+ migrations
+├── seeders/                   # 18 seeders
+└── factories/                 # 22 factories
 
-tests/Feature/Admin/           # 30 test files
+tests/Feature/Admin/           # 32 test files
 docs/                          # Architecture, database, backend, frontend docs
 ```
 
@@ -257,6 +276,7 @@ docs/                          # Architecture, database, backend, frontend docs
 | [DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md) | Per-phase implementation history |
 | [SECURITY.md](docs/SECURITY.md) | Security features and practices |
 | [COMPONENTS.md](docs/COMPONENTS.md) | Vue component library reference |
+| [OPEN_ISSUES.md](docs/OPEN_ISSUES.md) | Open decisions and issues pending resolution |
 
 ---
 
@@ -266,7 +286,7 @@ docs/                          # Architecture, database, backend, frontend docs
 |-------|-------------|--------|
 | Phase 0 | Foundation, Auth, Theme | ✅ Done |
 | Phase 1 | Students, Employees, Courses | ✅ Done |
-| Phase 2 | Classes, Enrollment, Terms | ✅ Done |
+| Phase 2 | Classes, Enrollment | ✅ Done |
 | Phase 3A | Grading & Assessments | ✅ Done |
 | Phase 3B | Report Cards & Transcripts | ✅ Done |
 | Phase 3D | Soft Delete Restore UI | ✅ Done |
@@ -276,11 +296,17 @@ docs/                          # Architecture, database, backend, frontend docs
 | Phase 5 | Student Notes | ✅ Done |
 | Phase 7 | Document Management | ✅ Done |
 | Phase 8 | Staff Training Management | ✅ Done |
+| Phase 9 | Academic Structure Reorganization | ✅ Done |
 | Phase 3G | Custom Report Builder | 🔜 Next |
 | Phase 3C | CSV Import & Bulk Export | ⏸ Deferred |
-| Phase 5 | Parent/Guardian Portal | 📋 Planned |
-| Phase 6 | Academic Calendar | 📋 Planned |
-| Phase 9 | Reporting & Analytics | 📋 Planned |
+| Parent Portal | Parent/Guardian Portal | 📋 Planned |
+| Academic Calendar | Calendar integration | 📋 Planned |
+
+---
+
+## Open Issues
+
+See [docs/OPEN_ISSUES.md](docs/OPEN_ISSUES.md) for decisions pending resolution.
 
 ---
 
@@ -290,6 +316,6 @@ docs/                          # Architecture, database, backend, frontend docs
 
 ---
 
-**Version:** 2.0.0
+**Version:** 2.1.0
 **Last Updated:** February 24, 2026
 **Status:** Active Development

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
-use App\Models\ClassModel;
+use App\Models\CohortCourse;
 use App\Models\Grade;
 use App\Models\Student;
 use App\Services\GradeCalculationService;
@@ -19,23 +19,23 @@ class GradeController extends Controller
 
     public function index(Request $request)
     {
-        $classes = ClassModel::with(['course', 'term', 'employee'])
+        $cohortCourses = CohortCourse::with(['course', 'cohort.class', 'employee'])
             ->withCount(['enrollments', 'assessments'])
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('Admin/Grades/Index', [
-            'classes' => $classes,
-            'filters' => $request->only(['search']),
+            'cohortCourses' => $cohortCourses,
+            'filters'       => $request->only(['search']),
         ]);
     }
 
-    public function classGrades(ClassModel $classModel)
+    public function classGrades(CohortCourse $cohortCourse)
     {
-        $classModel->load([
+        $cohortCourse->load([
             'course',
-            'term',
+            'cohort.class',
             'assessments' => fn ($q) => $q->published()->with('category'),
             'enrollments' => fn ($q) => $q->enrolled()->with([
                 'student',
@@ -44,21 +44,21 @@ class GradeController extends Controller
         ]);
 
         return Inertia::render('Admin/Grades/ClassGrades', [
-            'classModel' => $classModel,
+            'cohortCourse' => $cohortCourse,
         ]);
     }
 
     public function enter(Assessment $assessment)
     {
-        $assessment->load(['classModel.course', 'category']);
+        $assessment->load(['cohortCourse.course', 'category']);
 
-        $enrollments = $assessment->classModel->enrollments()
+        $enrollments = $assessment->cohortCourse->enrollments()
             ->enrolled()
             ->with(['student', 'grades' => fn ($q) => $q->where('assessment_id', $assessment->id)])
             ->get();
 
         return Inertia::render('Admin/Grades/Enter', [
-            'assessment' => $assessment,
+            'assessment'  => $assessment,
             'enrollments' => $enrollments,
         ]);
     }
@@ -66,13 +66,13 @@ class GradeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'grades' => ['required', 'array', 'min:1'],
-            'grades.*.enrollment_id' => ['required', 'exists:enrollments,id'],
-            'grades.*.assessment_id' => ['required', 'exists:assessments,id'],
-            'grades.*.score' => ['required', 'numeric', 'min:0'],
-            'grades.*.notes' => ['nullable', 'string'],
-            'grades.*.is_late' => ['boolean'],
-            'grades.*.late_penalty' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'grades'                    => ['required', 'array', 'min:1'],
+            'grades.*.enrollment_id'    => ['required', 'exists:enrollments,id'],
+            'grades.*.assessment_id'    => ['required', 'exists:assessments,id'],
+            'grades.*.score'            => ['required', 'numeric', 'min:0'],
+            'grades.*.notes'            => ['nullable', 'string'],
+            'grades.*.is_late'          => ['boolean'],
+            'grades.*.late_penalty'     => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
         $enrollmentIds = collect();
@@ -84,12 +84,12 @@ class GradeController extends Controller
                     'assessment_id' => $gradeData['assessment_id'],
                 ],
                 [
-                    'score' => $gradeData['score'],
-                    'notes' => $gradeData['notes'] ?? null,
-                    'is_late' => $gradeData['is_late'] ?? false,
+                    'score'       => $gradeData['score'],
+                    'notes'       => $gradeData['notes'] ?? null,
+                    'is_late'     => $gradeData['is_late'] ?? false,
                     'late_penalty' => $gradeData['late_penalty'] ?? null,
-                    'graded_by' => $request->user()->id,
-                    'graded_at' => now(),
+                    'graded_by'   => $request->user()->id,
+                    'graded_at'   => now(),
                 ]
             );
 
@@ -111,8 +111,8 @@ class GradeController extends Controller
     {
         $student->load([
             'enrollments' => fn ($q) => $q->with([
-                'class.course',
-                'class.term',
+                'cohortCourse.course',
+                'cohortCourse.cohort.class',
                 'grades.assessment.category',
             ]),
         ]);
@@ -120,7 +120,7 @@ class GradeController extends Controller
         $cumulativeGpa = $this->gradeService->calculateCumulativeGpa($student);
 
         return Inertia::render('Admin/Grades/StudentGrades', [
-            'student' => $student,
+            'student'       => $student,
             'cumulativeGpa' => $cumulativeGpa,
         ]);
     }

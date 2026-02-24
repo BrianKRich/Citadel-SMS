@@ -68,10 +68,10 @@
                                         Course Name
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Section
+                                        Class / Cohort
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Teacher
+                                        Instructor
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Room
@@ -79,14 +79,11 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Schedule
                                     </th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Term
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <tr v-if="enrollments.length === 0">
-                                    <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                         No current enrollments found.
                                     </td>
                                 </tr>
@@ -96,30 +93,28 @@
                                     class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
                                 >
                                     <td class="px-4 py-3 text-sm font-mono font-medium text-gray-900 dark:text-gray-100">
-                                        {{ enrollment.class?.course?.course_code }}
+                                        {{ enrollment.cohortCourse?.course?.course_code }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ enrollment.class?.course?.name }}
+                                        {{ enrollment.cohortCourse?.course?.name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        {{ enrollment.class?.section_name }}
+                                        Class {{ enrollment.cohortCourse?.cohort?.class?.class_number }}
+                                        / {{ enrollment.cohortCourse?.cohort?.name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        {{ enrollment.class?.employee?.first_name }} {{ enrollment.class?.employee?.last_name }}
+                                        {{ enrollment.cohortCourse?.employee?.first_name }} {{ enrollment.cohortCourse?.employee?.last_name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        {{ enrollment.class?.room || '—' }}
+                                        {{ enrollment.cohortCourse?.room || '—' }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        <template v-if="enrollment.class?.schedule?.length">
-                                            <div v-for="(slot, i) in enrollment.class.schedule" :key="i" class="whitespace-nowrap">
+                                        <template v-if="enrollment.cohortCourse?.schedule?.length">
+                                            <div v-for="(slot, i) in enrollment.cohortCourse.schedule" :key="i" class="whitespace-nowrap">
                                                 {{ formatScheduleSlot(slot) }}
                                             </div>
                                         </template>
                                         <span v-else class="text-gray-400 dark:text-gray-500">No schedule</span>
-                                    </td>
-                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        {{ enrollment.class?.term?.name }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -138,27 +133,27 @@
                         >
                             <div class="flex items-start justify-between gap-2">
                                 <p class="text-sm font-mono font-medium text-gray-900 dark:text-gray-100">
-                                    {{ enrollment.class?.course?.course_code }}
+                                    {{ enrollment.cohortCourse?.course?.course_code }}
                                 </p>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">
-                                    {{ enrollment.class?.term?.name }}
+                                    Class {{ enrollment.cohortCourse?.cohort?.class?.class_number }}
                                 </span>
                             </div>
                             <p class="text-sm text-gray-900 dark:text-gray-100">
-                                {{ enrollment.class?.course?.name }}
+                                {{ enrollment.cohortCourse?.course?.name }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Section: {{ enrollment.class?.section_name }}
-                                <template v-if="enrollment.class?.room">
-                                    &bull; Room: {{ enrollment.class.room }}
+                                Cohort: {{ enrollment.cohortCourse?.cohort?.name }}
+                                <template v-if="enrollment.cohortCourse?.room">
+                                    &bull; Room: {{ enrollment.cohortCourse.room }}
                                 </template>
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Teacher: {{ enrollment.class?.employee?.first_name }} {{ enrollment.class?.employee?.last_name }}
+                                Instructor: {{ enrollment.cohortCourse?.employee?.first_name }} {{ enrollment.cohortCourse?.employee?.last_name }}
                             </p>
                             <div class="text-xs text-gray-500 dark:text-gray-400">
-                                <template v-if="enrollment.class?.schedule?.length">
-                                    <div v-for="(slot, i) in enrollment.class.schedule" :key="i">
+                                <template v-if="enrollment.cohortCourse?.schedule?.length">
+                                    <div v-for="(slot, i) in enrollment.cohortCourse.schedule" :key="i">
                                         {{ formatScheduleSlot(slot) }}
                                     </div>
                                 </template>
@@ -168,7 +163,7 @@
                     </div>
 
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                        Showing {{ enrollments.length }} enrolled class(es) for {{ student.first_name }} {{ student.last_name }}.
+                        Showing {{ enrollments.length }} enrolled course(s) for {{ student.first_name }} {{ student.last_name }}.
                     </p>
                 </div>
             </Card>
@@ -179,7 +174,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
-import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link } from '@inertiajs/vue3';
@@ -201,7 +195,6 @@ const DAY_ABBR = {
 
 function formatTime(time) {
     if (!time) return '';
-    // Handle "HH:MM:SS" or "HH:MM" formats
     const [h, m] = time.split(':').map(Number);
     const period = h >= 12 ? 'PM' : 'AM';
     const hour = h % 12 || 12;

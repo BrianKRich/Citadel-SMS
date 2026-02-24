@@ -30,12 +30,12 @@ class AttendanceSeeder extends Seeder
         $admin = User::where('role', 'admin')->first() ?? User::first();
         $now   = now();
 
-        // Fall 2025 term window
+        // Alpha cohort window
         $termStart = Carbon::parse('2025-09-01');
-        $termEnd   = Carbon::parse('2025-12-20');
+        $termEnd   = Carbon::parse('2026-02-15');
 
-        // Load all enrolled enrollments with their class schedule
-        $enrollments = Enrollment::with('class')
+        // Load all enrolled enrollments with their cohort-course schedule
+        $enrollments = Enrollment::with('cohortCourse')
             ->enrolled()
             ->get();
 
@@ -45,9 +45,9 @@ class AttendanceSeeder extends Seeder
         $records = [];
 
         foreach ($enrollments as $enrollment) {
-            $schedule = $enrollment->class?->schedule ?? [];
+            $schedule = $enrollment->cohortCourse?->schedule ?? [];
 
-            // Collect unique meeting day numbers for this class
+            // Collect unique meeting day numbers for this cohort-course
             $meetingDays = collect($schedule)
                 ->pluck('day')
                 ->unique()
@@ -60,25 +60,25 @@ class AttendanceSeeder extends Seeder
                 continue;
             }
 
-            // Assign profile per student (consistent across all their classes)
+            // Assign profile per student (consistent across all their courses)
             if (! isset($studentProfiles[$enrollment->student_id])) {
                 $studentProfiles[$enrollment->student_id] = $this->randomProfile();
             }
             $profile = $studentProfiles[$enrollment->student_id];
 
-            // Walk the term, generate a record for each meeting day
+            // Walk the cohort window, generate a record for each meeting day
             $date = $termStart->copy();
             while ($date->lte($termEnd)) {
                 if (in_array($date->dayOfWeek, $meetingDays)) {
                     $records[] = [
-                        'student_id' => $enrollment->student_id,
-                        'class_id'   => $enrollment->class_id,
-                        'date'       => $date->toDateString(),
-                        'status'     => $this->pickStatus($profile),
-                        'notes'      => null,
-                        'marked_by'  => $admin?->id,
-                        'created_at' => $now,
-                        'updated_at' => $now,
+                        'student_id'       => $enrollment->student_id,
+                        'cohort_course_id' => $enrollment->cohort_course_id,
+                        'date'             => $date->toDateString(),
+                        'status'           => $this->pickStatus($profile),
+                        'notes'            => null,
+                        'marked_by'        => $admin?->id,
+                        'created_at'       => $now,
+                        'updated_at'       => $now,
                     ];
                 }
                 $date->addDay();
@@ -91,7 +91,7 @@ class AttendanceSeeder extends Seeder
         }
 
         $total = count($records);
-        $this->command->info("  Created {$total} attendance records for Fall 2025.");
+        $this->command->info("  Created {$total} attendance records for Alpha cohort.");
     }
 
     private function randomProfile(): string

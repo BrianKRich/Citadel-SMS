@@ -12,7 +12,7 @@ class AttendanceRecord extends Model
 
     protected $fillable = [
         'student_id',
-        'class_id',
+        'cohort_course_id',
         'date',
         'status',
         'notes',
@@ -28,9 +28,9 @@ class AttendanceRecord extends Model
         return $this->belongsTo(Student::class);
     }
 
-    public function classModel(): BelongsTo
+    public function cohortCourse(): BelongsTo
     {
-        return $this->belongsTo(ClassModel::class, 'class_id');
+        return $this->belongsTo(CohortCourse::class, 'cohort_course_id');
     }
 
     public function markedBy(): BelongsTo
@@ -43,9 +43,9 @@ class AttendanceRecord extends Model
         return $query->whereDate('date', $date);
     }
 
-    public function scopeForClass($query, $classId)
+    public function scopeForCohortCourse($query, $cohortCourseId)
     {
-        return $query->where('class_id', $classId);
+        return $query->where('cohort_course_id', $cohortCourseId);
     }
 
     public function scopeStatus($query, $status)

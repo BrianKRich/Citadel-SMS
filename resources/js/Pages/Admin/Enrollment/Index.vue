@@ -24,7 +24,7 @@
                     </PageHeader>
 
                     <!-- Filters -->
-                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
                             <input
@@ -35,14 +35,26 @@
                             />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Term</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Class</label>
                             <select
-                                v-model="selectedTerm"
+                                v-model="selectedClass"
                                 class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
                             >
-                                <option value="">All Terms</option>
-                                <option v-for="t in terms" :key="t.id" :value="t.id">
-                                    {{ t.name }} ({{ t.academic_year?.name }})
+                                <option value="">All Classes</option>
+                                <option v-for="cls in classes" :key="cls.id" :value="cls.id">
+                                    Class {{ cls.class_number }} ({{ cls.academic_year?.name }})
+                                </option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cohort Course</label>
+                            <select
+                                v-model="selectedCohortCourse"
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                            >
+                                <option value="">All Cohort Courses</option>
+                                <option v-for="cc in cohortCoursesForFilter" :key="cc.id" :value="cc.id">
+                                    {{ cc.cohort?.name }} / {{ cc.course?.course_code }} — {{ cc.course?.name }}
                                 </option>
                             </select>
                         </div>
@@ -80,7 +92,7 @@
                                         Course
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Term
+                                        Class / Cohort
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Status
@@ -111,11 +123,12 @@
                                         {{ enrollment.student?.first_name }} {{ enrollment.student?.last_name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        <span class="font-medium">{{ enrollment.class?.course?.course_code }}</span>
-                                        — {{ enrollment.class?.course?.name }}
+                                        <span class="font-medium">{{ enrollment.cohortCourse?.course?.course_code }}</span>
+                                        — {{ enrollment.cohortCourse?.course?.name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        {{ enrollment.class?.term?.name }}
+                                        Class {{ enrollment.cohortCourse?.cohort?.class?.class_number }}
+                                        / {{ enrollment.cohortCourse?.cohort?.name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm">
                                         <span
@@ -180,12 +193,13 @@
                                 </span>
                             </div>
                             <p class="text-sm text-gray-700 dark:text-gray-300">
-                                <span class="font-medium">{{ enrollment.class?.course?.course_code }}</span>
-                                — {{ enrollment.class?.course?.name }}
+                                <span class="font-medium">{{ enrollment.cohortCourse?.course?.course_code }}</span>
+                                — {{ enrollment.cohortCourse?.course?.name }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                {{ enrollment.class?.term?.name }}
-                                &bull; {{ enrollment.class?.employee?.first_name }} {{ enrollment.class?.employee?.last_name }}
+                                Class {{ enrollment.cohortCourse?.cohort?.class?.class_number }}
+                                / {{ enrollment.cohortCourse?.cohort?.name }}
+                                &bull; {{ enrollment.cohortCourse?.employee?.first_name }} {{ enrollment.cohortCourse?.employee?.last_name }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
                                 Enrolled: {{ enrollment.enrollment_date }}
@@ -242,24 +256,42 @@ import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
     enrollments: Object,
     students: Array,
-    terms: Array,
+    classes: Array,
     filters: Object,
 });
 
 const search = ref(props.filters?.search ?? '');
-const selectedTerm = ref(props.filters?.term_id ?? '');
+const selectedClass = ref(props.filters?.class_id ?? '');
+const selectedCohortCourse = ref(props.filters?.cohort_course_id ?? '');
 const selectedStatus = ref(props.filters?.status ?? '');
+
+// Build a flat list of cohort courses from all classes for the filter dropdown
+const cohortCoursesForFilter = computed(() => {
+    const list = [];
+    for (const cls of (props.classes ?? [])) {
+        for (const cohort of (cls.cohorts ?? [])) {
+            for (const cc of (cohort.cohort_courses ?? [])) {
+                list.push({
+                    ...cc,
+                    cohort: { ...cohort, class: cls },
+                });
+            }
+        }
+    }
+    return list;
+});
 
 function applyFilters() {
     router.get(route('admin.enrollment.index'), {
-        search: search.value,
-        term_id: selectedTerm.value,
-        status: selectedStatus.value,
+        search: search.value || undefined,
+        class_id: selectedClass.value || undefined,
+        cohort_course_id: selectedCohortCourse.value || undefined,
+        status: selectedStatus.value || undefined,
     }, { preserveState: true, replace: true });
 }
 
@@ -268,7 +300,7 @@ watch(search, () => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(applyFilters, 300);
 });
-watch([selectedTerm, selectedStatus], applyFilters);
+watch([selectedClass, selectedCohortCourse, selectedStatus], applyFilters);
 
 function getStatusBadgeClass(status) {
     const c = {
@@ -281,7 +313,7 @@ function getStatusBadgeClass(status) {
 }
 
 function drop(enrollment) {
-    if (confirm(`Drop ${enrollment.student?.first_name} from this class?`)) {
+    if (confirm(`Drop ${enrollment.student?.first_name} from this cohort course?`)) {
         router.delete(route('admin.enrollment.drop', enrollment.id));
     }
 }

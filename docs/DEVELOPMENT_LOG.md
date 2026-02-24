@@ -1818,6 +1818,107 @@ Dashboard-level insights beyond the current StatCards:
 - Export any report as PDF or CSV
 - Potential: dedicated reporting role with read-only access to all analytics
 
+---
+
+## Phase 9: Academic Structure Reorganization
+
+**Date:** February 24, 2026
+
+### What Was Built
+
+A complete redesign of the academic hierarchy to match Georgia Job Challenge Academy's actual structure, replacing the generic Term/Class model with a Cohort-based approach.
+
+### New Data Hierarchy
+
+```
+AcademicYear
+  └─ Class (class_number, ngb_number, status)
+       ├─ Cohort Alpha (start_date, end_date) ← auto-created on Class save
+       └─ Cohort Bravo (start_date, end_date) ← auto-created on Class save
+            └─ CohortCourse (course + instructor + schedule + capacity)
+                 └─ Enrollment (student + cohort_course)
+```
+
+### New Models
+
+- **`Cohort`** — Alpha or Bravo section of a class; auto-created in `ClassModel::boot()`
+- **`CohortCourse`** — A course assigned to a cohort with instructor type (`staff`, `technical_college`, `university`), employee or institution, room, schedule, capacity, and status
+- **`EducationalInstitution`** — Colleges and universities used as external course instructors
+
+### Database Changes
+
+Single migration (`reorganize_class_structure`) that:
+- Dropped and recreated: `classes`, `cohorts`, `cohort_courses`, `enrollments`, `assessments`, `attendance_records`, `grades`
+- Added `educational_institutions` table
+- Changed FK across Enrollment, Assessment, AttendanceRecord from `class_id` → `cohort_course_id`
+
+### New Controllers & Routes
+
+| Controller | Routes |
+|-----------|--------|
+| `CohortCourseController` | `admin.cohort-courses.*` (full CRUD) |
+| `EducationalInstitutionController` | `admin.institutions.*` (full CRUD) |
+| `EmployeeSearchController` | `GET /api/employees/search?q=` |
+| `ClassController::updateCohort` | `PATCH admin/classes/{class}/cohorts/{cohort}` |
+
+### New Vue Pages
+
+- `Admin/CohortCourses/Index`, `Create`, `Edit`, `Show`
+- `Admin/Institutions/Index`, `Create`, `Edit`
+
+### Updated Pages
+
+- `Admin/Classes/Show` — cohort cards with inline date edit, course table per cohort, Add/Remove course buttons
+- `Admin/Classes/Create` — cohort section dropdown with per-cohort date fields
+- `Admin/Grades/*`, `Admin/Enrollment/*`, `Admin/Attendance/*` — FK and prop updates
+- `Admin/ReportCards/Show`, `Admin/Transcripts/Show` — term → cohort GPA
+- `Admin/Dashboard` — Institutions card added
+- PDF Blade templates — term → cohort references
+
+### Key Design Decisions
+
+- **Auto-cohort creation:** `ClassModel::boot()` always creates Alpha and Bravo on insert. Factories must use `$class->cohorts()->where('name','alpha')->first()` — never `Cohort::factory()` directly (would violate unique constraint).
+- **Instructor types:** Three-way enum (`staff`, `technical_college`, `university`) with conditional UI — staff uses live employee search API; institutions use filtered dropdown.
+- **GPA calculation:** `GradeCalculationService::calculateTermGpa()` renamed to `calculateCohortGpa($student, $cohortId)`.
+- **DepartmentSeeder** uses `firstOrCreate` to handle data-inserting migrations that run before seeders during `migrate:fresh`.
+
+### Tests
+
+- **New:** `CohortCourseTest` (19 tests), `EducationalInstitutionTest` (18 tests)
+- **Rewritten:** `ClassTest`, `GradeCalculationServiceTest`
+- **Updated:** `EnrollmentTest`, `AssessmentTest`, `AttendanceTest`, `GradeTest`, `AcademicYearTest`, `ReportCardTest`, `TranscriptTest`
+- **Total:** 368 tests, 1927 assertions
+
+---
+
+## Phase 9 UI Improvements
+
+**Date:** February 24, 2026
+
+### Create Class — Cohort Date Fields
+
+The Create Class form now includes a **Section** dropdown (Cohort Alpha / Cohort Bravo) that shows start/end date inputs for the selected cohort. Both cohorts are always auto-created; dates for each can be set at creation or updated later from the Class Show page.
+
+### Class Show — Cohort View Selector
+
+A **View** dropdown above the cohort cards lets users select which section to display: Cohort Alpha, Cohort Bravo, or Both. Defaults to unselected (no cards shown) so users explicitly choose which cohort to work with.
+
+### Class Show — Remove Course Button
+
+Each course row in the cohort cards now has a **Remove** button. Clicking it shows a confirmation dialog and deletes the course assignment. Blocked with an error if the course has existing enrollments. On success, redirects back to the Class Show page (not the course assignments index).
+
+### CohortCourse Show — Enroll Student Button
+
+The Enrolled Students card on the Course Assignment Show page now has an **"+ Enroll Student"** button. It links to the enrollment form with the course pre-selected — class filter, cohort filter, and course dropdown all populate automatically.
+
+### Open Issues Tracking
+
+Created `docs/OPEN_ISSUES.md` to track decisions pending resolution.
+
+**Issue #1:** `/admin/cohort-courses` has no top-level navigation link — accessible only from the Class Show page. Decision needed: add Dashboard card, nav link, or keep as sub-feature only.
+
+---
+
 ### Performance & Infrastructure (No Phase Number)
 **GitHub Issue:** #14
 

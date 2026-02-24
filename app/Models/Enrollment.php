@@ -13,7 +13,7 @@ class Enrollment extends Model
 
     protected $fillable = [
         'student_id',
-        'class_id',
+        'cohort_course_id',
         'enrollment_date',
         'status',
         'weighted_average',
@@ -27,76 +27,41 @@ class Enrollment extends Model
         'grade_points' => 'decimal:2',
     ];
 
-    /**
-     * Get the student for this enrollment
-     */
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
     }
 
-    /**
-     * Get the class for this enrollment
-     */
-    public function class(): BelongsTo
+    public function cohortCourse(): BelongsTo
     {
-        return $this->belongsTo(ClassModel::class, 'class_id');
+        return $this->belongsTo(CohortCourse::class, 'cohort_course_id');
     }
 
-    /**
-     * Get all grades for this enrollment
-     * (Future: Phase 3)
-     */
     public function grades(): HasMany
     {
         return $this->hasMany(Grade::class);
     }
 
-    /**
-     * Scope to filter active enrollments
-     */
     public function scopeEnrolled($query)
     {
         return $query->where('status', 'enrolled');
     }
 
-    /**
-     * Scope to filter by student
-     */
     public function scopeStudent($query, $studentId)
     {
         return $query->where('student_id', $studentId);
     }
 
-    /**
-     * Scope to filter by class
-     */
-    public function scopeClass($query, $classId)
+    public function scopeCohortCourse($query, $cohortCourseId)
     {
-        return $query->where('class_id', $classId);
+        return $query->where('cohort_course_id', $cohortCourseId);
     }
 
-    /**
-     * Scope to filter by status
-     */
     public function scopeStatus($query, $status)
     {
         return $query->where('status', $status);
     }
 
-    /**
-     * Scope to filter by term (through class relationship)
-     */
-    public function scopeTerm($query, $termId)
-    {
-        return $query->whereHas('class', function ($q) use ($termId) {
-            $q->where('term_id', $termId);
-        });
-    }
-
-    /**
-     * Check if enrollment is active
-     */
     public function isActive(): bool
     {
         return $this->status === 'enrolled';

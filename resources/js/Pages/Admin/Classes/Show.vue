@@ -4,59 +4,97 @@ import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
-import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 
-const props = defineProps({
-    customFields: { type: Array, default: () => [] },
-});
-import { computed, watch, ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const page = usePage();
 const cls = computed(() => page.props.class);
 
-const getStatusBadgeClass = (status) => {
+const inputClass = 'mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm';
+
+const getClassStatusBadge = (s) => {
     const map = {
-        open: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-        closed: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-        in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+        forming:   'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+        active:    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
         completed: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
     };
-    return map[status] || map.open;
+    return map[s] || map.forming;
 };
 
-const getEnrollmentBadgeClass = (status) => {
+const getCohortCourseStatusBadge = (s) => {
     const map = {
-        active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-        dropped: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-        completed: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-        withdrawn: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+        open:        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+        closed:      'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+        in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+        completed:   'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
     };
-    return map[status] || map.active;
+    return map[s] || map.open;
 };
+
+const getCohort = (name) => (cls.value?.cohorts ?? []).find(c => c.name === name);
+
+// Per-cohort date editing state
+const cohortDateForms = ref({});
+
+function getCohortDateForm(cohort) {
+    if (!cohortDateForms.value[cohort.id]) {
+        cohortDateForms.value[cohort.id] = useForm({
+            start_date: cohort.start_date ? cohort.start_date.substring(0, 10) : '',
+            end_date:   cohort.end_date   ? cohort.end_date.substring(0, 10)   : '',
+        });
+    }
+    return cohortDateForms.value[cohort.id];
+}
+
+function saveCohortDates(cohort) {
+    const form = getCohortDateForm(cohort);
+    form.patch(route('admin.classes.cohorts.update', [cls.value.id, cohort.id]));
+}
 
 function destroy() {
-    if (confirm('Delete this class? This will fail if students are enrolled.')) {
+    if (confirm('Delete this class? This cannot be undone.')) {
         router.delete(route('admin.classes.destroy', cls.value.id));
+    }
+}
+
+const instructorLabel = (cc) => {
+    if (cc.instructor_type === 'staff' && cc.employee) {
+        return `${cc.employee.first_name} ${cc.employee.last_name}`;
+    }
+    return cc.institution?.name ?? '—';
+};
+
+const cohortTitle = (name) => name === 'alpha' ? 'Cohort Alpha' : 'Cohort Bravo';
+
+const cohortView = ref('');
+
+function removeCourse(cc) {
+    if (confirm(`Remove "${cc.course?.name}" from this cohort? This cannot be undone.`)) {
+        router.delete(route('admin.cohort-courses.destroy', cc.id), {
+            data: { from: 'class' },
+        });
     }
 }
 </script>
 
 <template>
-    <Head :title="`${cls?.course?.course_code} — ${cls?.section_name}`" />
+    <Head :title="`Class ${cls?.class_number}`" />
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">Class Detail</h2>
+            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
+                Class {{ cls?.class_number }}
+            </h2>
         </template>
 
         <div class="py-12">
-            <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
                 <Breadcrumb :items="[
                     { label: 'Dashboard', href: route('admin.dashboard') },
                     { label: 'Class Management', href: route('admin.classes.index') },
-                    { label: cls?.course?.name ?? 'Class' },
+                    { label: `Class ${cls?.class_number}` },
                 ]" />
 
                 <div v-if="$page.props.flash?.success" class="mb-4">
@@ -66,156 +104,170 @@ function destroy() {
                     <Alert type="error" :message="$page.props.flash.error" />
                 </div>
 
-                <!-- Card 1: Class Information -->
-                <Card class="mb-6">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <PageHeader
-                                :title="`${cls?.course?.course_code} — ${cls?.section_name}`"
-                                description="Class details and enrollment information"
-                            />
+                <!-- Class Info Card -->
+                <Card>
+                    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div>
+                            <PageHeader :title="`Class ${cls?.class_number}`" description="Class details and cohort management." />
+                            <dl class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                                <div>
+                                    <dt class="font-medium text-gray-500 dark:text-gray-400">NGB Number</dt>
+                                    <dd class="text-gray-900 dark:text-gray-100">{{ cls?.ngb_number ?? '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-medium text-gray-500 dark:text-gray-400">Academic Year</dt>
+                                    <dd class="text-gray-900 dark:text-gray-100">{{ cls?.academic_year?.name ?? '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-medium text-gray-500 dark:text-gray-400">Status</dt>
+                                    <dd>
+                                        <span :class="getClassStatusBadge(cls?.status)" class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 capitalize">
+                                            {{ cls?.status }}
+                                        </span>
+                                    </dd>
+                                </div>
+                            </dl>
                         </div>
-                        <div class="flex gap-3 ml-4 flex-shrink-0">
+                        <div class="flex gap-2">
                             <Link
-                                :href="route('admin.classes.edit', cls.id)"
-                                class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-primary-600 text-white hover:bg-primary-700"
-                            >Edit Class</Link>
+                                :href="route('admin.classes.edit', cls?.id)"
+                                class="inline-flex items-center rounded-md bg-secondary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-700"
+                            >Edit</Link>
                             <button
+                                type="button"
                                 @click="destroy"
-                                class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                                class="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700"
                             >Delete</button>
                         </div>
                     </div>
-
-                    <!-- Status Badge -->
-                    <div class="mt-3">
-                        <span
-                            :class="getStatusBadgeClass(cls?.status)"
-                            class="px-2 py-1 rounded-full text-xs font-medium"
-                        >{{ cls?.status?.replace('_', ' ') }}</span>
-                    </div>
-
-                    <!-- Definition List -->
-                    <dl class="mt-6 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Course Name</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ cls?.course?.name || '—' }}</dd>
-                        </div>
-
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Teacher</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                                <span v-if="cls?.employee">{{ cls.employee.first_name }} {{ cls.employee.last_name }}</span>
-                                <span v-else class="text-gray-400 dark:text-gray-500">—</span>
-                            </dd>
-                        </div>
-
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Academic Year</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ cls?.academicYear?.name || '—' }}</dd>
-                        </div>
-
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Term</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ cls?.term?.name || '—' }}</dd>
-                        </div>
-
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Room</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ cls?.room || '—' }}</dd>
-                        </div>
-
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Max Capacity</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ cls?.max_students ?? '—' }}</dd>
-                        </div>
-
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Enrolled Count</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ cls?.enrollments?.length ?? 0 }}</dd>
-                        </div>
-
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4 sm:col-span-2 lg:col-span-2">
-                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Schedule</dt>
-                            <dd v-if="cls?.schedule?.length" class="mt-1">
-                                <span
-                                    v-for="s in cls.schedule"
-                                    :key="s.day"
-                                    class="block text-sm text-gray-900 dark:text-gray-100"
-                                >
-                                    {{ s.day }}: {{ s.start_time }}–{{ s.end_time }}
-                                </span>
-                            </dd>
-                            <dd v-else class="mt-1 text-sm text-gray-500 dark:text-gray-400">No schedule set</dd>
-                        </div>
-                    </dl>
                 </Card>
 
-                <!-- Card 2: Enrolled Students -->
-                <Card>
-                    <PageHeader title="Enrolled Students" />
-
-                    <div class="mt-4 overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-800">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                                        Student ID
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                                        Name
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                                        Enrolled Date
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                                        Status
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                <tr
-                                    v-for="e in cls?.enrollments"
-                                    :key="e.id"
-                                    class="hover:bg-gray-50 dark:hover:bg-gray-800"
-                                >
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ e.student?.student_id }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ e.student?.first_name }} {{ e.student?.last_name }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ new Date(e.enrollment_date).toLocaleDateString() }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4">
-                                        <span
-                                            :class="getEnrollmentBadgeClass(e.status)"
-                                            class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
-                                        >{{ e.status }}</span>
-                                    </td>
-                                </tr>
-                                <tr v-if="!cls?.enrollments?.length">
-                                    <td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                                        No students currently enrolled.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </Card>
-
-                <!-- Custom Fields -->
-                <Card v-if="customFields.length" class="mt-6">
-                    <CustomFieldsSection :fields="customFields" :readonly="true" />
-                </Card>
-
-                <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <Link
-                        :href="route('admin.classes.index')"
-                        class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-                    >&#x2190; Back to Classes</Link>
+                <!-- Cohort Filter -->
+                <div class="flex items-center gap-3">
+                    <label for="cohort_view" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">View:</label>
+                    <select
+                        id="cohort_view"
+                        v-model="cohortView"
+                        class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                    >
+                        <option value="" disabled>Select a cohort...</option>
+                        <option value="both">Both Cohorts</option>
+                        <option value="alpha">Cohort Alpha</option>
+                        <option value="bravo">Cohort Bravo</option>
+                    </select>
                 </div>
+
+                <!-- Cohort Cards -->
+                <template v-for="cohortName in ['alpha', 'bravo']" :key="cohortName">
+                    <Card v-if="cohortView && getCohort(cohortName) && (cohortView === 'both' || cohortView === cohortName)">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                {{ cohortTitle(cohortName) }}
+                            </h3>
+                        </div>
+
+                        <!-- Inline Date Edit Form -->
+                        <div class="mb-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Cohort Dates</h4>
+                            <form @submit.prevent="saveCohortDates(getCohort(cohortName))" class="flex flex-col sm:flex-row sm:items-end gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">Start Date</label>
+                                    <input
+                                        type="date"
+                                        v-model="getCohortDateForm(getCohort(cohortName)).start_date"
+                                        :class="inputClass"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">End Date</label>
+                                    <input
+                                        type="date"
+                                        v-model="getCohortDateForm(getCohort(cohortName)).end_date"
+                                        :class="inputClass"
+                                    />
+                                </div>
+                                <div>
+                                    <PrimaryButton
+                                        type="submit"
+                                        :disabled="getCohortDateForm(getCohort(cohortName)).processing"
+                                    >
+                                        {{ getCohortDateForm(getCohort(cohortName)).processing ? 'Saving...' : 'Save Dates' }}
+                                    </PrimaryButton>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Cohort Courses Table -->
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Assigned Courses</h4>
+                            <Link
+                                :href="route('admin.cohort-courses.create') + '?cohort_id=' + getCohort(cohortName).id"
+                                class="inline-flex items-center rounded-md bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-primary-700"
+                            >+ Add Course to {{ cohortTitle(cohortName) }}</Link>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-800">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Course</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Instructor</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Room</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Enrolled / Max</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+                                    <tr v-if="!getCohort(cohortName).cohort_courses || getCohort(cohortName).cohort_courses.length === 0">
+                                        <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                                            No courses assigned yet.
+                                        </td>
+                                    </tr>
+                                    <tr
+                                        v-for="cc in getCohort(cohortName).cohort_courses"
+                                        :key="cc.id"
+                                        class="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    >
+                                        <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            {{ cc.course?.name ?? '—' }}
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                            {{ instructorLabel(cc) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                            {{ cc.room ?? '—' }}
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span
+                                                :class="getCohortCourseStatusBadge(cc.status)"
+                                                class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
+                                            >{{ cc.status?.replace('_', ' ') }}</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                            {{ cc.enrolled_count ?? 0 }} / {{ cc.max_students ?? '—' }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right text-sm font-medium space-x-3">
+                                            <Link
+                                                :href="route('admin.cohort-courses.show', cc.id)"
+                                                class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
+                                            >View</Link>
+                                            <Link
+                                                :href="route('admin.cohort-courses.edit', cc.id)"
+                                                class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
+                                            >Edit</Link>
+                                            <button
+                                                type="button"
+                                                @click="removeCourse(cc)"
+                                                class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                                            >Remove</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                </template>
             </div>
         </div>
     </AuthenticatedLayout>

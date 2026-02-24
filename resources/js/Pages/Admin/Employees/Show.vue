@@ -231,9 +231,9 @@ function deleteDocument(doc) {
                     </p>
                 </Card>
 
-                <!-- Card 3: Teaching Schedule (only shown when classes are assigned) -->
-                <Card v-if="employee.classes && employee.classes.length > 0" class="mb-6">
-                    <PageHeader title="Teaching Schedule" description="Classes currently assigned to this employee." />
+                <!-- Card 3: Teaching Schedule (only shown when cohort courses are assigned) -->
+                <Card v-if="employee.cohort_courses && employee.cohort_courses.length > 0" class="mb-6">
+                    <PageHeader title="Teaching Schedule" description="Cohort courses currently assigned to this employee." />
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -246,10 +246,7 @@ function deleteDocument(doc) {
                                         Course Name
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                        Section
-                                    </th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                        Term
+                                        Class / Cohort
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Enrolled / Capacity
@@ -257,45 +254,34 @@ function deleteDocument(doc) {
                                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Status
                                     </th>
-                                    <th class="px-4 py-3"></th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                 <tr
-                                    v-for="cls in employee.classes"
-                                    :key="cls.id"
+                                    v-for="cc in employee.cohort_courses"
+                                    :key="cc.id"
                                     class="hover:bg-gray-50 dark:hover:bg-gray-800"
                                 >
                                     <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ cls.course?.course_code ?? '—' }}
+                                        {{ cc.course?.course_code ?? '—' }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        {{ cls.course?.name ?? '—' }}
+                                        {{ cc.course?.name ?? '—' }}
                                     </td>
                                     <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ cls.section_name ?? '—' }}
+                                        Class {{ cc.cohort?.class?.class_number ?? '?' }}
+                                        – Cohort {{ cc.cohort?.name ? cc.cohort.name.charAt(0).toUpperCase() + cc.cohort.name.slice(1) : '' }}
                                     </td>
                                     <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ cls.term?.name ?? '—' }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ cls.enrolled_count }} / {{ cls.max_students }}
+                                        {{ cc.enrollments_count ?? '—' }} / {{ cc.max_students }}
                                     </td>
                                     <td class="whitespace-nowrap px-4 py-3">
                                         <span
-                                            :class="getStatusBadgeClass(cls.status)"
+                                            :class="getStatusBadgeClass(cc.status)"
                                             class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 capitalize"
                                         >
-                                            {{ cls.status?.replace('_', ' ') ?? '—' }}
+                                            {{ cc.status?.replace('_', ' ') ?? '—' }}
                                         </span>
-                                    </td>
-                                    <td class="whitespace-nowrap px-4 py-3 text-right">
-                                        <button
-                                            @click="removeClass(cls.id)"
-                                            class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                                        >
-                                            Remove
-                                        </button>
                                     </td>
                                 </tr>
                             </tbody>

@@ -2,36 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Concerns\SavesCustomFieldValues;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
-use App\Models\CustomField;
 use App\Models\ClassModel;
-use App\Models\Course;
-use App\Models\Employee;
-use App\Models\Term;
+use App\Models\Cohort;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ClassController extends Controller
 {
-    use SavesCustomFieldValues;
-
-    /**
-     * Display a listing of classes
-     */
     public function index(Request $request)
     {
         $classes = ClassModel::query()
-            ->with(['course', 'employee', 'term.academicYear'])
-            ->when($request->term_id, function ($query, $termId) {
-                $query->term($termId);
-            })
-            ->when($request->course_id, function ($query, $courseId) {
-                $query->course($courseId);
-            })
-            ->when($request->employee_id, function ($query, $employeeId) {
-                $query->employee($employeeId);
+            ->with(['academicYear', 'cohorts'])
+            ->when($request->academic_year_id, function ($query, $yearId) {
+                $query->where('academic_year_id', $yearId);
             })
             ->when($request->status, function ($query, $status) {
                 $query->status($status);
@@ -42,180 +27,114 @@ class ClassController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        // Get filter options
-        $terms = Term::with('academicYear')->orderBy('start_date', 'desc')->get();
-        $courses = Course::active()->orderBy('name')->get();
-        $employees = Employee::active()->orderBy('first_name')->get();
+        $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
 
         return Inertia::render('Admin/Classes/Index', [
-            'classes' => $classes,
-            'terms' => $terms,
-            'courses' => $courses,
-            'employees' => $employees,
-            'filters' => $request->only(['search', 'term_id', 'course_id', 'employee_id', 'status']),
+            'classes'       => $classes,
+            'academicYears' => $academicYears,
+            'filters'       => $request->only(['search', 'academic_year_id', 'status']),
         ]);
     }
 
-    /**
-     * Show the form for creating a new class
-     */
     public function create()
     {
-        $courses = Course::active()->orderBy('name')->get();
-        $employees = Employee::active()->orderBy('first_name')->get();
-        $academicYears = AcademicYear::with('terms')->orderBy('start_date', 'desc')->get();
+        $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
 
         return Inertia::render('Admin/Classes/Create', [
-            'courses' => $courses,
-            'employees' => $employees,
             'academicYears' => $academicYears,
-            'customFields' => CustomField::forEntity('Class')->active()->orderBy('sort_order')->get(),
         ]);
     }
 
-    /**
-     * Store a newly created class
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'course_id' => ['required', 'exists:courses,id'],
-            'employee_id' => ['required', 'exists:employees,id'],
-            'academic_year_id' => ['required', 'exists:academic_years,id'],
-            'term_id' => ['required', 'exists:terms,id'],
-            'section_name' => ['required', 'string', 'max:255'],
-            'room' => ['nullable', 'string', 'max:255'],
-            'schedule' => ['nullable', 'array'],
-            'schedule.*.day' => ['required', 'string', 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'],
-            'schedule.*.start_time' => ['required', 'string'],
-            'schedule.*.end_time' => ['required', 'string'],
-            'max_students' => ['required', 'integer', 'min:1', 'max:500'],
-            'status' => ['required', 'in:open,closed,in_progress,completed'],
+            'academic_year_id'   => ['required', 'exists:academic_years,id'],
+            'class_number'       => ['required', 'string', 'max:255'],
+            'ngb_number'         => ['required', 'string', 'max:255', 'unique:classes,ngb_number'],
+            'status'             => ['required', 'in:forming,active,completed'],
+            'alpha_start_date'   => ['nullable', 'date'],
+            'alpha_end_date'     => ['nullable', 'date', 'after_or_equal:alpha_start_date'],
+            'bravo_start_date'   => ['nullable', 'date'],
+            'bravo_end_date'     => ['nullable', 'date', 'after_or_equal:bravo_start_date'],
         ]);
 
-        // Check for schedule conflicts with teacher's other classes
-        if (!empty($validated['schedule'])) {
-            $conflict = $this->checkScheduleConflict(
-                $validated['employee_id'],
-                $validated['term_id'],
-                $validated['schedule']
-            );
+        $class = ClassModel::create([
+            'academic_year_id' => $validated['academic_year_id'],
+            'class_number'     => $validated['class_number'],
+            'ngb_number'       => $validated['ngb_number'],
+            'status'           => $validated['status'],
+        ]);
 
-            if ($conflict) {
-                return back()->withErrors([
-                    'schedule' => "Schedule conflict detected with {$conflict->course->name} ({$conflict->section_name})"
-                ])->withInput();
-            }
-        }
+        // Update cohort dates if provided (cohorts auto-created by boot())
+        $class->cohorts()->where('name', 'alpha')->first()?->update([
+            'start_date' => $validated['alpha_start_date'] ?? null,
+            'end_date'   => $validated['alpha_end_date'] ?? null,
+        ]);
 
-        $class = ClassModel::create($validated);
-
-        $this->saveCustomFieldValues($request, 'Class', $class->id);
+        $class->cohorts()->where('name', 'bravo')->first()?->update([
+            'start_date' => $validated['bravo_start_date'] ?? null,
+            'end_date'   => $validated['bravo_end_date'] ?? null,
+        ]);
 
         return redirect()->route('admin.classes.show', $class)
-            ->with('success', 'Class created successfully.');
+            ->with('success', "Class {$class->class_number} created successfully.");
     }
 
-    /**
-     * Display the specified class
-     */
     public function show(ClassModel $class)
     {
         $class->load([
-            'course',
-            'employee',
             'academicYear',
-            'term',
-            'enrollments' => function ($query) {
-                $query->with('student')->where('status', 'enrolled');
-            }
+            'cohorts.cohortCourses.course',
+            'cohorts.cohortCourses.employee',
+            'cohorts.cohortCourses.institution',
         ]);
+
+        // Append enrollment counts
+        foreach ($class->cohorts as $cohort) {
+            foreach ($cohort->cohortCourses as $cc) {
+                $cc->append(['enrolled_count', 'available_seats']);
+            }
+        }
 
         return Inertia::render('Admin/Classes/Show', [
             'class' => $class,
-            'customFields' => CustomField::forEntityWithValues('Class', $class->id),
         ]);
     }
 
-    /**
-     * Show the form for editing the specified class
-     */
     public function edit(ClassModel $class)
     {
-        $courses = Course::active()->orderBy('name')->get();
-        $employees = Employee::active()->orderBy('first_name')->get();
-        $academicYears = AcademicYear::with('terms')->orderBy('start_date', 'desc')->get();
+        $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
 
         return Inertia::render('Admin/Classes/Edit', [
-            'class' => $class->load(['course', 'employee', 'academicYear', 'term']),
-            'courses' => $courses,
-            'employees' => $employees,
+            'class'         => $class->load('academicYear'),
             'academicYears' => $academicYears,
-            'customFields' => CustomField::forEntity('Class')->orderBy('sort_order')->get(),
         ]);
     }
 
-    /**
-     * Update the specified class
-     */
     public function update(Request $request, ClassModel $class)
     {
         $validated = $request->validate([
-            'course_id' => ['required', 'exists:courses,id'],
-            'employee_id' => ['required', 'exists:employees,id'],
             'academic_year_id' => ['required', 'exists:academic_years,id'],
-            'term_id' => ['required', 'exists:terms,id'],
-            'section_name' => ['required', 'string', 'max:255'],
-            'room' => ['nullable', 'string', 'max:255'],
-            'schedule' => ['nullable', 'array'],
-            'schedule.*.day' => ['required', 'string', 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'],
-            'schedule.*.start_time' => ['required', 'string'],
-            'schedule.*.end_time' => ['required', 'string'],
-            'max_students' => ['required', 'integer', 'min:1', 'max:500'],
-            'status' => ['required', 'in:open,closed,in_progress,completed'],
+            'class_number'     => ['required', 'string', 'max:255'],
+            'ngb_number'       => ['required', 'string', 'max:255', 'unique:classes,ngb_number,' . $class->id],
+            'status'           => ['required', 'in:forming,active,completed'],
         ]);
 
-        // Check for schedule conflicts (excluding current class)
-        if (!empty($validated['schedule'])) {
-            $conflict = $this->checkScheduleConflict(
-                $validated['employee_id'],
-                $validated['term_id'],
-                $validated['schedule'],
-                $class->id
-            );
-
-            if ($conflict) {
-                return back()->withErrors([
-                    'schedule' => "Schedule conflict detected with {$conflict->course->name} ({$conflict->section_name})"
-                ])->withInput();
-            }
-        }
-
-        // Check if reducing max_students below current enrollments
-        $enrolledCount = $class->enrollments()->where('status', 'enrolled')->count();
-        if ($validated['max_students'] < $enrolledCount) {
-            return back()->withErrors([
-                'max_students' => "Cannot reduce capacity below current enrollment count ({$enrolledCount} students)"
-            ])->withInput();
-        }
-
         $class->update($validated);
-
-        $this->saveCustomFieldValues($request, 'Class', $class->id);
 
         return redirect()->route('admin.classes.show', $class)
             ->with('success', 'Class updated successfully.');
     }
 
-    /**
-     * Remove the specified class
-     */
     public function destroy(ClassModel $class)
     {
-        // Check if class has enrollments
-        if ($class->enrollments()->count() > 0) {
+        $hasEnrollments = $class->cohortCourses()
+            ->whereHas('enrollments')
+            ->exists();
+
+        if ($hasEnrollments) {
             return back()->withErrors([
-                'error' => 'Cannot delete class with existing enrollments. Please remove all enrollments first.'
+                'error' => 'Cannot delete class with existing enrollments. Please remove all enrollments first.',
             ]);
         }
 
@@ -225,47 +144,15 @@ class ClassController extends Controller
             ->with('success', 'Class deleted successfully.');
     }
 
-    /**
-     * Check for schedule conflicts with teacher's other classes
-     */
-    private function checkScheduleConflict($employeeId, $termId, $schedule, $excludeClassId = null)
+    public function updateCohort(Request $request, ClassModel $class, Cohort $cohort)
     {
-        $teacherClasses = ClassModel::where('employee_id', $employeeId)
-            ->where('term_id', $termId)
-            ->when($excludeClassId, function ($query, $excludeId) {
-                $query->where('id', '!=', $excludeId);
-            })
-            ->with('course')
-            ->get();
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
 
-        foreach ($teacherClasses as $existingClass) {
-            if (empty($existingClass->schedule)) {
-                continue;
-            }
+        $cohort->update($validated);
 
-            foreach ($schedule as $newSlot) {
-                foreach ($existingClass->schedule as $existingSlot) {
-                    if ($newSlot['day'] === $existingSlot['day']) {
-                        // Check for time overlap
-                        if ($this->timesOverlap(
-                            $newSlot['start_time'], $newSlot['end_time'],
-                            $existingSlot['start_time'], $existingSlot['end_time']
-                        )) {
-                            return $existingClass;
-                        }
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Check if two time ranges overlap
-     */
-    private function timesOverlap($start1, $end1, $start2, $end2)
-    {
-        return ($start1 < $end2) && ($end1 > $start2);
+        return back()->with('success', ucfirst($cohort->name) . ' cohort dates updated.');
     }
 }

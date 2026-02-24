@@ -17,28 +17,28 @@ class GradeSeeder extends Seeder
         $publishedAssessments = Assessment::published()->get();
 
         foreach ($publishedAssessments as $assessment) {
-            $enrollments = Enrollment::where('class_id', $assessment->class_id)
+            $enrollments = Enrollment::where('cohort_course_id', $assessment->cohort_course_id)
                 ->enrolled()
                 ->get();
 
             foreach ($enrollments as $enrollment) {
-                $score = fake()->randomFloat(2, 45, (float) $assessment->max_score);
+                $score  = fake()->randomFloat(2, 45, (float) $assessment->max_score);
                 $isLate = fake()->boolean(15);
 
                 Grade::create([
                     'enrollment_id' => $enrollment->id,
                     'assessment_id' => $assessment->id,
-                    'score' => $score,
-                    'is_late' => $isLate,
-                    'late_penalty' => $isLate ? 10.00 : null,
-                    'graded_by' => $admin?->id,
-                    'graded_at' => now(),
+                    'score'         => $score,
+                    'is_late'       => $isLate,
+                    'late_penalty'  => $isLate ? 10.00 : null,
+                    'graded_by'     => $admin?->id,
+                    'graded_at'     => now(),
                 ]);
             }
         }
 
         // Recalculate all enrollment grades
-        $service = app(GradeCalculationService::class);
+        $service     = app(GradeCalculationService::class);
         $enrollments = Enrollment::enrolled()->get();
 
         foreach ($enrollments as $enrollment) {

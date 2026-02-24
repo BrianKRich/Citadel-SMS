@@ -3,12 +3,11 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\AcademicYear;
+use App\Models\Cohort;
 use App\Models\ClassModel;
-use App\Models\Course;
-use App\Models\Employee;
+use App\Models\CohortCourse;
 use App\Models\Enrollment;
 use App\Models\Student;
-use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -31,18 +30,12 @@ class ClassTest extends TestCase
     private function validPayload(array $overrides = []): array
     {
         $academicYear = AcademicYear::factory()->create();
-        $term         = Term::factory()->for($academicYear)->create();
-        $course       = Course::factory()->create();
-        $employee     = Employee::factory()->create();
 
         return array_merge([
-            'course_id'        => $course->id,
-            'employee_id'      => $employee->id,
             'academic_year_id' => $academicYear->id,
-            'term_id'          => $term->id,
-            'section_name'     => 'A',
-            'max_students'     => 30,
-            'status'           => 'open',
+            'class_number'     => '42',
+            'ngb_number'       => 'NGB-TEST-001',
+            'status'           => 'forming',
         ], $overrides);
     }
 
@@ -64,22 +57,29 @@ class ClassTest extends TestCase
             ->assertInertia(fn (Assert $p) => $p
                 ->component('Admin/Classes/Index')
                 ->has('classes')
-                ->has('terms')
-                ->has('courses')
-                ->has('employees')
+                ->has('academicYears')
                 ->has('filters')
             );
     }
 
-    public function test_index_filters_by_term(): void
+    public function test_index_filters_by_academic_year(): void
     {
         $academicYear = AcademicYear::factory()->create();
-        $term         = Term::factory()->for($academicYear)->create();
-        ClassModel::factory()->create(['term_id' => $term->id, 'academic_year_id' => $academicYear->id]);
+        ClassModel::factory()->create(['academic_year_id' => $academicYear->id]);
         ClassModel::factory()->count(2)->create();
 
         $this->actingAs($this->admin())
-            ->get(route('admin.classes.index', ['term_id' => $term->id]))
+            ->get(route('admin.classes.index', ['academic_year_id' => $academicYear->id]))
+            ->assertInertia(fn (Assert $p) => $p->where('classes.total', 1));
+    }
+
+    public function test_index_filters_by_status(): void
+    {
+        ClassModel::factory()->create(['status' => 'active']);
+        ClassModel::factory()->count(2)->create(['status' => 'forming']);
+
+        $this->actingAs($this->admin())
+            ->get(route('admin.classes.index', ['status' => 'active']))
             ->assertInertia(fn (Assert $p) => $p->where('classes.total', 1));
     }
 
@@ -91,8 +91,6 @@ class ClassTest extends TestCase
             ->get(route('admin.classes.create'))
             ->assertInertia(fn (Assert $p) => $p
                 ->component('Admin/Classes/Create')
-                ->has('courses')
-                ->has('employees')
                 ->has('academicYears')
             );
     }
@@ -108,7 +106,19 @@ class ClassTest extends TestCase
 
         $class = ClassModel::first();
         $response->assertRedirect(route('admin.classes.show', $class));
-        $this->assertDatabaseHas('classes', ['section_name' => 'A']);
+        $this->assertDatabaseHas('classes', ['class_number' => '42']);
+    }
+
+    public function test_store_auto_creates_alpha_and_bravo_cohorts(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.classes.store'), $this->validPayload());
+
+        $class = ClassModel::first();
+        $this->assertNotNull($class);
+        $this->assertSame(2, $class->cohorts()->count());
+        $this->assertDatabaseHas('cohorts', ['class_id' => $class->id, 'name' => 'alpha']);
+        $this->assertDatabaseHas('cohorts', ['class_id' => $class->id, 'name' => 'bravo']);
     }
 
     public function test_store_validates_required_fields(): void
@@ -116,8 +126,7 @@ class ClassTest extends TestCase
         $this->actingAs($this->admin())
             ->post(route('admin.classes.store'), [])
             ->assertSessionHasErrors([
-                'course_id', 'employee_id', 'academic_year_id',
-                'term_id', 'section_name', 'max_students', 'status',
+                'academic_year_id', 'class_number', 'ngb_number', 'status',
             ]);
     }
 
@@ -128,34 +137,24 @@ class ClassTest extends TestCase
             ->assertSessionHasErrors(['status']);
     }
 
-    public function test_store_detects_schedule_conflict(): void
+    public function test_store_validates_ngb_number_unique(): void
     {
-        $academicYear = AcademicYear::factory()->create();
-        $term         = Term::factory()->for($academicYear)->create();
-        $course       = Course::factory()->create();
-        $employee     = Employee::factory()->create();
+        $existing = $this->makeClass();
 
-        // Existing class on Monday 08:00–09:00
-        ClassModel::factory()->create([
-            'employee_id'      => $employee->id,
-            'term_id'          => $term->id,
-            'academic_year_id' => $academicYear->id,
-            'schedule'         => [['day' => 'Monday', 'start_time' => '08:00', 'end_time' => '09:00']],
-        ]);
-
-        // New class overlaps Monday 08:30–09:30
         $this->actingAs($this->admin())
-            ->post(route('admin.classes.store'), [
-                'course_id'        => $course->id,
-                'employee_id'      => $employee->id,
-                'academic_year_id' => $academicYear->id,
-                'term_id'          => $term->id,
-                'section_name'     => 'B',
-                'max_students'     => 30,
-                'status'           => 'open',
-                'schedule'         => [['day' => 'Monday', 'start_time' => '08:30', 'end_time' => '09:30']],
-            ])
-            ->assertSessionHasErrors(['schedule']);
+            ->post(route('admin.classes.store'), $this->validPayload([
+                'ngb_number' => $existing->ngb_number,
+            ]))
+            ->assertSessionHasErrors(['ngb_number']);
+    }
+
+    public function test_store_validates_academic_year_exists(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.classes.store'), $this->validPayload([
+                'academic_year_id' => 99999,
+            ]))
+            ->assertSessionHasErrors(['academic_year_id']);
     }
 
     // ── Show ──────────────────────────────────────────────────────────────────
@@ -183,8 +182,6 @@ class ClassTest extends TestCase
             ->assertInertia(fn (Assert $p) => $p
                 ->component('Admin/Classes/Edit')
                 ->has('class')
-                ->has('courses')
-                ->has('employees')
                 ->has('academicYears')
             );
     }
@@ -197,38 +194,55 @@ class ClassTest extends TestCase
 
         $response = $this->actingAs($this->admin())
             ->patch(route('admin.classes.update', $class), [
-                'course_id'        => $class->course_id,
-                'employee_id'      => $class->employee_id,
                 'academic_year_id' => $class->academic_year_id,
-                'term_id'          => $class->term_id,
-                'section_name'     => 'Updated',
-                'max_students'     => 25,
-                'status'           => 'open',
+                'class_number'     => '99',
+                'ngb_number'       => $class->ngb_number,
+                'status'           => 'active',
             ]);
 
         $response->assertRedirect(route('admin.classes.show', $class));
-        $this->assertDatabaseHas('classes', ['id' => $class->id, 'section_name' => 'Updated']);
+        $this->assertDatabaseHas('classes', ['id' => $class->id, 'class_number' => '99', 'status' => 'active']);
     }
 
-    public function test_update_rejects_reducing_capacity_below_enrollment(): void
+    public function test_update_validates_required_fields(): void
     {
-        $class    = $this->makeClass(['max_students' => 5]);
-        $student1 = Student::factory()->create();
-        $student2 = Student::factory()->create();
-        Enrollment::factory()->create(['class_id' => $class->id, 'student_id' => $student1->id, 'status' => 'enrolled']);
-        Enrollment::factory()->create(['class_id' => $class->id, 'student_id' => $student2->id, 'status' => 'enrolled']);
+        $class = $this->makeClass();
 
         $this->actingAs($this->admin())
-            ->patch(route('admin.classes.update', $class), [
-                'course_id'        => $class->course_id,
-                'employee_id'      => $class->employee_id,
-                'academic_year_id' => $class->academic_year_id,
-                'term_id'          => $class->term_id,
-                'section_name'     => $class->section_name,
-                'max_students'     => 1,  // below enrolled count of 2
-                'status'           => 'open',
+            ->patch(route('admin.classes.update', $class), [])
+            ->assertSessionHasErrors(['academic_year_id', 'class_number', 'ngb_number', 'status']);
+    }
+
+    // ── UpdateCohort ──────────────────────────────────────────────────────────
+
+    public function test_update_cohort_sets_dates(): void
+    {
+        $class  = $this->makeClass();
+        $cohort = $class->cohorts()->where('name', 'alpha')->first();
+
+        $this->actingAs($this->admin())
+            ->patch(route('admin.classes.cohorts.update', [$class, $cohort]), [
+                'start_date' => '2025-01-01',
+                'end_date'   => '2025-06-30',
             ])
-            ->assertSessionHasErrors(['max_students']);
+            ->assertRedirect();
+
+        $cohort->refresh();
+        $this->assertSame('2025-01-01', $cohort->start_date->toDateString());
+        $this->assertSame('2025-06-30', $cohort->end_date->toDateString());
+    }
+
+    public function test_update_cohort_validates_end_after_start(): void
+    {
+        $class  = $this->makeClass();
+        $cohort = $class->cohorts()->where('name', 'alpha')->first();
+
+        $this->actingAs($this->admin())
+            ->patch(route('admin.classes.cohorts.update', [$class, $cohort]), [
+                'start_date' => '2025-06-01',
+                'end_date'   => '2025-01-01',
+            ])
+            ->assertSessionHasErrors(['end_date']);
     }
 
     // ── Destroy ───────────────────────────────────────────────────────────────
@@ -244,11 +258,16 @@ class ClassTest extends TestCase
         $this->assertDatabaseMissing('classes', ['id' => $class->id]);
     }
 
-    public function test_destroy_blocked_when_enrollments_exist(): void
+    public function test_destroy_blocked_when_cohort_courses_have_enrollments(): void
     {
-        $class   = $this->makeClass();
-        $student = Student::factory()->create();
-        Enrollment::factory()->create(['class_id' => $class->id, 'student_id' => $student->id]);
+        $class      = $this->makeClass();
+        $cohort     = $class->cohorts()->first();
+        $cc         = CohortCourse::factory()->create(['cohort_id' => $cohort->id]);
+        $student    = Student::factory()->create();
+        Enrollment::factory()->create([
+            'cohort_course_id' => $cc->id,
+            'student_id'       => $student->id,
+        ]);
 
         $this->actingAs($this->admin())
             ->delete(route('admin.classes.destroy', $class))

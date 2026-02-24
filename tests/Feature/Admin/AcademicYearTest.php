@@ -4,9 +4,6 @@ namespace Tests\Feature\Admin;
 
 use App\Models\AcademicYear;
 use App\Models\ClassModel;
-use App\Models\Enrollment;
-use App\Models\Student;
-use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -27,16 +24,6 @@ class AcademicYearTest extends TestCase
             'name'       => '2024-2025',
             'start_date' => '2024-08-01',
             'end_date'   => '2025-05-31',
-            'is_current' => false,
-        ], $overrides);
-    }
-
-    private function validTermPayload(array $overrides = []): array
-    {
-        return array_merge([
-            'name'       => 'Fall 2024',
-            'start_date' => '2024-08-01',
-            'end_date'   => '2024-12-15',
             'is_current' => false,
         ], $overrides);
     }
@@ -100,25 +87,6 @@ class AcademicYearTest extends TestCase
             ->assertSessionHasErrors(['end_date']);
     }
 
-    public function test_store_creates_with_inline_terms(): void
-    {
-        $payload = $this->validPayload([
-            'terms' => [[
-                'name'       => 'Fall 2024',
-                'start_date' => '2024-08-01',
-                'end_date'   => '2024-12-15',
-                'is_current' => false,
-            ]],
-        ]);
-
-        $this->actingAs($this->admin())
-            ->post(route('admin.academic-years.store'), $payload);
-
-        $year = AcademicYear::first();
-        $this->assertCount(1, $year->terms);
-        $this->assertDatabaseHas('terms', ['name' => 'Fall 2024']);
-    }
-
     public function test_store_setting_as_current_unsets_other_years(): void
     {
         $other = AcademicYear::factory()->create(['is_current' => true]);
@@ -138,9 +106,10 @@ class AcademicYearTest extends TestCase
 
     // ── Show ──────────────────────────────────────────────────────────────────
 
-    public function test_show_renders_academic_year(): void
+    public function test_show_renders_academic_year_with_classes(): void
     {
         $year = AcademicYear::factory()->create();
+        ClassModel::factory()->create(['academic_year_id' => $year->id]);
 
         $this->actingAs($this->admin())
             ->get(route('admin.academic-years.show', $year))
@@ -209,111 +178,12 @@ class AcademicYearTest extends TestCase
         $this->assertTrue($second->is_current);
     }
 
-    // ── Term Management ───────────────────────────────────────────────────────
-
-    public function test_store_term_creates_term_under_year(): void
-    {
-        $year = AcademicYear::factory()->create();
-
-        $this->actingAs($this->admin())
-            ->post(route('admin.academic-years.terms.store', $year), $this->validTermPayload())
-            ->assertRedirect();
-
-        $this->assertDatabaseHas('terms', [
-            'academic_year_id' => $year->id,
-            'name'             => 'Fall 2024',
-        ]);
-    }
-
-    public function test_store_term_validates_required_fields(): void
-    {
-        $year = AcademicYear::factory()->create();
-
-        $this->actingAs($this->admin())
-            ->post(route('admin.academic-years.terms.store', $year), [])
-            ->assertSessionHasErrors(['name', 'start_date', 'end_date']);
-    }
-
-    public function test_update_term_modifies_term(): void
-    {
-        $year = AcademicYear::factory()->create();
-        $term = Term::factory()->for($year)->create(['name' => 'Old Term']);
-
-        $this->actingAs($this->admin())
-            ->put(route('admin.academic-years.terms.update', [$year, $term]),
-                $this->validTermPayload(['name' => 'New Term']))
-            ->assertRedirect();
-
-        $this->assertDatabaseHas('terms', ['id' => $term->id, 'name' => 'New Term']);
-    }
-
-    public function test_destroy_term_deletes_term(): void
-    {
-        $year = AcademicYear::factory()->create();
-        $term = Term::factory()->for($year)->create();
-
-        $this->actingAs($this->admin())
-            ->delete(route('admin.academic-years.terms.destroy', [$year, $term]))
-            ->assertRedirect();
-
-        $this->assertDatabaseMissing('terms', ['id' => $term->id]);
-    }
-
-    public function test_set_current_term_marks_term_as_current(): void
-    {
-        $year   = AcademicYear::factory()->create();
-        $first  = Term::factory()->for($year)->create(['is_current' => true]);
-        $second = Term::factory()->for($year)->create(['is_current' => false]);
-
-        $this->actingAs($this->admin())
-            ->post(route('admin.academic-years.terms.set-current', [$year, $second]))
-            ->assertRedirect();
-
-        $first->refresh();
-        $second->refresh();
-        $this->assertFalse($first->is_current);
-        $this->assertTrue($second->is_current);
-    }
-
-    // ── Guard: cannot delete when students are enrolled ───────────────────────
-
-    public function test_destroy_blocked_when_students_enrolled(): void
-    {
-        $year    = AcademicYear::factory()->create();
-        $term    = Term::factory()->for($year)->create();
-        $class   = ClassModel::factory()->for($year, 'academicYear')->for($term)->create();
-        $student = Student::factory()->create();
-        Enrollment::factory()->for($class, 'class')->for($student)->create(['status' => 'enrolled']);
-
-        $response = $this->actingAs($this->admin())
-            ->delete(route('admin.academic-years.destroy', $year));
-
-        $response->assertRedirect();
-        $response->assertSessionHas('error');
-        $this->assertDatabaseHas('academic_years', ['id' => $year->id]);
-    }
-
-    public function test_destroy_term_blocked_when_students_enrolled(): void
-    {
-        $year    = AcademicYear::factory()->create();
-        $term    = Term::factory()->for($year)->create();
-        $class   = ClassModel::factory()->for($year, 'academicYear')->for($term)->create();
-        $student = Student::factory()->create();
-        Enrollment::factory()->for($class, 'class')->for($student)->create(['status' => 'enrolled']);
-
-        $response = $this->actingAs($this->admin())
-            ->delete(route('admin.academic-years.terms.destroy', [$year, $term]));
-
-        $response->assertRedirect();
-        $response->assertSessionHas('error');
-        $this->assertDatabaseHas('terms', ['id' => $term->id]);
-    }
+    // ── Guard: cannot delete when classes exist ────────────────────────────────
 
     public function test_destroy_blocked_when_classes_exist(): void
     {
-        $year  = AcademicYear::factory()->create();
-        $term  = Term::factory()->for($year)->create();
-        ClassModel::factory()->for($year, 'academicYear')->for($term)->create();
+        $year = AcademicYear::factory()->create();
+        ClassModel::factory()->create(['academic_year_id' => $year->id]);
 
         $response = $this->actingAs($this->admin())
             ->delete(route('admin.academic-years.destroy', $year));
@@ -321,19 +191,5 @@ class AcademicYearTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('error');
         $this->assertDatabaseHas('academic_years', ['id' => $year->id]);
-    }
-
-    public function test_destroy_term_blocked_when_classes_exist(): void
-    {
-        $year  = AcademicYear::factory()->create();
-        $term  = Term::factory()->for($year)->create();
-        ClassModel::factory()->for($year, 'academicYear')->for($term)->create();
-
-        $response = $this->actingAs($this->admin())
-            ->delete(route('admin.academic-years.terms.destroy', [$year, $term]));
-
-        $response->assertRedirect();
-        $response->assertSessionHas('error');
-        $this->assertDatabaseHas('terms', ['id' => $term->id]);
     }
 }

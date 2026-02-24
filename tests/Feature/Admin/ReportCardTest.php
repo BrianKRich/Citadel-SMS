@@ -2,12 +2,11 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\AcademicYear;
 use App\Models\ClassModel;
+use App\Models\CohortCourse;
 use App\Models\Enrollment;
 use App\Models\GradingScale;
 use App\Models\Student;
-use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -22,16 +21,11 @@ class ReportCardTest extends TestCase
         return User::factory()->create(['role' => 'admin']);
     }
 
-    private function makeTermWithEnrollment(): array
+    private function makeCohortWithEnrollment(): array
     {
-        $year = AcademicYear::factory()->create(['is_current' => true]);
-        $term = Term::factory()->create(['academic_year_id' => $year->id, 'is_current' => true]);
-        $classModel = ClassModel::factory()->create(['term_id' => $term->id]);
-        $student = Student::factory()->create(['status' => 'active']);
-
         GradingScale::factory()->create([
             'is_default' => true,
-            'scale' => [
+            'scale'      => [
                 ['letter' => 'A', 'min_percentage' => 90, 'gpa_points' => 4.0],
                 ['letter' => 'B', 'min_percentage' => 80, 'gpa_points' => 3.0],
                 ['letter' => 'C', 'min_percentage' => 70, 'gpa_points' => 2.0],
@@ -40,12 +34,20 @@ class ReportCardTest extends TestCase
             ],
         ]);
 
+        $class  = ClassModel::factory()->create();
+        // Use the auto-created alpha cohort from boot()
+        $cohort = $class->cohorts()->where('name', 'alpha')->first();
+        $cohort->update(['start_date' => '2025-01-01', 'end_date' => '2025-06-30']);
+
+        $cohortCourse = CohortCourse::factory()->create(['cohort_id' => $cohort->id]);
+        $student      = Student::factory()->create(['status' => 'active']);
+
         $enrollment = Enrollment::factory()->withGrade('B', 3.0)->create([
-            'student_id' => $student->id,
-            'class_id'   => $classModel->id,
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
         ]);
 
-        return compact('year', 'term', 'classModel', 'student', 'enrollment');
+        return compact('class', 'cohort', 'cohortCourse', 'student', 'enrollment');
     }
 
     public function test_index_requires_auth(): void
@@ -57,21 +59,21 @@ class ReportCardTest extends TestCase
     public function test_index_renders_page(): void
     {
         $user = $this->adminUser();
-        $this->makeTermWithEnrollment();
+        $this->makeCohortWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.index'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/ReportCards/Index')
             ->has('students')
-            ->has('terms')
+            ->has('cohorts')
         );
     }
 
     public function test_index_search_filters_students(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeTermWithEnrollment();
+        $data = $this->makeCohortWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.index', [
             'search' => $data['student']->last_name,
@@ -83,30 +85,30 @@ class ReportCardTest extends TestCase
         );
     }
 
-    public function test_show_renders_page_for_student_and_term(): void
+    public function test_show_renders_page_for_student_and_cohort(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeTermWithEnrollment();
+        $data = $this->makeCohortWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.show', [
-            'student' => $data['student']->id,
-            'term_id' => $data['term']->id,
+            'student'   => $data['student']->id,
+            'cohort_id' => $data['cohort']->id,
         ]));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/ReportCards/Show')
             ->has('student')
-            ->has('term')
+            ->has('cohort')
             ->has('enrollments')
-            ->has('termGpa')
+            ->has('cohortGpa')
             ->has('cumulativeGpa')
         );
     }
 
-    public function test_show_uses_current_term_when_no_term_id_provided(): void
+    public function test_show_uses_first_cohort_when_no_cohort_id_provided(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeTermWithEnrollment();
+        $data = $this->makeCohortWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.show', $data['student']->id));
 
@@ -117,7 +119,7 @@ class ReportCardTest extends TestCase
 
     public function test_show_requires_auth(): void
     {
-        $student = Student::factory()->create(['status' => 'active']);
+        $student  = Student::factory()->create(['status' => 'active']);
         $response = $this->get(route('admin.report-cards.show', $student->id));
         $response->assertRedirect(route('login'));
     }
@@ -125,11 +127,11 @@ class ReportCardTest extends TestCase
     public function test_pdf_returns_pdf_download(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeTermWithEnrollment();
+        $data = $this->makeCohortWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.pdf', [
-            'student' => $data['student']->id,
-            'term_id' => $data['term']->id,
+            'student'   => $data['student']->id,
+            'cohort_id' => $data['cohort']->id,
         ]));
 
         $response->assertOk();
@@ -138,39 +140,37 @@ class ReportCardTest extends TestCase
 
     public function test_pdf_requires_auth(): void
     {
-        $student = Student::factory()->create(['status' => 'active']);
+        $student  = Student::factory()->create(['status' => 'active']);
         $response = $this->get(route('admin.report-cards.pdf', $student->id));
         $response->assertRedirect(route('login'));
     }
 
-    public function test_pdf_filename_contains_student_id_and_term(): void
+    public function test_pdf_filename_contains_report_card(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeTermWithEnrollment();
+        $data = $this->makeCohortWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.pdf', [
-            'student' => $data['student']->id,
-            'term_id' => $data['term']->id,
+            'student'   => $data['student']->id,
+            'cohort_id' => $data['cohort']->id,
         ]));
 
         $disposition = $response->headers->get('Content-Disposition');
         $this->assertStringContainsString('report-card', $disposition);
     }
 
-    public function test_show_passes_enrollments_for_selected_term_only(): void
+    public function test_show_passes_enrollments_for_selected_cohort_only(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeTermWithEnrollment();
+        $data = $this->makeCohortWithEnrollment();
 
-        // Second term with no enrollment for this student
-        $otherTerm = Term::factory()->create([
-            'academic_year_id' => $data['year']->id,
-            'is_current' => false,
-        ]);
+        // Use the bravo cohort (auto-created by boot), which has no enrollment for this student
+        $otherCohort = $data['class']->cohorts()->where('name', 'bravo')->first();
+        $otherCohort->update(['start_date' => '2025-07-01', 'end_date' => '2025-12-31']);
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.show', [
-            'student' => $data['student']->id,
-            'term_id' => $otherTerm->id,
+            'student'   => $data['student']->id,
+            'cohort_id' => $otherCohort->id,
         ]));
 
         $response->assertInertia(fn (Assert $page) => $page

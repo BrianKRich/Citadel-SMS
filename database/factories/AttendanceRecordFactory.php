@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\AttendanceRecord;
-use App\Models\ClassModel;
+use App\Models\CohortCourse;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -18,12 +18,12 @@ class AttendanceRecordFactory extends Factory
     public function definition(): array
     {
         return [
-            'student_id' => Student::factory(),
-            'class_id'   => ClassModel::factory(),
-            'date'       => fake()->dateTimeBetween('-30 days', 'now')->format('Y-m-d'),
-            'status'     => fake()->randomElement(['present', 'absent', 'late', 'excused']),
-            'notes'      => null,
-            'marked_by'  => User::factory(),
+            'student_id'       => Student::factory(),
+            'cohort_course_id' => CohortCourse::factory(),
+            'date'             => fake()->dateTimeBetween('-30 days', 'now')->format('Y-m-d'),
+            'status'           => fake()->randomElement(['present', 'absent', 'late', 'excused']),
+            'notes'            => null,
+            'marked_by'        => User::factory(),
         ];
     }
 

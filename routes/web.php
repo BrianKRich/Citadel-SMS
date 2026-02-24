@@ -7,12 +7,14 @@ use App\Http\Controllers\Admin\AcademicYearController;
 use App\Http\Controllers\Admin\StudentNoteController;
 use App\Http\Controllers\Admin\AssessmentCategoryController;
 use App\Http\Controllers\Admin\AssessmentController;
-use App\Http\Controllers\Admin\ClassController;
-use App\Http\Controllers\Admin\CourseController;
-use App\Http\Controllers\Admin\EnrollmentController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\ClassController;
+use App\Http\Controllers\Admin\CohortCourseController;
+use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\CustomFieldController;
+use App\Http\Controllers\Admin\EducationalInstitutionController;
+use App\Http\Controllers\Admin\EnrollmentController;
 use App\Http\Controllers\Admin\GradeController;
 use App\Http\Controllers\Admin\GradingScaleController;
 use App\Http\Controllers\Admin\GuardianController;
@@ -21,6 +23,7 @@ use App\Http\Controllers\Admin\TranscriptController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Api\EmployeeSearchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\UserManagementController;
@@ -53,11 +56,11 @@ Route::middleware('auth')->group(function () {
 
     // User management routes
     Route::resource('admin/users', UserManagementController::class)->names([
-        'index' => 'admin.users.index',
-        'create' => 'admin.users.create',
-        'store' => 'admin.users.store',
-        'edit' => 'admin.users.edit',
-        'update' => 'admin.users.update',
+        'index'   => 'admin.users.index',
+        'create'  => 'admin.users.create',
+        'store'   => 'admin.users.store',
+        'edit'    => 'admin.users.edit',
+        'update'  => 'admin.users.update',
         'destroy' => 'admin.users.destroy',
     ]);
 
@@ -83,32 +86,32 @@ Route::middleware('auth')->group(function () {
         ->withTrashed();
 
     Route::resource('admin/students', StudentController::class)->names([
-        'index' => 'admin.students.index',
-        'create' => 'admin.students.create',
-        'store' => 'admin.students.store',
-        'show' => 'admin.students.show',
-        'edit' => 'admin.students.edit',
-        'update' => 'admin.students.update',
+        'index'   => 'admin.students.index',
+        'create'  => 'admin.students.create',
+        'store'   => 'admin.students.store',
+        'show'    => 'admin.students.show',
+        'edit'    => 'admin.students.edit',
+        'update'  => 'admin.students.update',
         'destroy' => 'admin.students.destroy',
     ]);
 
     Route::resource('admin/guardians', GuardianController::class)->names([
-        'index' => 'admin.guardians.index',
-        'create' => 'admin.guardians.create',
-        'store' => 'admin.guardians.store',
-        'show' => 'admin.guardians.show',
-        'edit' => 'admin.guardians.edit',
-        'update' => 'admin.guardians.update',
+        'index'   => 'admin.guardians.index',
+        'create'  => 'admin.guardians.create',
+        'store'   => 'admin.guardians.store',
+        'show'    => 'admin.guardians.show',
+        'edit'    => 'admin.guardians.edit',
+        'update'  => 'admin.guardians.update',
         'destroy' => 'admin.guardians.destroy',
     ]);
 
     Route::resource('admin/courses', CourseController::class)->names([
-        'index' => 'admin.courses.index',
-        'create' => 'admin.courses.create',
-        'store' => 'admin.courses.store',
-        'show' => 'admin.courses.show',
-        'edit' => 'admin.courses.edit',
-        'update' => 'admin.courses.update',
+        'index'   => 'admin.courses.index',
+        'create'  => 'admin.courses.create',
+        'store'   => 'admin.courses.store',
+        'show'    => 'admin.courses.show',
+        'edit'    => 'admin.courses.edit',
+        'update'  => 'admin.courses.update',
         'destroy' => 'admin.courses.destroy',
     ]);
 
@@ -122,51 +125,49 @@ Route::middleware('auth')->group(function () {
         ->name('admin.employees.force-delete')
         ->withTrashed();
 
-    Route::delete('admin/employees/{employee}/classes/{class}', [EmployeeController::class, 'removeClass'])
-        ->name('admin.employees.remove-class');
-
     Route::resource('admin/employees', EmployeeController::class)->names([
-        'index' => 'admin.employees.index',
-        'create' => 'admin.employees.create',
-        'store' => 'admin.employees.store',
-        'show' => 'admin.employees.show',
-        'edit' => 'admin.employees.edit',
-        'update' => 'admin.employees.update',
+        'index'   => 'admin.employees.index',
+        'create'  => 'admin.employees.create',
+        'store'   => 'admin.employees.store',
+        'show'    => 'admin.employees.show',
+        'edit'    => 'admin.employees.edit',
+        'update'  => 'admin.employees.update',
         'destroy' => 'admin.employees.destroy',
     ]);
 
     Route::resource('admin/academic-years', AcademicYearController::class)->names([
-        'index' => 'admin.academic-years.index',
-        'create' => 'admin.academic-years.create',
-        'store' => 'admin.academic-years.store',
-        'show' => 'admin.academic-years.show',
-        'edit' => 'admin.academic-years.edit',
-        'update' => 'admin.academic-years.update',
+        'index'   => 'admin.academic-years.index',
+        'create'  => 'admin.academic-years.create',
+        'store'   => 'admin.academic-years.store',
+        'show'    => 'admin.academic-years.show',
+        'edit'    => 'admin.academic-years.edit',
+        'update'  => 'admin.academic-years.update',
         'destroy' => 'admin.academic-years.destroy',
     ]);
 
-    // Additional Academic Year routes for term management
     Route::post('admin/academic-years/{academicYear}/set-current', [AcademicYearController::class, 'setCurrent'])
         ->name('admin.academic-years.set-current');
-    Route::post('admin/academic-years/{academicYear}/terms', [AcademicYearController::class, 'storeTerm'])
-        ->name('admin.academic-years.terms.store');
-    Route::put('admin/academic-years/{academicYear}/terms/{term}', [AcademicYearController::class, 'updateTerm'])
-        ->name('admin.academic-years.terms.update');
-    Route::delete('admin/academic-years/{academicYear}/terms/{term}', [AcademicYearController::class, 'destroyTerm'])
-        ->name('admin.academic-years.terms.destroy');
-    Route::post('admin/academic-years/{academicYear}/terms/{term}/set-current', [AcademicYearController::class, 'setCurrentTerm'])
-        ->name('admin.academic-years.terms.set-current');
 
     // Phase 2: Class & Enrollment Management
+    // Cohort update (must be BEFORE resource to avoid wildcard conflicts)
+    Route::patch('admin/classes/{class}/cohorts/{cohort}', [ClassController::class, 'updateCohort'])
+        ->name('admin.classes.cohorts.update');
+
     Route::resource('admin/classes', ClassController::class)->names([
-        'index' => 'admin.classes.index',
-        'create' => 'admin.classes.create',
-        'store' => 'admin.classes.store',
-        'show' => 'admin.classes.show',
-        'edit' => 'admin.classes.edit',
-        'update' => 'admin.classes.update',
+        'index'   => 'admin.classes.index',
+        'create'  => 'admin.classes.create',
+        'store'   => 'admin.classes.store',
+        'show'    => 'admin.classes.show',
+        'edit'    => 'admin.classes.edit',
+        'update'  => 'admin.classes.update',
         'destroy' => 'admin.classes.destroy',
     ]);
+
+    // Cohort Courses
+    Route::resource('admin/cohort-courses', CohortCourseController::class)->names('admin.cohort-courses');
+
+    // Educational Institutions
+    Route::resource('admin/institutions', EducationalInstitutionController::class)->names('admin.institutions');
 
     // Enrollment routes
     Route::prefix('admin/enrollment')->group(function () {
@@ -186,7 +187,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin/grades')->group(function () {
         Route::get('/', [GradeController::class, 'index'])->name('admin.grades.index');
-        Route::get('/class/{classModel}', [GradeController::class, 'classGrades'])->name('admin.grades.class');
+        Route::get('/cohort-course/{cohortCourse}', [GradeController::class, 'classGrades'])->name('admin.grades.class');
         Route::get('/enter/{assessment}', [GradeController::class, 'enter'])->name('admin.grades.enter');
         Route::post('/store', [GradeController::class, 'store'])->name('admin.grades.store');
         Route::get('/student/{student}', [GradeController::class, 'studentGrades'])->name('admin.grades.student');
@@ -254,19 +255,23 @@ Route::middleware('auth')->group(function () {
         'destroy' => 'admin.training-records.destroy',
     ]);
 
-    // Phase 4: Attendance (student route BEFORE classModel wildcard)
+    // Phase 4: Attendance (student route BEFORE cohortCourse wildcard)
     Route::get('admin/attendance/student/{student}', [AttendanceController::class, 'studentHistory'])
         ->name('admin.attendance.student');
 
     Route::prefix('admin/attendance')->group(function () {
         Route::get('/', [AttendanceController::class, 'index'])->name('admin.attendance.index');
-        Route::get('/{classModel}/take', [AttendanceController::class, 'take'])->name('admin.attendance.take');
+        Route::get('/{cohortCourse}/take', [AttendanceController::class, 'take'])->name('admin.attendance.take');
         Route::post('/store', [AttendanceController::class, 'store'])->name('admin.attendance.store');
-        Route::get('/{classModel}/summary', [AttendanceController::class, 'classSummary'])->name('admin.attendance.summary');
+        Route::get('/{cohortCourse}/summary', [AttendanceController::class, 'classSummary'])->name('admin.attendance.summary');
     });
 });
 
 // Public route to get current theme
 Route::get('/api/theme', [ThemeController::class, 'getTheme']);
+
+// API: Employee search (authenticated)
+Route::middleware('auth')->get('/api/employees/search', [EmployeeSearchController::class, 'search'])
+    ->name('api.employees.search');
 
 require __DIR__.'/auth.php';

@@ -56,44 +56,66 @@
                             </p>
                         </div>
 
-                        <!-- Term Filter (not part of form) -->
+                        <!-- Filter by Class (not part of form submission) -->
                         <div>
-                            <label for="term_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Filter by Term
+                            <label for="class_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Filter by Class
                             </label>
                             <select
-                                id="term_filter"
-                                v-model="termFilter"
+                                id="class_filter"
+                                v-model="classFilter"
                                 class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
                             >
-                                <option value="">All Terms</option>
-                                <option v-for="t in terms" :key="t.id" :value="t.id">
-                                    {{ t.name }} ({{ t.academic_year?.name }})
+                                <option value="">All Classes</option>
+                                <option v-for="cls in classes" :key="cls.id" :value="cls.id">
+                                    Class {{ cls.class_number }} ({{ cls.academic_year?.name }})
                                 </option>
                             </select>
                         </div>
 
-                        <!-- Class -->
-                        <div>
-                            <label for="class_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Class <span class="text-red-500">*</span>
+                        <!-- Filter by Cohort (not part of form submission) -->
+                        <div v-if="cohortsForSelectedClass.length > 0">
+                            <label for="cohort_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Filter by Cohort
                             </label>
                             <select
-                                id="class_id"
-                                v-model="form.class_id"
+                                id="cohort_filter"
+                                v-model="cohortFilter"
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                            >
+                                <option value="">All Cohorts</option>
+                                <option v-for="cohort in cohortsForSelectedClass" :key="cohort.id" :value="cohort.id">
+                                    {{ cohort.name }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Select Cohort Course (CohortCourse = course assignment within a cohort) -->
+                        <div>
+                            <label for="cohort_course_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Select Course Assignment (Cohort Course) <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="cohort_course_id"
+                                v-model="form.cohort_course_id"
                                 required
                                 class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
                             >
-                                <option value="">— Select Class —</option>
-                                <option v-for="c in classes" :key="c.id" :value="c.id">
-                                    {{ c.course?.course_code }} — {{ c.course?.name }} ({{ c.section_name }}) | {{ c.employee?.first_name }} {{ c.employee?.last_name }} | {{ c.enrolled_count }}/{{ c.max_students }} seats
+                                <option value="">— Select Cohort Course —</option>
+                                <option v-for="cc in filteredCohortCourses" :key="cc.id" :value="cc.id">
+                                    Class {{ cc.cohort?.class?.class_number }}
+                                    / {{ cc.cohort?.name }}
+                                    / {{ cc.course?.course_code }} — {{ cc.course?.name }}
+                                    <template v-if="cc.employee">
+                                        ({{ cc.employee.first_name }} {{ cc.employee.last_name }})
+                                    </template>
                                 </option>
                             </select>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Showing open classes with available seats.
+                                Showing available cohort course assignments.
                             </p>
-                            <p v-if="form.errors.class_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                {{ form.errors.class_id }}
+                            <p v-if="form.errors.cohort_course_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.cohort_course_id }}
                             </p>
                         </div>
 
@@ -148,28 +170,63 @@ import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
     students: Array,
-    terms: Array,
     classes: Array,
-    selectedTermId: [Number, String, null],
+    cohortCourses: Array,
+    selectedCohortId: [Number, String, null],
+    selectedCohortCourseId: [Number, String, null],
     customFields: { type: Array, default: () => [] },
 });
 
+// Resolve preselected cohort course to also pre-populate class/cohort filters
+const preselectedCC = props.selectedCohortCourseId
+    ? (props.cohortCourses ?? []).find(cc => cc.id === Number(props.selectedCohortCourseId))
+    : null;
+
 const form = useForm({
     student_id: '',
-    class_id: '',
+    cohort_course_id: preselectedCC ? preselectedCC.id : '',
     enrollment_date: new Date().toISOString().substring(0, 10),
     custom_field_values: {},
 });
 
-const termFilter = ref(props.selectedTermId ?? '');
+const classFilter = ref(preselectedCC?.cohort?.class?.id ?? '');
+const cohortFilter = ref(preselectedCC?.cohort?.id ?? props.selectedCohortId ?? '');
 
-watch(termFilter, (val) => {
-    router.get(route('admin.enrollment.create'), { term_id: val }, { preserveState: true, replace: true });
+// Cohorts belonging to the selected class
+const cohortsForSelectedClass = computed(() => {
+    if (!classFilter.value) return [];
+    const cls = props.classes?.find(c => c.id == classFilter.value);
+    return cls?.cohorts ?? [];
+});
+
+// Reset cohort filter when class changes
+watch(classFilter, () => {
+    cohortFilter.value = '';
+    form.cohort_course_id = '';
+});
+
+watch(cohortFilter, () => {
+    form.cohort_course_id = '';
+});
+
+// Filter cohort courses by selected class and/or cohort
+const filteredCohortCourses = computed(() => {
+    let list = props.cohortCourses ?? [];
+
+    if (classFilter.value) {
+        list = list.filter(cc => cc.cohort?.class?.id == classFilter.value);
+    }
+
+    if (cohortFilter.value) {
+        list = list.filter(cc => cc.cohort?.id == cohortFilter.value);
+    }
+
+    return list;
 });
 
 function submit() {

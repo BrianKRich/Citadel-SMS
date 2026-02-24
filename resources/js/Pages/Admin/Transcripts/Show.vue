@@ -8,10 +8,18 @@ import { Head, Link } from '@inertiajs/vue3';
 const props = defineProps({
     student: Object,
     official: Boolean,
-    termGroups: Array,
+    cohortGroups: Array,
     totalCredits: Number,
     cumulativeGpa: Number,
 });
+
+function cohortHeading(cohort) {
+    if (!cohort) return '';
+    const name = cohort.name ? cohort.name.charAt(0).toUpperCase() + cohort.name.slice(1) : '';
+    const classNum = cohort.class?.class_number ?? '';
+    const year = cohort.class?.academic_year?.name ?? '';
+    return `Cohort ${name}${classNum ? ` – Class ${classNum}` : ''}${year ? ` (${year})` : ''}`;
+}
 
 function getLetterGradeBadgeClass(letter) {
     if (!letter) return 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400';
@@ -84,11 +92,11 @@ function getLetterGradeBadgeClass(letter) {
                     </div>
                 </Card>
 
-                <!-- Term Blocks -->
-                <div v-if="termGroups && termGroups.length > 0" class="space-y-4">
-                    <Card v-for="group in termGroups" :key="group.term?.id">
+                <!-- Cohort Blocks -->
+                <div v-if="cohortGroups && cohortGroups.length > 0" class="space-y-4">
+                    <Card v-for="group in cohortGroups" :key="group.cohort?.id">
                         <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">
-                            {{ group.term?.name }} — {{ group.term?.academic_year?.name }}
+                            {{ cohortHeading(group.cohort) }}
                         </h3>
 
                         <div class="overflow-x-auto">
@@ -105,10 +113,10 @@ function getLetterGradeBadgeClass(letter) {
                                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                     <tr v-for="enrollment in group.enrollments" :key="enrollment.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                         <td class="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">
-                                            {{ enrollment.class?.course?.course_code || '—' }}
+                                            {{ enrollment.cohort_course?.course?.course_code || '—' }}
                                         </td>
                                         <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
-                                            {{ enrollment.class?.course?.name || '—' }}
+                                            {{ enrollment.cohort_course?.course?.name || '—' }}
                                         </td>
                                         <td class="px-4 py-3 text-center">
                                             <span
@@ -126,8 +134,8 @@ function getLetterGradeBadgeClass(letter) {
                                                 : '—' }}
                                         </td>
                                         <td class="px-4 py-3 text-right text-gray-500 dark:text-gray-400">
-                                            {{ enrollment.class?.course?.credits !== undefined
-                                                ? Number(enrollment.class.course.credits).toFixed(1)
+                                            {{ enrollment.cohort_course?.course?.credits !== undefined
+                                                ? Number(enrollment.cohort_course.course.credits).toFixed(1)
                                                 : '—' }}
                                         </td>
                                     </tr>
@@ -135,15 +143,15 @@ function getLetterGradeBadgeClass(letter) {
                             </table>
                         </div>
 
-                        <!-- Term Footer -->
+                        <!-- Cohort Footer -->
                         <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex gap-6 text-sm">
                             <div>
-                                <span class="font-semibold text-gray-700 dark:text-gray-300">Term GPA:</span>
-                                <span class="ml-2 text-gray-900 dark:text-gray-100">{{ Number(group.termGpa).toFixed(2) }}</span>
+                                <span class="font-semibold text-gray-700 dark:text-gray-300">Cohort GPA:</span>
+                                <span class="ml-2 text-gray-900 dark:text-gray-100">{{ Number(group.cohortGpa).toFixed(2) }}</span>
                             </div>
                             <div>
-                                <span class="font-semibold text-gray-700 dark:text-gray-300">Term Credits:</span>
-                                <span class="ml-2 text-gray-900 dark:text-gray-100">{{ Number(group.termCredits).toFixed(1) }}</span>
+                                <span class="font-semibold text-gray-700 dark:text-gray-300">Cohort Credits:</span>
+                                <span class="ml-2 text-gray-900 dark:text-gray-100">{{ Number(group.cohortCredits).toFixed(1) }}</span>
                             </div>
                         </div>
                     </Card>
@@ -158,7 +166,7 @@ function getLetterGradeBadgeClass(letter) {
                 </div>
 
                 <!-- Cumulative Summary -->
-                <Card v-if="termGroups && termGroups.length > 0">
+                <Card v-if="cohortGroups && cohortGroups.length > 0">
                     <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Cumulative Summary</h3>
                     <div class="flex gap-12">
                         <div class="text-center">

@@ -19,10 +19,10 @@ class DepartmentSeeder extends Seeder
         ];
 
         foreach ($data as $departmentName => $roles) {
-            $department = Department::create(['name' => $departmentName]);
+            $department = Department::firstOrCreate(['name' => $departmentName]);
 
             foreach ($roles as $roleName) {
-                $department->roles()->create(['name' => $roleName]);
+                $department->roles()->firstOrCreate(['name' => $roleName]);
             }
         }
     }

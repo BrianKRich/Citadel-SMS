@@ -2,12 +2,11 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\AcademicYear;
 use App\Models\ClassModel;
+use App\Models\CohortCourse;
 use App\Models\Enrollment;
 use App\Models\GradingScale;
 use App\Models\Student;
-use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -26,7 +25,7 @@ class TranscriptTest extends TestCase
     {
         GradingScale::factory()->create([
             'is_default' => true,
-            'scale' => [
+            'scale'      => [
                 ['letter' => 'A', 'min_percentage' => 90, 'gpa_points' => 4.0],
                 ['letter' => 'B', 'min_percentage' => 80, 'gpa_points' => 3.0],
                 ['letter' => 'C', 'min_percentage' => 70, 'gpa_points' => 2.0],
@@ -35,19 +34,17 @@ class TranscriptTest extends TestCase
             ],
         ]);
 
-        $year = AcademicYear::factory()->create(['is_current' => true]);
-        $term = Term::factory()->create([
-            'academic_year_id' => $year->id,
-            'is_current' => true,
-            'start_date' => '2025-08-01',
-            'end_date' => '2025-12-15',
-        ]);
-        $classModel = ClassModel::factory()->create(['term_id' => $term->id]);
-        $student = Student::factory()->create(['status' => 'active']);
+        $class  = ClassModel::factory()->create();
+        // Use the auto-created alpha cohort from boot()
+        $cohort = $class->cohorts()->where('name', 'alpha')->first();
+        $cohort->update(['start_date' => '2025-08-01', 'end_date' => '2025-12-15']);
+
+        $cohortCourse = CohortCourse::factory()->create(['cohort_id' => $cohort->id]);
+        $student      = Student::factory()->create(['status' => 'active']);
 
         Enrollment::factory()->withGrade('A', 4.0)->create([
-            'student_id' => $student->id,
-            'class_id'   => $classModel->id,
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
         ]);
 
         return $student;
@@ -74,7 +71,7 @@ class TranscriptTest extends TestCase
 
     public function test_index_search_filters_students(): void
     {
-        $user = $this->adminUser();
+        $user    = $this->adminUser();
         $student = $this->makeStudentWithHistory();
 
         $response = $this->actingAs($user)->get(route('admin.transcripts.index', [
@@ -89,7 +86,7 @@ class TranscriptTest extends TestCase
 
     public function test_show_renders_page(): void
     {
-        $user = $this->adminUser();
+        $user    = $this->adminUser();
         $student = $this->makeStudentWithHistory();
 
         $response = $this->actingAs($user)->get(route('admin.transcripts.show', $student->id));
@@ -97,7 +94,7 @@ class TranscriptTest extends TestCase
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Transcripts/Show')
             ->has('student')
-            ->has('termGroups')
+            ->has('cohortGroups')
             ->has('totalCredits')
             ->has('cumulativeGpa')
             ->where('official', false)
@@ -106,11 +103,11 @@ class TranscriptTest extends TestCase
 
     public function test_show_marks_official_when_flag_set(): void
     {
-        $user = $this->adminUser();
+        $user    = $this->adminUser();
         $student = $this->makeStudentWithHistory();
 
         $response = $this->actingAs($user)->get(route('admin.transcripts.show', [
-            'student' => $student->id,
+            'student'  => $student->id,
             'official' => '1',
         ]));
 
@@ -122,27 +119,27 @@ class TranscriptTest extends TestCase
 
     public function test_show_requires_auth(): void
     {
-        $student = Student::factory()->create(['status' => 'active']);
+        $student  = Student::factory()->create(['status' => 'active']);
         $response = $this->get(route('admin.transcripts.show', $student->id));
         $response->assertRedirect(route('login'));
     }
 
-    public function test_show_groups_enrollments_by_term(): void
+    public function test_show_groups_enrollments_by_cohort(): void
     {
-        $user = $this->adminUser();
+        $user    = $this->adminUser();
         $student = $this->makeStudentWithHistory();
 
         $response = $this->actingAs($user)->get(route('admin.transcripts.show', $student->id));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Transcripts/Show')
-            ->where('termGroups', fn ($groups) => count($groups) === 1)
+            ->where('cohortGroups', fn ($groups) => count($groups) === 1)
         );
     }
 
     public function test_pdf_returns_unofficial_pdf(): void
     {
-        $user = $this->adminUser();
+        $user    = $this->adminUser();
         $student = $this->makeStudentWithHistory();
 
         $response = $this->actingAs($user)->get(route('admin.transcripts.pdf', $student->id));
@@ -153,7 +150,7 @@ class TranscriptTest extends TestCase
 
     public function test_pdf_returns_official_pdf(): void
     {
-        $user = $this->adminUser();
+        $user    = $this->adminUser();
         $student = $this->makeStudentWithHistory();
 
         $response = $this->actingAs($user)->get(route('admin.transcripts.pdf', [
@@ -167,14 +164,14 @@ class TranscriptTest extends TestCase
 
     public function test_pdf_requires_auth(): void
     {
-        $student = Student::factory()->create(['status' => 'active']);
+        $student  = Student::factory()->create(['status' => 'active']);
         $response = $this->get(route('admin.transcripts.pdf', $student->id));
         $response->assertRedirect(route('login'));
     }
 
     public function test_unofficial_pdf_filename_contains_unofficial(): void
     {
-        $user = $this->adminUser();
+        $user    = $this->adminUser();
         $student = $this->makeStudentWithHistory();
 
         $response = $this->actingAs($user)->get(route('admin.transcripts.pdf', $student->id));
@@ -185,7 +182,7 @@ class TranscriptTest extends TestCase
 
     public function test_official_pdf_filename_contains_official(): void
     {
-        $user = $this->adminUser();
+        $user    = $this->adminUser();
         $student = $this->makeStudentWithHistory();
 
         $response = $this->actingAs($user)->get(route('admin.transcripts.pdf', [

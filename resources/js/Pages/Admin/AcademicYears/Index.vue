@@ -38,7 +38,7 @@ function setCurrent(yearId) {
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                         <PageHeader
                             title="Academic Years"
-                            :description="`Manage all ${academic_years.total} academic years and terms`"
+                            :description="`Manage all ${academic_years.total} academic years`"
                         />
 
                         <div class="sm:ml-auto">
@@ -86,38 +86,13 @@ function setCurrent(yearId) {
                                 </div>
                             </div>
 
-                            <!-- Terms -->
-                            <div v-if="year.terms && year.terms.length > 0" class="mt-4">
-                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Terms:</h4>
-                                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    <div
-                                        v-for="term in year.terms"
-                                        :key="term.id"
-                                        class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
-                                    >
-                                        <div class="flex items-start justify-between">
-                                            <div class="flex-1 min-w-0">
-                                                <div class="flex items-center gap-2">
-                                                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                        {{ term.name }}
-                                                    </p>
-                                                    <span
-                                                        v-if="term.is_current"
-                                                        class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900 px-2 py-0.5 text-xs font-medium text-blue-800 dark:text-blue-300"
-                                                    >
-                                                        Current
-                                                    </span>
-                                                </div>
-                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                    {{ new Date(term.start_date).toLocaleDateString() }} - {{ new Date(term.end_date).toLocaleDateString() }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-else class="mt-4 text-sm text-gray-500 dark:text-gray-400 italic">
-                                No terms defined for this academic year
+                            <div class="mt-3">
+                                <Link
+                                    :href="route('admin.academic-years.show', year.id)"
+                                    class="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                                >
+                                    View Classes &rarr;
+                                </Link>
                             </div>
                         </div>
                     </div>

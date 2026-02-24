@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\AttendanceRecord;
 use App\Models\ClassModel;
+use App\Models\CohortCourse;
 use App\Models\Enrollment;
 use App\Models\Setting;
 use App\Models\Student;
@@ -31,27 +32,42 @@ class AttendanceTest extends TestCase
         Setting::set('feature_attendance_enabled', '1', 'boolean');
     }
 
+    /**
+     * Create a CohortCourse using an auto-created cohort from ClassModel::boot()
+     * to avoid unique constraint violations on (class_id, name).
+     */
+    private function makeCohortCourse(array $overrides = []): CohortCourse
+    {
+        $class  = ClassModel::factory()->create();
+        $cohort = $class->cohorts()->first();
+
+        return CohortCourse::factory()->create(array_merge(
+            ['cohort_id' => $cohort->id],
+            $overrides
+        ));
+    }
+
     // -----------------------------------------------------------------------
     // Feature flag tests
     // -----------------------------------------------------------------------
 
     public function test_routes_blocked_when_attendance_disabled(): void
     {
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
-        $student    = Student::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
 
         $this->actingAs($user)->get(route('admin.attendance.index'))->assertStatus(403);
-        $this->actingAs($user)->get(route('admin.attendance.take', $classModel))->assertStatus(403);
+        $this->actingAs($user)->get(route('admin.attendance.take', $cohortCourse))->assertStatus(403);
         $this->actingAs($user)->post(route('admin.attendance.store'))->assertStatus(403);
         $this->actingAs($user)->get(route('admin.attendance.student', $student))->assertStatus(403);
-        $this->actingAs($user)->get(route('admin.attendance.summary', $classModel))->assertStatus(403);
+        $this->actingAs($user)->get(route('admin.attendance.summary', $cohortCourse))->assertStatus(403);
     }
 
     public function test_routes_accessible_when_attendance_enabled(): void
     {
         $this->enableAttendance();
-        $user    = $this->adminUser();
+        $user = $this->adminUser();
 
         $response = $this->actingAs($user)->get(route('admin.attendance.index'));
         $response->assertOk();
@@ -122,17 +138,17 @@ class AttendanceTest extends TestCase
         $this->get(route('admin.attendance.index'))->assertRedirect(route('login'));
     }
 
-    public function test_index_renders_class_list(): void
+    public function test_index_renders_cohort_course_list(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        ClassModel::factory()->create();
+        $user = $this->adminUser();
+        $this->makeCohortCourse();
 
         $this->actingAs($user)
             ->get(route('admin.attendance.index'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Attendance/Index')
-                ->has('classes')
+                ->has('cohortCourses')
                 ->has('filters')
             );
     }
@@ -144,21 +160,21 @@ class AttendanceTest extends TestCase
     public function test_take_renders_enrolled_students(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
-        $student    = Student::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
 
         Enrollment::factory()->create([
-            'class_id'   => $classModel->id,
-            'student_id' => $student->id,
-            'status'     => 'enrolled',
+            'cohort_course_id' => $cohortCourse->id,
+            'student_id'       => $student->id,
+            'status'           => 'enrolled',
         ]);
 
         $this->actingAs($user)
-            ->get(route('admin.attendance.take', $classModel))
+            ->get(route('admin.attendance.take', $cohortCourse))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Attendance/Take')
-                ->has('classModel')
+                ->has('cohortCourse')
                 ->has('enrollments', 1)
                 ->has('existingRecords')
                 ->has('date')
@@ -168,27 +184,27 @@ class AttendanceTest extends TestCase
     public function test_take_prefills_existing_records(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
-        $student    = Student::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
 
         Enrollment::factory()->create([
-            'class_id'   => $classModel->id,
-            'student_id' => $student->id,
-            'status'     => 'enrolled',
+            'cohort_course_id' => $cohortCourse->id,
+            'student_id'       => $student->id,
+            'status'           => 'enrolled',
         ]);
 
         $date = today()->toDateString();
 
         AttendanceRecord::factory()->create([
-            'student_id' => $student->id,
-            'class_id'   => $classModel->id,
-            'date'       => $date,
-            'status'     => 'absent',
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => $date,
+            'status'           => 'absent',
         ]);
 
         $this->actingAs($user)
-            ->get(route('admin.attendance.take', ['classModel' => $classModel->id, 'date' => $date]))
+            ->get(route('admin.attendance.take', ['cohortCourse' => $cohortCourse->id, 'date' => $date]))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Attendance/Take')
                 ->where("existingRecords.{$student->id}.status", 'absent')
@@ -202,53 +218,53 @@ class AttendanceTest extends TestCase
     public function test_store_creates_attendance_records(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
-        $student    = Student::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
 
         Enrollment::factory()->create([
-            'class_id'   => $classModel->id,
-            'student_id' => $student->id,
-            'status'     => 'enrolled',
+            'cohort_course_id' => $cohortCourse->id,
+            'student_id'       => $student->id,
+            'status'           => 'enrolled',
         ]);
 
         $date = today()->toDateString();
 
         $this->actingAs($user)->post(route('admin.attendance.store'), [
-            'class_id' => $classModel->id,
-            'date'     => $date,
-            'records'  => [
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => $date,
+            'records'          => [
                 ['student_id' => $student->id, 'status' => 'present', 'notes' => null],
             ],
         ])->assertRedirect();
 
         $this->assertDatabaseHas('attendance_records', [
-            'student_id' => $student->id,
-            'class_id'   => $classModel->id,
-            'date'       => $date,
-            'status'     => 'present',
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => $date,
+            'status'           => 'present',
         ]);
     }
 
     public function test_store_upserts_same_date(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
-        $student    = Student::factory()->create();
-        $date       = today()->toDateString();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
+        $date         = today()->toDateString();
 
         AttendanceRecord::factory()->create([
-            'student_id' => $student->id,
-            'class_id'   => $classModel->id,
-            'date'       => $date,
-            'status'     => 'absent',
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => $date,
+            'status'           => 'absent',
         ]);
 
         $this->actingAs($user)->post(route('admin.attendance.store'), [
-            'class_id' => $classModel->id,
-            'date'     => $date,
-            'records'  => [
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => $date,
+            'records'          => [
                 ['student_id' => $student->id, 'status' => 'present'],
             ],
         ]);
@@ -256,29 +272,29 @@ class AttendanceTest extends TestCase
         $this->assertSame(
             1,
             AttendanceRecord::where('student_id', $student->id)
-                ->where('class_id', $classModel->id)
+                ->where('cohort_course_id', $cohortCourse->id)
                 ->whereDate('date', $date)
                 ->count()
         );
 
         $this->assertDatabaseHas('attendance_records', [
-            'student_id' => $student->id,
-            'class_id'   => $classModel->id,
-            'status'     => 'present',
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
+            'status'           => 'present',
         ]);
     }
 
     public function test_store_rejects_invalid_status(): void
     {
         $this->enableAttendance();
-        $user    = $this->adminUser();
-        $class   = ClassModel::factory()->create();
-        $student = Student::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
 
         $this->actingAs($user)->post(route('admin.attendance.store'), [
-            'class_id' => $class->id,
-            'date'     => today()->toDateString(),
-            'records'  => [
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => today()->toDateString(),
+            'records'          => [
                 ['student_id' => $student->id, 'status' => 'tardy'],
             ],
         ])->assertSessionHasErrors(['records.0.status']);
@@ -294,7 +310,11 @@ class AttendanceTest extends TestCase
         $user    = $this->adminUser();
         $student = Student::factory()->create();
 
-        AttendanceRecord::factory()->create(['student_id' => $student->id]);
+        $cohortCourse = $this->makeCohortCourse();
+        AttendanceRecord::factory()->create([
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
+        ]);
 
         $this->actingAs($user)
             ->get(route('admin.attendance.student', $student))
@@ -312,32 +332,32 @@ class AttendanceTest extends TestCase
     public function test_class_summary_renders_counts(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
-        $student    = Student::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
 
         Enrollment::factory()->create([
-            'class_id'   => $classModel->id,
-            'student_id' => $student->id,
-            'status'     => 'enrolled',
+            'cohort_course_id' => $cohortCourse->id,
+            'student_id'       => $student->id,
+            'status'           => 'enrolled',
         ]);
 
         AttendanceRecord::factory()->present()->create([
-            'student_id' => $student->id,
-            'class_id'   => $classModel->id,
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
         ]);
 
         AttendanceRecord::factory()->absent()->create([
-            'student_id' => $student->id,
-            'class_id'   => $classModel->id,
-            'date'       => today()->subDay()->toDateString(),
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => today()->subDay()->toDateString(),
         ]);
 
         $this->actingAs($user)
-            ->get(route('admin.attendance.summary', $classModel))
+            ->get(route('admin.attendance.summary', $cohortCourse))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Attendance/ClassSummary')
-                ->has('classModel')
+                ->has('cohortCourse')
                 ->has('summaries', 1)
                 ->where('summaries.0.present', 1)
                 ->where('summaries.0.absent', 1)
@@ -348,39 +368,39 @@ class AttendanceTest extends TestCase
     public function test_class_summary_date_range_filter(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
-        $student    = Student::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
 
         Enrollment::factory()->create([
-            'class_id'   => $classModel->id,
-            'student_id' => $student->id,
-            'status'     => 'enrolled',
+            'cohort_course_id' => $cohortCourse->id,
+            'student_id'       => $student->id,
+            'status'           => 'enrolled',
         ]);
 
         // Three records spread across 30 days
         AttendanceRecord::factory()->present()->create([
-            'student_id' => $student->id,
-            'class_id'   => $classModel->id,
-            'date'       => today()->subDays(25)->toDateString(),
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => today()->subDays(25)->toDateString(),
         ]);
         AttendanceRecord::factory()->absent()->create([
-            'student_id' => $student->id,
-            'class_id'   => $classModel->id,
-            'date'       => today()->subDays(10)->toDateString(),
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => today()->subDays(10)->toDateString(),
         ]);
         AttendanceRecord::factory()->late()->create([
-            'student_id' => $student->id,
-            'class_id'   => $classModel->id,
-            'date'       => today()->subDays(1)->toDateString(),
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => today()->subDays(1)->toDateString(),
         ]);
 
         // Filter to last 15 days — should only see the absent + late records
         $this->actingAs($user)
             ->get(route('admin.attendance.summary', [
-                'classModel' => $classModel->id,
-                'date_from'  => today()->subDays(15)->toDateString(),
-                'date_to'    => today()->toDateString(),
+                'cohortCourse' => $cohortCourse->id,
+                'date_from'    => today()->subDays(15)->toDateString(),
+                'date_to'      => today()->toDateString(),
             ]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('summaries.0.total', 2)
@@ -393,29 +413,29 @@ class AttendanceTest extends TestCase
     public function test_class_summary_attendance_rate_calculation(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
-        $student    = Student::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
 
         Enrollment::factory()->create([
-            'class_id'   => $classModel->id,
-            'student_id' => $student->id,
-            'status'     => 'enrolled',
+            'cohort_course_id' => $cohortCourse->id,
+            'student_id'       => $student->id,
+            'status'           => 'enrolled',
         ]);
 
         // 3 present, 1 late, 1 absent, 1 excused = 6 total
         // rate = (present + late) / total = 4/6 = 66.7%
         foreach (['present', 'present', 'present', 'late', 'absent', 'excused'] as $i => $status) {
             AttendanceRecord::factory()->create([
-                'student_id' => $student->id,
-                'class_id'   => $classModel->id,
-                'date'       => today()->subDays($i)->toDateString(),
-                'status'     => $status,
+                'student_id'       => $student->id,
+                'cohort_course_id' => $cohortCourse->id,
+                'date'             => today()->subDays($i)->toDateString(),
+                'status'           => $status,
             ]);
         }
 
         $this->actingAs($user)
-            ->get(route('admin.attendance.summary', $classModel))
+            ->get(route('admin.attendance.summary', $cohortCourse))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('summaries.0.total', 6)
                 ->where('summaries.0.present', 3)
@@ -433,10 +453,14 @@ class AttendanceTest extends TestCase
     public function test_existing_records_preserved_when_disabled(): void
     {
         $this->enableAttendance();
-        $user    = $this->siteAdmin();
-        $student = Student::factory()->create();
+        $user         = $this->siteAdmin();
+        $student      = Student::factory()->create();
+        $cohortCourse = $this->makeCohortCourse();
 
-        AttendanceRecord::factory()->count(5)->create(['student_id' => $student->id]);
+        AttendanceRecord::factory()->count(5)->create([
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
+        ]);
 
         $this->assertSame(5, AttendanceRecord::count());
 
@@ -460,7 +484,7 @@ class AttendanceTest extends TestCase
     // Additional store validation
     // -----------------------------------------------------------------------
 
-    public function test_store_requires_class_id(): void
+    public function test_store_requires_cohort_course_id(): void
     {
         $this->enableAttendance();
         $user    = $this->adminUser();
@@ -469,47 +493,47 @@ class AttendanceTest extends TestCase
         $this->actingAs($user)->post(route('admin.attendance.store'), [
             'date'    => today()->toDateString(),
             'records' => [['student_id' => $student->id, 'status' => 'present']],
-        ])->assertSessionHasErrors(['class_id']);
+        ])->assertSessionHasErrors(['cohort_course_id']);
     }
 
     public function test_store_requires_valid_date(): void
     {
         $this->enableAttendance();
-        $user    = $this->adminUser();
-        $class   = ClassModel::factory()->create();
-        $student = Student::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
 
         $this->actingAs($user)->post(route('admin.attendance.store'), [
-            'class_id' => $class->id,
-            'date'     => 'not-a-date',
-            'records'  => [['student_id' => $student->id, 'status' => 'present']],
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => 'not-a-date',
+            'records'          => [['student_id' => $student->id, 'status' => 'present']],
         ])->assertSessionHasErrors(['date']);
     }
 
     public function test_store_requires_records_array(): void
     {
         $this->enableAttendance();
-        $user  = $this->adminUser();
-        $class = ClassModel::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
 
         $this->actingAs($user)->post(route('admin.attendance.store'), [
-            'class_id' => $class->id,
-            'date'     => today()->toDateString(),
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => today()->toDateString(),
         ])->assertSessionHasErrors(['records']);
     }
 
     public function test_store_saves_notes(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
-        $student    = Student::factory()->create();
-        $date       = today()->toDateString();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
+        $date         = today()->toDateString();
 
         $this->actingAs($user)->post(route('admin.attendance.store'), [
-            'class_id' => $classModel->id,
-            'date'     => $date,
-            'records'  => [
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => $date,
+            'records'          => [
                 ['student_id' => $student->id, 'status' => 'late', 'notes' => 'Arrived 10 minutes late'],
             ],
         ]);
@@ -524,14 +548,14 @@ class AttendanceTest extends TestCase
     public function test_store_sets_marked_by(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
-        $student    = Student::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $student      = Student::factory()->create();
 
         $this->actingAs($user)->post(route('admin.attendance.store'), [
-            'class_id' => $classModel->id,
-            'date'     => today()->toDateString(),
-            'records'  => [['student_id' => $student->id, 'status' => 'present']],
+            'cohort_course_id' => $cohortCourse->id,
+            'date'             => today()->toDateString(),
+            'records'          => [['student_id' => $student->id, 'status' => 'present']],
         ]);
 
         $this->assertDatabaseHas('attendance_records', [
@@ -547,11 +571,11 @@ class AttendanceTest extends TestCase
     public function test_take_defaults_to_today(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
 
         $this->actingAs($user)
-            ->get(route('admin.attendance.take', $classModel))
+            ->get(route('admin.attendance.take', $cohortCourse))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('date', today()->toDateString())
             );
@@ -560,12 +584,12 @@ class AttendanceTest extends TestCase
     public function test_take_uses_date_query_param(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
-        $date       = '2025-11-15';
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
+        $date         = '2025-11-15';
 
         $this->actingAs($user)
-            ->get(route('admin.attendance.take', ['classModel' => $classModel->id, 'date' => $date]))
+            ->get(route('admin.attendance.take', ['cohortCourse' => $cohortCourse->id, 'date' => $date]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('date', $date)
             );
@@ -574,23 +598,23 @@ class AttendanceTest extends TestCase
     public function test_take_excludes_dropped_students(): void
     {
         $this->enableAttendance();
-        $user       = $this->adminUser();
-        $classModel = ClassModel::factory()->create();
+        $user         = $this->adminUser();
+        $cohortCourse = $this->makeCohortCourse();
 
         // Enrolled student
         Enrollment::factory()->create([
-            'class_id' => $classModel->id,
-            'status'   => 'enrolled',
+            'cohort_course_id' => $cohortCourse->id,
+            'status'           => 'enrolled',
         ]);
 
         // Dropped student — should not appear
         Enrollment::factory()->create([
-            'class_id' => $classModel->id,
-            'status'   => 'dropped',
+            'cohort_course_id' => $cohortCourse->id,
+            'status'           => 'dropped',
         ]);
 
         $this->actingAs($user)
-            ->get(route('admin.attendance.take', $classModel))
+            ->get(route('admin.attendance.take', $cohortCourse))
             ->assertInertia(fn (Assert $page) => $page
                 ->has('enrollments', 1)
             );
@@ -612,9 +636,9 @@ class AttendanceTest extends TestCase
     public function test_class_summary_requires_auth(): void
     {
         $this->enableAttendance();
-        $classModel = ClassModel::factory()->create();
+        $cohortCourse = $this->makeCohortCourse();
 
-        $this->get(route('admin.attendance.summary', $classModel))
+        $this->get(route('admin.attendance.summary', $cohortCourse))
             ->assertRedirect(route('login'));
     }
 
@@ -623,13 +647,13 @@ class AttendanceTest extends TestCase
         $this->enableAttendance();
         $user = $this->adminUser();
 
-        ClassModel::factory()->create(['section_name' => 'Alpha']);
-        ClassModel::factory()->create(['section_name' => 'Beta']);
+        $this->makeCohortCourse();
+        $this->makeCohortCourse();
 
         $this->actingAs($user)
-            ->get(route('admin.attendance.index', ['search' => 'Alpha']))
+            ->get(route('admin.attendance.index', ['search' => 'Room']))
             ->assertInertia(fn (Assert $page) => $page
-                ->where('filters.search', 'Alpha')
+                ->where('filters.search', 'Room')
             );
     }
 }

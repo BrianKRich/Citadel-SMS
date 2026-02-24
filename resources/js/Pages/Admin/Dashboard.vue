@@ -121,10 +121,18 @@ const props = defineProps({
 
                         <AdminActionCard
                             title="Academic Years"
-                            description="Manage academic years and terms"
+                            description="Manage academic years, classes, and cohorts"
                             icon="📅"
                             :href="route('admin.academic-years.index')"
                             color="primary"
+                        />
+
+                        <AdminActionCard
+                            title="Institutions"
+                            description="Manage technical colleges and universities used as course instructors"
+                            icon="🏫"
+                            :href="route('admin.institutions.index')"
+                            color="accent"
                         />
 
                         <AdminActionCard
@@ -139,7 +147,7 @@ const props = defineProps({
                         <AdminActionCard
                             v-if="$page.props.features?.report_cards_enabled"
                             title="Report Cards"
-                            description="View and download per-term report cards for students"
+                            description="View and download per-cohort report cards for students"
                             icon="📄"
                             :href="route('admin.report-cards.index')"
                             color="primary"

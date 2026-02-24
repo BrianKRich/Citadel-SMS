@@ -4,9 +4,7 @@ import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     academicYear: Object,
@@ -22,27 +20,14 @@ function destroyYear() {
     }
 }
 
-function setCurrentTerm(term) {
-    router.post(route('admin.academic-years.terms.set-current', [props.academicYear.id, term.id]));
-}
-
-function destroyTerm(term) {
-    if (confirm(`Delete term "${term.name}"?`)) {
-        router.delete(route('admin.academic-years.terms.destroy', [props.academicYear.id, term.id]));
-    }
-}
-
-const showAddTerm = ref(false);
-const termForm = useForm({ name: '', start_date: '', end_date: '', is_current: false });
-
-function submitTerm() {
-    termForm.post(route('admin.academic-years.terms.store', props.academicYear.id), {
-        onSuccess: () => {
-            showAddTerm.value = false;
-            termForm.reset();
-        },
-    });
-}
+const getStatusBadgeClass = (status) => {
+    const map = {
+        forming: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+        active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+        completed: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+    };
+    return map[status] || map.forming;
+};
 </script>
 
 <template>
@@ -89,7 +74,7 @@ function submitTerm() {
                             <button
                                 v-if="!academicYear.is_current"
                                 @click="setCurrent"
-                                class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700"
                             >
                                 Set as Current
                             </button>
@@ -101,14 +86,14 @@ function submitTerm() {
                             </Link>
                             <button
                                 @click="destroyYear"
-                                class="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                class="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700"
                             >
                                 Delete
                             </button>
                         </div>
                     </div>
 
-                    <dl class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <dl class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3">
                         <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
                             <dt class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Start Date</dt>
                             <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
@@ -122,203 +107,61 @@ function submitTerm() {
                             </dd>
                         </div>
                         <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                            <dt class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Terms</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                                {{ academicYear.terms.length }}
-                            </dd>
-                        </div>
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
                             <dt class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Classes</dt>
                             <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                                {{ academicYear.classes.length }}
+                                {{ academicYear.classes?.length ?? 0 }}
                             </dd>
                         </div>
                     </dl>
                 </Card>
 
-                <!-- Terms Card -->
-                <Card>
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Terms</h3>
-                        <button
-                            type="button"
-                            @click="showAddTerm = !showAddTerm"
-                            class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium"
-                        >
-                            {{ showAddTerm ? 'Cancel' : '+ Add Term' }}
-                        </button>
-                    </div>
-
-                    <!-- Add Term Form -->
-                    <div
-                        v-if="showAddTerm"
-                        class="mb-4 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800"
-                    >
-                        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Add New Term</h4>
-                        <form @submit.prevent="submitTerm" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Term Name <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    v-model="termForm.name"
-                                    type="text"
-                                    placeholder="e.g. Fall 2024"
-                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
-                                />
-                                <p v-if="termForm.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                    {{ termForm.errors.name }}
-                                </p>
-                            </div>
-
-                            <div class="flex items-end pb-1">
-                                <label class="flex items-center gap-2">
-                                    <input
-                                        v-model="termForm.is_current"
-                                        type="checkbox"
-                                        class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
-                                    />
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Set as current term
-                                    </span>
-                                </label>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Start Date <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    v-model="termForm.start_date"
-                                    type="date"
-                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
-                                />
-                                <p v-if="termForm.errors.start_date" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                    {{ termForm.errors.start_date }}
-                                </p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    End Date <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    v-model="termForm.end_date"
-                                    type="date"
-                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
-                                />
-                                <p v-if="termForm.errors.end_date" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                    {{ termForm.errors.end_date }}
-                                </p>
-                            </div>
-
-                            <div class="sm:col-span-2 flex gap-3 items-center">
-                                <PrimaryButton type="submit" :disabled="termForm.processing">
-                                    {{ termForm.processing ? 'Adding...' : 'Add Term' }}
-                                </PrimaryButton>
-                                <button
-                                    type="button"
-                                    @click="showAddTerm = false"
-                                    class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Terms Table -->
-                    <div v-if="academicYear.terms.length" class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-800">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Start Date</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">End Date</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Current</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                <tr v-for="term in academicYear.terms" :key="term.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ term.name }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ new Date(term.start_date).toLocaleDateString() }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ new Date(term.end_date).toLocaleDateString() }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4">
-                                        <span
-                                            v-if="term.is_current"
-                                            class="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 font-medium"
-                                        >
-                                            Current
-                                        </span>
-                                        <span v-else class="text-sm text-gray-400">—</span>
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4">
-                                        <div class="flex gap-3">
-                                            <button
-                                                v-if="!term.is_current"
-                                                @click="setCurrentTerm(term)"
-                                                class="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium"
-                                            >
-                                                Set Current
-                                            </button>
-                                            <button
-                                                @click="destroyTerm(term)"
-                                                class="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div v-else class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                        No terms defined for this academic year.
-                        <button
-                            type="button"
-                            @click="showAddTerm = true"
-                            class="ml-1 text-primary-600 dark:text-primary-400 hover:underline"
-                        >
-                            Add a term now
-                        </button>
-                    </div>
-                </Card>
-
                 <!-- Classes Card -->
                 <Card>
-                    <div class="mb-4">
-                        <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Classes</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Classes scheduled for this academic year</p>
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Classes</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Classes assigned to this academic year</p>
+                        </div>
+                        <Link
+                            :href="route('admin.classes.create')"
+                            class="inline-flex items-center rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
+                        >
+                            + Add Class
+                        </Link>
                     </div>
 
-                    <div v-if="academicYear.classes.length" class="overflow-x-auto">
+                    <div v-if="academicYear.classes?.length" class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-800">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Course Code</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Course Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Section</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Class #</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">NGB Number</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Cohorts</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                 <tr v-for="cls in academicYear.classes" :key="cls.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm font-mono text-gray-900 dark:text-gray-100">
-                                        {{ cls.course?.course_code || '—' }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ cls.course?.name || '—' }}
+                                    <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        Class {{ cls.class_number }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ cls.section_name }}
+                                        {{ cls.ngb_number }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-6 py-4">
+                                        <span :class="getStatusBadgeClass(cls.status)" class="inline-flex rounded-full px-2 text-xs font-semibold leading-5">
+                                            {{ cls.status }}
+                                        </span>
+                                    </td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                        {{ cls.cohorts?.map(c => c.name.charAt(0).toUpperCase() + c.name.slice(1)).join(', ') || '—' }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                        <Link
+                                            :href="route('admin.classes.show', cls.id)"
+                                            class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
+                                        >View</Link>
                                     </td>
                                 </tr>
                             </tbody>

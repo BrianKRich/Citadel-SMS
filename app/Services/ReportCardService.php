@@ -2,10 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Cohort;
 use App\Models\Student;
-use App\Models\Term;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Response;
 
 class ReportCardService
 {
@@ -16,34 +15,34 @@ class ReportCardService
     /**
      * Assemble all data needed to render the report card template.
      */
-    public function getData(Student $student, Term $term): array
+    public function getData(Student $student, Cohort $cohort): array
     {
-        $term->load('academicYear');
+        $cohort->load('class.academicYear');
 
         $enrollments = $student->enrollments()
-            ->whereHas('class', fn ($q) => $q->where('term_id', $term->id))
-            ->with(['class.course', 'class.employee'])
+            ->whereHas('cohortCourse', fn ($q) => $q->where('cohort_id', $cohort->id))
+            ->with(['cohortCourse.course', 'cohortCourse.employee'])
             ->get();
 
-        $termGpa = $this->gradeService->calculateTermGpa($student, $term);
+        $cohortGpa = $this->gradeService->calculateCohortGpa($student, $cohort->id);
         $cumulativeGpa = $this->gradeService->calculateCumulativeGpa($student);
 
         return [
             'student'       => $student,
-            'term'          => $term,
+            'cohort'        => $cohort,
             'enrollments'   => $enrollments,
-            'termGpa'       => $termGpa,
+            'cohortGpa'     => $cohortGpa,
             'cumulativeGpa' => $cumulativeGpa,
             'generatedAt'   => now(),
         ];
     }
 
     /**
-     * Generate a DomPDF instance for the given student and term.
+     * Generate a DomPDF instance for the given student and cohort.
      */
-    public function generatePdf(Student $student, Term $term): \Barryvdh\DomPDF\PDF
+    public function generatePdf(Student $student, Cohort $cohort): \Barryvdh\DomPDF\PDF
     {
-        $data = $this->getData($student, $term);
+        $data = $this->getData($student, $cohort);
 
         return Pdf::loadView('pdf.report-card', $data)
             ->setPaper('letter', 'portrait');

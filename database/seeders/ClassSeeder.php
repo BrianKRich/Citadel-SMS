@@ -4,9 +4,11 @@ namespace Database\Seeders;
 
 use App\Models\AcademicYear;
 use App\Models\ClassModel;
+use App\Models\Cohort;
+use App\Models\CohortCourse;
 use App\Models\Course;
+use App\Models\EducationalInstitution;
 use App\Models\Employee;
-use App\Models\Term;
 use Illuminate\Database\Seeder;
 
 class ClassSeeder extends Seeder
@@ -14,61 +16,75 @@ class ClassSeeder extends Seeder
     public function run(): void
     {
         $academicYear = AcademicYear::where('name', '2025-2026')->first();
-        $fallTerm = Term::where('name', 'Fall 2025')->first();
-        $springTerm = Term::where('name', 'Spring 2026')->first();
 
-        // Map each teacher (by email) to their course, room, and schedule
-        $assignments = [
-            ['email' => 'm.williams@gyca.edu', 'course' => 'MATH-101', 'room' => '101', 'schedule' => [['day' => 'Monday', 'start_time' => '08:00', 'end_time' => '09:00'], ['day' => 'Wednesday', 'start_time' => '08:00', 'end_time' => '09:00'], ['day' => 'Friday', 'start_time' => '08:00', 'end_time' => '09:00']], 'max' => 25],
-            ['email' => 'p.johnson@gyca.edu', 'course' => 'ENG-101', 'room' => '102', 'schedule' => [['day' => 'Monday', 'start_time' => '09:15', 'end_time' => '10:15'], ['day' => 'Wednesday', 'start_time' => '09:15', 'end_time' => '10:15'], ['day' => 'Friday', 'start_time' => '09:15', 'end_time' => '10:15']], 'max' => 25],
-            ['email' => 'd.thompson@gyca.edu', 'course' => 'SCI-101', 'room' => '105', 'schedule' => [['day' => 'Tuesday', 'start_time' => '08:00', 'end_time' => '09:30'], ['day' => 'Thursday', 'start_time' => '08:00', 'end_time' => '09:30']], 'max' => 25],
-            ['email' => 'a.davis@gyca.edu', 'course' => 'HIST-101', 'room' => '103', 'schedule' => [['day' => 'Tuesday', 'start_time' => '10:00', 'end_time' => '11:00'], ['day' => 'Thursday', 'start_time' => '10:00', 'end_time' => '11:00']], 'max' => 25],
-            ['email' => 'k.lee@gyca.edu', 'course' => 'MATH-201', 'room' => '104', 'schedule' => [['day' => 'Monday', 'start_time' => '10:30', 'end_time' => '11:30'], ['day' => 'Wednesday', 'start_time' => '10:30', 'end_time' => '11:30'], ['day' => 'Friday', 'start_time' => '10:30', 'end_time' => '11:30']], 'max' => 25],
-            ['email' => 't.brown@gyca.edu', 'course' => 'ENG-102', 'room' => '106', 'schedule' => [['day' => 'Monday', 'start_time' => '13:00', 'end_time' => '14:00'], ['day' => 'Wednesday', 'start_time' => '13:00', 'end_time' => '14:00'], ['day' => 'Friday', 'start_time' => '13:00', 'end_time' => '14:00']], 'max' => 25],
-            ['email' => 'l.garcia@gyca.edu', 'course' => 'SCI-202', 'room' => '107', 'schedule' => [['day' => 'Tuesday', 'start_time' => '09:45', 'end_time' => '11:15'], ['day' => 'Thursday', 'start_time' => '09:45', 'end_time' => '11:15']], 'max' => 25],
-            ['email' => 'c.martinez@gyca.edu', 'course' => 'SCI-201', 'room' => '108', 'schedule' => [['day' => 'Monday', 'start_time' => '14:15', 'end_time' => '15:45'], ['day' => 'Wednesday', 'start_time' => '14:15', 'end_time' => '15:45']], 'max' => 25],
-            ['email' => 'j.taylor@gyca.edu', 'course' => 'HIST-201', 'room' => '109', 'schedule' => [['day' => 'Tuesday', 'start_time' => '13:00', 'end_time' => '14:00'], ['day' => 'Thursday', 'start_time' => '13:00', 'end_time' => '14:00']], 'max' => 25],
-            ['email' => 'd.anderson@gyca.edu', 'course' => 'CS-101', 'room' => '110', 'schedule' => [['day' => 'Tuesday', 'start_time' => '14:15', 'end_time' => '15:15'], ['day' => 'Thursday', 'start_time' => '14:15', 'end_time' => '15:15']], 'max' => 25],
-            ['email' => 'm.robinson@gyca.edu', 'course' => 'CS-201', 'room' => '111', 'schedule' => [['day' => 'Monday', 'start_time' => '11:45', 'end_time' => '12:45'], ['day' => 'Wednesday', 'start_time' => '11:45', 'end_time' => '12:45']], 'max' => 25],
-            ['email' => 'k.clark@gyca.edu', 'course' => 'PE-101', 'room' => 'GYM-A', 'schedule' => [['day' => 'Monday', 'start_time' => '08:00', 'end_time' => '09:00'], ['day' => 'Wednesday', 'start_time' => '08:00', 'end_time' => '09:00']], 'max' => 30],
-            ['email' => 'l.walker@gyca.edu', 'course' => 'PE-102', 'room' => 'GYM-B', 'schedule' => [['day' => 'Tuesday', 'start_time' => '08:00', 'end_time' => '09:00'], ['day' => 'Thursday', 'start_time' => '08:00', 'end_time' => '09:00']], 'max' => 30],
-            ['email' => 'b.hall@gyca.edu', 'course' => 'HLT-101', 'room' => '112', 'schedule' => [['day' => 'Monday', 'start_time' => '14:15', 'end_time' => '15:15'], ['day' => 'Wednesday', 'start_time' => '14:15', 'end_time' => '15:15']], 'max' => 30],
-            ['email' => 's.young@gyca.edu', 'course' => 'ART-101', 'room' => '201', 'schedule' => [['day' => 'Tuesday', 'start_time' => '11:30', 'end_time' => '12:30'], ['day' => 'Thursday', 'start_time' => '11:30', 'end_time' => '12:30']], 'max' => 25],
-            ['email' => 'r.king@gyca.edu', 'course' => 'ART-201', 'room' => '202', 'schedule' => [['day' => 'Monday', 'start_time' => '09:15', 'end_time' => '10:15'], ['day' => 'Wednesday', 'start_time' => '09:15', 'end_time' => '10:15']], 'max' => 25],
-            ['email' => 'a.wright@gyca.edu', 'course' => 'MUS-101', 'room' => '203', 'schedule' => [['day' => 'Tuesday', 'start_time' => '14:15', 'end_time' => '15:15'], ['day' => 'Thursday', 'start_time' => '14:15', 'end_time' => '15:15']], 'max' => 30],
-            ['email' => 'm.hernandez@gyca.edu', 'course' => 'SPAN-101', 'room' => '113', 'schedule' => [['day' => 'Monday', 'start_time' => '10:30', 'end_time' => '11:30'], ['day' => 'Wednesday', 'start_time' => '10:30', 'end_time' => '11:30'], ['day' => 'Friday', 'start_time' => '10:30', 'end_time' => '11:30']], 'max' => 25],
-            ['email' => 'c.lopez@gyca.edu', 'course' => 'SPAN-201', 'room' => '114', 'schedule' => [['day' => 'Tuesday', 'start_time' => '10:00', 'end_time' => '11:00'], ['day' => 'Thursday', 'start_time' => '10:00', 'end_time' => '11:00']], 'max' => 25],
-            ['email' => 'n.scott@gyca.edu', 'course' => 'LIFE-101', 'room' => '115', 'schedule' => [['day' => 'Friday', 'start_time' => '09:15', 'end_time' => '11:15']], 'max' => 30],
+        // Create Class 42 (active) — cohorts auto-created by ClassModel::boot()
+        $class42 = ClassModel::create([
+            'academic_year_id' => $academicYear->id,
+            'class_number'     => '42',
+            'ngb_number'       => 'NGB-42',
+            'status'           => 'active',
+        ]);
+
+        // Retrieve the auto-created cohorts
+        $alpha = Cohort::where('class_id', $class42->id)->where('name', 'alpha')->first();
+        $bravo = Cohort::where('class_id', $class42->id)->where('name', 'bravo')->first();
+
+        // Set cohort dates
+        $alpha->update(['start_date' => '2025-09-01', 'end_date' => '2026-02-15']);
+        $bravo->update(['start_date' => '2026-02-16', 'end_date' => '2026-06-30']);
+
+        // Instructor assignments for Alpha cohort: [course_code, email, room, schedule]
+        $alphaAssignments = [
+            ['course' => 'MATH-101', 'email' => 'm.williams@gyca.edu', 'room' => '101', 'schedule' => [['day' => 'Monday', 'start_time' => '08:00', 'end_time' => '09:00'], ['day' => 'Wednesday', 'start_time' => '08:00', 'end_time' => '09:00'], ['day' => 'Friday', 'start_time' => '08:00', 'end_time' => '09:00']]],
+            ['course' => 'ENG-101',  'email' => 'p.johnson@gyca.edu',  'room' => '102', 'schedule' => [['day' => 'Monday', 'start_time' => '09:15', 'end_time' => '10:15'], ['day' => 'Wednesday', 'start_time' => '09:15', 'end_time' => '10:15'], ['day' => 'Friday', 'start_time' => '09:15', 'end_time' => '10:15']]],
+            ['course' => 'SCI-101',  'email' => 'd.thompson@gyca.edu', 'room' => '105', 'schedule' => [['day' => 'Tuesday', 'start_time' => '08:00', 'end_time' => '09:30'], ['day' => 'Thursday', 'start_time' => '08:00', 'end_time' => '09:30']]],
+            ['course' => 'HIST-101', 'email' => 'a.davis@gyca.edu',    'room' => '103', 'schedule' => [['day' => 'Tuesday', 'start_time' => '10:00', 'end_time' => '11:00'], ['day' => 'Thursday', 'start_time' => '10:00', 'end_time' => '11:00']]],
+            ['course' => 'MATH-201', 'email' => 'k.lee@gyca.edu',      'room' => '104', 'schedule' => [['day' => 'Monday', 'start_time' => '10:30', 'end_time' => '11:30'], ['day' => 'Wednesday', 'start_time' => '10:30', 'end_time' => '11:30'], ['day' => 'Friday', 'start_time' => '10:30', 'end_time' => '11:30']]],
+            ['course' => 'ENG-102',  'email' => 't.brown@gyca.edu',    'room' => '106', 'schedule' => [['day' => 'Monday', 'start_time' => '13:00', 'end_time' => '14:00'], ['day' => 'Wednesday', 'start_time' => '13:00', 'end_time' => '14:00'], ['day' => 'Friday', 'start_time' => '13:00', 'end_time' => '14:00']]],
+            ['course' => 'SCI-202',  'email' => 'l.garcia@gyca.edu',   'room' => '107', 'schedule' => [['day' => 'Tuesday', 'start_time' => '09:45', 'end_time' => '11:15'], ['day' => 'Thursday', 'start_time' => '09:45', 'end_time' => '11:15']]],
+            ['course' => 'CS-101',   'email' => 'd.anderson@gyca.edu', 'room' => '110', 'schedule' => [['day' => 'Tuesday', 'start_time' => '14:15', 'end_time' => '15:15'], ['day' => 'Thursday', 'start_time' => '14:15', 'end_time' => '15:15']]],
+            ['course' => 'PE-101',   'email' => 'k.clark@gyca.edu',    'room' => 'GYM-A', 'schedule' => [['day' => 'Monday', 'start_time' => '08:00', 'end_time' => '09:00'], ['day' => 'Wednesday', 'start_time' => '08:00', 'end_time' => '09:00']]],
+            ['course' => 'LIFE-101', 'email' => 'n.scott@gyca.edu',    'room' => '115', 'schedule' => [['day' => 'Friday', 'start_time' => '09:15', 'end_time' => '11:15']]],
         ];
 
+        // Instructor assignments for Bravo cohort (mix of staff + one institution)
+        $bravoAssignments = [
+            ['course' => 'MATH-101', 'email' => 'm.williams@gyca.edu', 'room' => '101', 'schedule' => [['day' => 'Monday', 'start_time' => '08:00', 'end_time' => '09:00'], ['day' => 'Wednesday', 'start_time' => '08:00', 'end_time' => '09:00'], ['day' => 'Friday', 'start_time' => '08:00', 'end_time' => '09:00']]],
+            ['course' => 'ENG-101',  'email' => 'p.johnson@gyca.edu',  'room' => '102', 'schedule' => [['day' => 'Monday', 'start_time' => '09:15', 'end_time' => '10:15'], ['day' => 'Wednesday', 'start_time' => '09:15', 'end_time' => '10:15'], ['day' => 'Friday', 'start_time' => '09:15', 'end_time' => '10:15']]],
+            ['course' => 'SCI-101',  'email' => 'd.thompson@gyca.edu', 'room' => '105', 'schedule' => [['day' => 'Tuesday', 'start_time' => '08:00', 'end_time' => '09:30'], ['day' => 'Thursday', 'start_time' => '08:00', 'end_time' => '09:30']]],
+            ['course' => 'HIST-101', 'email' => 'a.davis@gyca.edu',    'room' => '103', 'schedule' => [['day' => 'Tuesday', 'start_time' => '10:00', 'end_time' => '11:00'], ['day' => 'Thursday', 'start_time' => '10:00', 'end_time' => '11:00']]],
+            ['course' => 'MATH-201', 'email' => 'k.lee@gyca.edu',      'room' => '104', 'schedule' => [['day' => 'Monday', 'start_time' => '10:30', 'end_time' => '11:30'], ['day' => 'Wednesday', 'start_time' => '10:30', 'end_time' => '11:30'], ['day' => 'Friday', 'start_time' => '10:30', 'end_time' => '11:30']]],
+            ['course' => 'ENG-102',  'email' => 't.brown@gyca.edu',    'room' => '106', 'schedule' => [['day' => 'Monday', 'start_time' => '13:00', 'end_time' => '14:00'], ['day' => 'Wednesday', 'start_time' => '13:00', 'end_time' => '14:00'], ['day' => 'Friday', 'start_time' => '13:00', 'end_time' => '14:00']]],
+            ['course' => 'SCI-202',  'email' => 'l.garcia@gyca.edu',   'room' => '107', 'schedule' => [['day' => 'Tuesday', 'start_time' => '09:45', 'end_time' => '11:15'], ['day' => 'Thursday', 'start_time' => '09:45', 'end_time' => '11:15']]],
+            ['course' => 'CS-101',   'email' => 'd.anderson@gyca.edu', 'room' => '110', 'schedule' => [['day' => 'Tuesday', 'start_time' => '14:15', 'end_time' => '15:15'], ['day' => 'Thursday', 'start_time' => '14:15', 'end_time' => '15:15']]],
+            ['course' => 'PE-101',   'email' => 'k.clark@gyca.edu',    'room' => 'GYM-A', 'schedule' => [['day' => 'Monday', 'start_time' => '08:00', 'end_time' => '09:00'], ['day' => 'Wednesday', 'start_time' => '08:00', 'end_time' => '09:00']]],
+            ['course' => 'LIFE-101', 'email' => 'n.scott@gyca.edu',    'room' => '115', 'schedule' => [['day' => 'Friday', 'start_time' => '09:15', 'end_time' => '11:15']]],
+        ];
+
+        $this->createCohortCourses($alpha, $alphaAssignments, 'in_progress');
+        $this->createCohortCourses($bravo, $bravoAssignments, 'open');
+    }
+
+    private function createCohortCourses(Cohort $cohort, array $assignments, string $status): void
+    {
         foreach ($assignments as $a) {
-            $teacher = Employee::where('email', $a['email'])->first();
-            $course = Course::where('course_code', $a['course'])->first();
+            $employee = Employee::where('email', $a['email'])->first();
+            $course   = Course::where('course_code', $a['course'])->first();
 
-            // Fall — in_progress
-            ClassModel::create([
-                'course_id' => $course->id,
-                'employee_id' => $teacher->id,
-                'academic_year_id' => $academicYear->id,
-                'term_id' => $fallTerm->id,
-                'section_name' => 'A',
-                'room' => $a['room'],
-                'schedule' => $a['schedule'],
-                'max_students' => $a['max'],
-                'status' => 'in_progress',
-            ]);
+            if (! $employee || ! $course) {
+                continue;
+            }
 
-            // Spring — open
-            ClassModel::create([
-                'course_id' => $course->id,
-                'employee_id' => $teacher->id,
-                'academic_year_id' => $academicYear->id,
-                'term_id' => $springTerm->id,
-                'section_name' => 'A',
-                'room' => $a['room'],
-                'schedule' => $a['schedule'],
-                'max_students' => $a['max'],
-                'status' => 'open',
+            CohortCourse::create([
+                'cohort_id'       => $cohort->id,
+                'course_id'       => $course->id,
+                'instructor_type' => 'staff',
+                'employee_id'     => $employee->id,
+                'institution_id'  => null,
+                'room'            => $a['room'],
+                'schedule'        => $a['schedule'],
+                'max_students'    => 25,
+                'status'          => $status,
             ]);
         }
     }

@@ -95,7 +95,7 @@ class CourseController extends Controller
      */
     public function show(Course $course)
     {
-        $course->load(['classes.employee', 'classes.term']);
+        $course->load(['cohortCourses.cohort.class', 'cohortCourses.employee', 'cohortCourses.institution']);
 
         return Inertia::render('Admin/Courses/Show', [
             'course' => $course,

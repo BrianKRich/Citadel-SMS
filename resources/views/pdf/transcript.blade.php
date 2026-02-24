@@ -59,11 +59,11 @@
             font-weight: bold;
             width: 140px;
         }
-        .term-block {
+        .cohort-block {
             page-break-inside: avoid;
             margin-bottom: 16px;
         }
-        .term-header {
+        .cohort-header {
             background-color: #edf2f7;
             padding: 6px 8px;
             font-weight: bold;
@@ -71,12 +71,12 @@
             border: 1px solid #cbd5e0;
             border-bottom: none;
         }
-        .term-table {
+        .cohort-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 0;
         }
-        .term-table th {
+        .cohort-table th {
             background-color: #2d3748;
             color: #fff;
             padding: 5px 8px;
@@ -84,27 +84,27 @@
             font-size: 10px;
             text-transform: uppercase;
         }
-        .term-table th.numeric {
+        .cohort-table th.numeric {
             text-align: right;
         }
-        .term-table td {
+        .cohort-table td {
             padding: 4px 8px;
             border-bottom: 1px solid #e2e8f0;
         }
-        .term-table td.numeric {
+        .cohort-table td.numeric {
             text-align: right;
         }
-        .term-table tr:nth-child(even) {
+        .cohort-table tr:nth-child(even) {
             background-color: #f7fafc;
         }
-        .term-footer {
+        .cohort-footer {
             background-color: #edf2f7;
             padding: 6px 8px;
             border: 1px solid #cbd5e0;
             border-top: none;
             font-size: 10px;
         }
-        .term-footer span {
+        .cohort-footer span {
             margin-right: 24px;
             font-weight: bold;
         }
@@ -162,19 +162,25 @@
             </tr>
             <tr>
                 <td class="label">Date of Birth:</td>
-                <td>{{ $student->date_of_birth->format('M d, Y') }}</td>
+                <td>{{ $student->date_of_birth ? $student->date_of_birth->format('M d, Y') : '—' }}</td>
                 <td class="label">Enrollment Date:</td>
-                <td>{{ $student->enrollment_date->format('M d, Y') }}</td>
+                <td>{{ $student->enrollment_date ? $student->enrollment_date->format('M d, Y') : '—' }}</td>
             </tr>
         </table>
     </div>
 
-    @foreach($termGroups as $group)
-        <div class="term-block">
-            <div class="term-header">
-                {{ $group['term']->name }} — {{ $group['term']->academicYear->name }}
+    @foreach($cohortGroups as $group)
+        <div class="cohort-block">
+            <div class="cohort-header">
+                Cohort {{ ucfirst($group['cohort']->name) }}
+                @if($group['cohort']->class)
+                    — Class {{ $group['cohort']->class->class_number }}
+                    @if($group['cohort']->class->academicYear)
+                        ({{ $group['cohort']->class->academicYear->name }})
+                    @endif
+                @endif
             </div>
-            <table class="term-table">
+            <table class="cohort-table">
                 <thead>
                     <tr>
                         <th>Course Code</th>
@@ -187,18 +193,18 @@
                 <tbody>
                     @foreach($group['enrollments'] as $enrollment)
                         <tr>
-                            <td>{{ $enrollment->class->course->course_code }}</td>
-                            <td>{{ $enrollment->class->course->name }}</td>
+                            <td>{{ $enrollment->cohortCourse->course->course_code ?? '—' }}</td>
+                            <td>{{ $enrollment->cohortCourse->course->name ?? '—' }}</td>
                             <td>{{ $enrollment->final_letter_grade ?? '—' }}</td>
                             <td class="numeric">{{ $enrollment->grade_points !== null ? number_format($enrollment->grade_points, 2) : '—' }}</td>
-                            <td class="numeric">{{ number_format($enrollment->class->course->credits, 1) }}</td>
+                            <td class="numeric">{{ number_format($enrollment->cohortCourse->course->credits ?? 1, 1) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
-            <div class="term-footer">
-                <span>Term GPA: {{ number_format($group['termGpa'], 2) }}</span>
-                <span>Term Credits: {{ number_format($group['termCredits'], 1) }}</span>
+            <div class="cohort-footer">
+                <span>Cohort GPA: {{ number_format($group['cohortGpa'], 2) }}</span>
+                <span>Cohort Credits: {{ number_format($group['cohortCredits'], 1) }}</span>
             </div>
         </div>
     @endforeach

@@ -103,17 +103,16 @@ function destroy() {
                     </dl>
                 </Card>
 
-                <!-- Card 2: Classes -->
+                <!-- Card 2: Cohort Courses -->
                 <Card>
-                    <PageHeader title="Classes Using This Course" />
+                    <PageHeader title="Cohort Courses Using This Course" />
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-800">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Section</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Teacher</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Term</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Class / Cohort</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Instructor</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Enrolled / Capacity</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Actions</th>
@@ -121,34 +120,34 @@ function destroy() {
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                 <tr
-                                    v-for="cls in course.classes"
-                                    :key="cls.id"
+                                    v-for="cc in course.cohort_courses"
+                                    :key="cc.id"
                                     class="hover:bg-gray-50 dark:hover:bg-gray-800"
                                 >
-                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ cls.section_name }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        <span v-if="cls.employee">{{ cls.employee.first_name }} {{ cls.employee.last_name }}</span>
+                                        Class {{ cc.cohort?.class?.class_number ?? '?' }}
+                                        – Cohort {{ cc.cohort?.name ? cc.cohort.name.charAt(0).toUpperCase() + cc.cohort.name.slice(1) : '' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                        <span v-if="cc.employee">{{ cc.employee.first_name }} {{ cc.employee.last_name }}</span>
+                                        <span v-else-if="cc.institution">{{ cc.institution.name }}</span>
                                         <span v-else class="text-gray-400 dark:text-gray-500">—</span>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        <span v-if="cls.term">{{ cls.term.name }}</span>
-                                        <span v-else class="text-gray-400 dark:text-gray-500">—</span>
+                                        {{ cc.enrollments_count ?? '—' }} / {{ cc.max_students ?? '—' }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ cls.enrolled_count }} / {{ cls.max_students ?? '—' }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ cls.status }}
+                                        {{ cc.status?.replace('_', ' ') }}
                                     </td>
                                     <td class="px-6 py-4 text-sm">
                                         <Link
-                                            :href="route('admin.classes.show', cls.id)"
+                                            :href="route('admin.cohort-courses.show', cc.id)"
                                             class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                                         >View</Link>
                                     </td>
                                 </tr>
-                                <tr v-if="!course.classes?.length">
-                                    <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No classes scheduled for this course.</td>
+                                <tr v-if="!course.cohort_courses?.length">
+                                    <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No cohort courses scheduled for this course.</td>
                                 </tr>
                             </tbody>
                         </table>

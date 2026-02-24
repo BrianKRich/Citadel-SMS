@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
             DepartmentSeeder::class,
             EmployeeSeeder::class,
             AcademicYearSeeder::class,
+            InstitutionSeeder::class,
             CourseSeeder::class,
             StudentSeeder::class,
             ClassSeeder::class,

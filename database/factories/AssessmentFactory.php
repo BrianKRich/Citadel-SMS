@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Assessment;
 use App\Models\AssessmentCategory;
-use App\Models\ClassModel;
+use App\Models\CohortCourse;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +17,7 @@ class AssessmentFactory extends Factory
     public function definition(): array
     {
         return [
-            'class_id' => ClassModel::factory(),
+            'cohort_course_id' => CohortCourse::factory(),
             'assessment_category_id' => AssessmentCategory::factory(),
             'name' => fake()->words(3, true),
             'max_score' => 100.00,

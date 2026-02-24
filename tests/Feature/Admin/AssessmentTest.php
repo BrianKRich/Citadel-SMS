@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\Assessment;
 use App\Models\AssessmentCategory;
 use App\Models\ClassModel;
+use App\Models\CohortCourse;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\User;
@@ -21,10 +22,26 @@ class AssessmentTest extends TestCase
         return User::factory()->create(['role' => 'admin']);
     }
 
+    /**
+     * Create a CohortCourse using an auto-created cohort from ClassModel::boot()
+     * to avoid unique constraint violations on (class_id, name).
+     */
+    private function makeCohortCourse(array $overrides = []): CohortCourse
+    {
+        $class  = ClassModel::factory()->create();
+        $cohort = $class->cohorts()->first();
+
+        return CohortCourse::factory()->create(array_merge(
+            ['cohort_id' => $cohort->id],
+            $overrides
+        ));
+    }
+
     public function test_index_displays_assessments(): void
     {
         $user = $this->adminUser();
-        Assessment::factory()->count(3)->create();
+        $cc   = $this->makeCohortCourse();
+        Assessment::factory()->count(3)->create(['cohort_course_id' => $cc->id]);
 
         $response = $this->actingAs($user)->get(route('admin.assessments.index'));
 
@@ -34,30 +51,31 @@ class AssessmentTest extends TestCase
         );
     }
 
-    public function test_index_filters_by_class(): void
+    public function test_index_filters_by_cohort_course(): void
     {
-        $user = $this->adminUser();
-        $targetClass = ClassModel::factory()->create();
-        $otherClass  = ClassModel::factory()->create();
+        $user     = $this->adminUser();
+        $targetCc = $this->makeCohortCourse();
+        $otherCc  = $this->makeCohortCourse();
 
-        $targetAssessment = Assessment::factory()->create(['class_id' => $targetClass->id, 'name' => 'Target Quiz']);
-        Assessment::factory()->create(['class_id' => $otherClass->id, 'name' => 'Other Quiz']);
+        Assessment::factory()->create(['cohort_course_id' => $targetCc->id, 'name' => 'Target Quiz']);
+        Assessment::factory()->create(['cohort_course_id' => $otherCc->id, 'name' => 'Other Quiz']);
 
         $response = $this->actingAs($user)->get(
-            route('admin.assessments.index', ['class_id' => $targetClass->id])
+            route('admin.assessments.index', ['cohort_course_id' => $targetCc->id])
         );
 
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Assessments/Index')
-            ->where('filters.class_id', (string) $targetClass->id)
+            ->where('filters.cohort_course_id', (string) $targetCc->id)
         );
     }
 
     public function test_index_filters_by_status(): void
     {
         $user = $this->adminUser();
-        Assessment::factory()->create(['status' => 'published']);
-        Assessment::factory()->draft()->create();
+        $cc   = $this->makeCohortCourse();
+        Assessment::factory()->create(['cohort_course_id' => $cc->id, 'status' => 'published']);
+        Assessment::factory()->draft()->create(['cohort_course_id' => $cc->id]);
 
         $response = $this->actingAs($user)->get(
             route('admin.assessments.index', ['status' => 'draft'])
@@ -72,11 +90,11 @@ class AssessmentTest extends TestCase
     public function test_store_creates_assessment(): void
     {
         $user     = $this->adminUser();
-        $class    = ClassModel::factory()->create();
+        $cc       = $this->makeCohortCourse();
         $category = AssessmentCategory::factory()->create();
 
         $response = $this->actingAs($user)->post(route('admin.assessments.store'), [
-            'class_id'               => $class->id,
+            'cohort_course_id'       => $cc->id,
             'assessment_category_id' => $category->id,
             'name'                   => 'Midterm Exam',
             'max_score'              => 100,
@@ -87,8 +105,8 @@ class AssessmentTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('assessments', [
-            'name'     => 'Midterm Exam',
-            'class_id' => $class->id,
+            'name'             => 'Midterm Exam',
+            'cohort_course_id' => $cc->id,
         ]);
     }
 
@@ -98,23 +116,25 @@ class AssessmentTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('admin.assessments.store'), []);
 
-        $response->assertSessionHasErrors(['class_id', 'assessment_category_id', 'name', 'max_score', 'status']);
+        $response->assertSessionHasErrors([
+            'cohort_course_id', 'assessment_category_id', 'name', 'max_score', 'status',
+        ]);
     }
 
     public function test_show_displays_assessment_with_grade_stats(): void
     {
         $user       = $this->adminUser();
-        $class      = ClassModel::factory()->create();
+        $cc         = $this->makeCohortCourse();
         $category   = AssessmentCategory::factory()->create();
         $assessment = Assessment::factory()->create([
-            'class_id'               => $class->id,
+            'cohort_course_id'       => $cc->id,
             'assessment_category_id' => $category->id,
             'status'                 => 'published',
         ]);
 
         $enrollment = Enrollment::factory()->create([
-            'class_id' => $class->id,
-            'status'   => 'enrolled',
+            'cohort_course_id' => $cc->id,
+            'status'           => 'enrolled',
         ]);
 
         Grade::factory()->create([
@@ -137,17 +157,17 @@ class AssessmentTest extends TestCase
     public function test_update_modifies_assessment(): void
     {
         $user       = $this->adminUser();
-        $class      = ClassModel::factory()->create();
+        $cc         = $this->makeCohortCourse();
         $category   = AssessmentCategory::factory()->create();
         $assessment = Assessment::factory()->create([
-            'class_id'               => $class->id,
+            'cohort_course_id'       => $cc->id,
             'assessment_category_id' => $category->id,
             'name'                   => 'Original Name',
             'status'                 => 'published',
         ]);
 
         $response = $this->actingAs($user)->put(route('admin.assessments.update', $assessment), [
-            'class_id'               => $class->id,
+            'cohort_course_id'       => $cc->id,
             'assessment_category_id' => $category->id,
             'name'                   => 'Updated Name',
             'max_score'              => 100,
@@ -165,7 +185,8 @@ class AssessmentTest extends TestCase
     public function test_destroy_deletes_assessment(): void
     {
         $user       = $this->adminUser();
-        $assessment = Assessment::factory()->create();
+        $cc         = $this->makeCohortCourse();
+        $assessment = Assessment::factory()->create(['cohort_course_id' => $cc->id]);
 
         $response = $this->actingAs($user)->delete(route('admin.assessments.destroy', $assessment));
 

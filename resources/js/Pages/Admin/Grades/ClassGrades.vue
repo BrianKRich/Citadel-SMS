@@ -7,12 +7,12 @@ import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const props = defineProps({
-    classModel: Object,
+    cohortCourse: Object,
 });
 
-// classModel has: course, section_name, assessments (array), enrollments (with student + grades)
-const assessments = computed(() => props.classModel.assessments || []);
-const enrollments = computed(() => props.classModel.enrollments || []);
+// cohortCourse has: course, cohort.class, assessments (array), enrollments (with student + grades)
+const assessments = computed(() => props.cohortCourse.assessments || []);
+const enrollments = computed(() => props.cohortCourse.enrollments || []);
 
 // Build class rank map using standard competition ranking (1,1,3)
 const rankMap = computed(() => {
@@ -82,7 +82,7 @@ function getLetterGradeBadgeClass(letter) {
 </script>
 
 <template>
-    <Head :title="`Grade Book — ${classModel.course?.name || 'Class'} ${classModel.section_name}`" />
+    <Head :title="`Grade Book — ${cohortCourse.course?.name || 'Course'}`" />
 
     <AuthenticatedLayout>
         <template #header>
@@ -109,8 +109,8 @@ function getLetterGradeBadgeClass(letter) {
                 <Card class="mb-6 max-w-7xl mx-auto">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <PageHeader
-                            :title="`${classModel.course?.name || 'N/A'} — ${classModel.section_name}`"
-                            :description="`Grade matrix for ${enrollments.length} enrolled students across ${assessments.length} assessments`"
+                            :title="`${cohortCourse.course?.name || 'N/A'}`"
+                            :description="`Class ${cohortCourse.cohort?.class?.class_number ?? '?'} – Cohort ${cohortCourse.cohort?.name ? cohortCourse.cohort.name.charAt(0).toUpperCase() + cohortCourse.cohort.name.slice(1) : ''} · ${enrollments.length} students · ${assessments.length} assessments`"
                         />
                         <div class="flex gap-2 flex-shrink-0">
                             <Link

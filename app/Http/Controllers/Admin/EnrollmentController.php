@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\SavesCustomFieldValues;
 use App\Http\Controllers\Controller;
-use App\Models\CustomField;
 use App\Models\ClassModel;
+use App\Models\Cohort;
+use App\Models\CohortCourse;
+use App\Models\CustomField;
 use App\Models\Enrollment;
 use App\Models\Student;
-use App\Models\Term;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -16,26 +17,20 @@ class EnrollmentController extends Controller
 {
     use SavesCustomFieldValues;
 
-    /**
-     * Display a listing of enrollments
-     */
     public function index(Request $request)
     {
         $enrollments = Enrollment::query()
             ->with([
                 'student',
-                'class.course',
-                'class.employee' => fn($q) => $q->withTrashed(),
-                'class.term',
+                'cohortCourse.course',
+                'cohortCourse.employee' => fn($q) => $q->withTrashed(),
+                'cohortCourse.cohort.class',
             ])
             ->when($request->student_id, function ($query, $studentId) {
                 $query->student($studentId);
             })
-            ->when($request->class_id, function ($query, $classId) {
-                $query->class($classId);
-            })
-            ->when($request->term_id, function ($query, $termId) {
-                $query->term($termId);
+            ->when($request->cohort_course_id, function ($query, $ccId) {
+                $query->cohortCourse($ccId);
             })
             ->when($request->status, function ($query, $status) {
                 $query->status($status);
@@ -52,188 +47,119 @@ class EnrollmentController extends Controller
             ->withQueryString();
 
         $students = Student::active()->orderBy('first_name')->get();
-        $terms = Term::with('academicYear')->orderBy('start_date', 'desc')->get();
+        $classes  = ClassModel::with('cohorts')->orderBy('class_number')->get();
 
         return Inertia::render('Admin/Enrollment/Index', [
             'enrollments' => $enrollments,
-            'students' => $students,
-            'terms' => $terms,
-            'filters' => $request->only(['search', 'student_id', 'class_id', 'term_id', 'status']),
+            'students'    => $students,
+            'classes'     => $classes,
+            'filters'     => $request->only(['search', 'student_id', 'cohort_course_id', 'status']),
         ]);
     }
 
-    /**
-     * Show the form for enrolling a student
-     */
     public function create(Request $request)
     {
         $students = Student::active()->orderBy('first_name')->get();
-        $terms = Term::with('academicYear')->orderBy('start_date', 'desc')->get();
+        $classes  = ClassModel::with('cohorts')->orderBy('class_number')->get();
 
-        // Get available classes (open and not full)
-        $classes = ClassModel::query()
-            ->available()
-            ->with(['course', 'employee', 'term'])
-            ->when($request->term_id, function ($query, $termId) {
-                $query->where('term_id', $termId);
+        $preselectedCohortCourseId = $request->cohort_course_id ? (int) $request->cohort_course_id : null;
+
+        // Available cohort-courses; always include the preselected one even if not "available"
+        $cohortCourses = CohortCourse::query()
+            ->where(function ($query) use ($preselectedCohortCourseId) {
+                $query->available();
+                if ($preselectedCohortCourseId) {
+                    $query->orWhere('id', $preselectedCohortCourseId);
+                }
+            })
+            ->with(['course', 'cohort.class', 'employee'])
+            ->when($request->cohort_id, function ($query, $cohortId) {
+                $query->where('cohort_id', $cohortId);
             })
             ->orderBy('created_at', 'desc')
             ->get();
 
         return Inertia::render('Admin/Enrollment/Create', [
-            'students' => $students,
-            'terms' => $terms,
-            'classes' => $classes,
-            'selectedTermId' => $request->term_id,
-            'customFields' => CustomField::forEntity('Enrollment')->active()->orderBy('sort_order')->get(),
+            'students'                 => $students,
+            'classes'                  => $classes,
+            'cohortCourses'            => $cohortCourses,
+            'selectedCohortId'         => $request->cohort_id,
+            'selectedCohortCourseId'   => $preselectedCohortCourseId,
+            'customFields'             => CustomField::forEntity('Enrollment')->active()->orderBy('sort_order')->get(),
         ]);
     }
 
-    /**
-     * Enroll a student in a class
-     */
     public function enroll(Request $request)
     {
         $validated = $request->validate([
-            'student_id' => ['required', 'exists:students,id'],
-            'class_id' => ['required', 'exists:classes,id'],
-            'enrollment_date' => ['nullable', 'date'],
+            'student_id'       => ['required', 'exists:students,id'],
+            'cohort_course_id' => ['required', 'exists:cohort_courses,id'],
+            'enrollment_date'  => ['nullable', 'date'],
         ]);
 
-        $student = Student::findOrFail($validated['student_id']);
-        $class = ClassModel::findOrFail($validated['class_id']);
+        $student      = Student::findOrFail($validated['student_id']);
+        $cohortCourse = CohortCourse::findOrFail($validated['cohort_course_id']);
 
         // Check if student is already enrolled
         $existingEnrollment = Enrollment::where('student_id', $student->id)
-            ->where('class_id', $class->id)
+            ->where('cohort_course_id', $cohortCourse->id)
             ->first();
 
         if ($existingEnrollment) {
             return back()->withErrors([
-                'error' => 'Student is already enrolled in this class.'
+                'error' => 'Student is already enrolled in this course.',
             ])->withInput();
         }
 
-        // Check if class is full
-        if ($class->isFull()) {
+        // Check if course is full
+        if ($cohortCourse->isFull()) {
             return back()->withErrors([
-                'error' => 'Class is full. Cannot enroll more students.'
+                'error' => 'Course is full. Cannot enroll more students.',
             ])->withInput();
         }
 
-        // Check if class is open
-        if ($class->status !== 'open') {
+        // Check if course is open
+        if ($cohortCourse->status !== 'open') {
             return back()->withErrors([
-                'error' => 'Class is not open for enrollment.'
+                'error' => 'Course is not open for enrollment.',
             ])->withInput();
         }
 
-        // Check for schedule conflicts with student's other enrolled classes
-        $conflict = $this->checkStudentScheduleConflict($student->id, $class);
-        if ($conflict) {
-            return back()->withErrors([
-                'error' => "Schedule conflict with {$conflict->course->name} ({$conflict->section_name})"
-            ])->withInput();
-        }
-
-        // Create enrollment
         $enrollment = Enrollment::create([
-            'student_id' => $student->id,
-            'class_id' => $class->id,
-            'enrollment_date' => $validated['enrollment_date'] ?? now(),
-            'status' => 'enrolled',
+            'student_id'       => $student->id,
+            'cohort_course_id' => $cohortCourse->id,
+            'enrollment_date'  => $validated['enrollment_date'] ?? now(),
+            'status'           => 'enrolled',
         ]);
 
         $this->saveCustomFieldValues($request, 'Enrollment', $enrollment->id);
 
         return redirect()->route('admin.enrollment.index')
-            ->with('success', "Successfully enrolled {$student->full_name} in {$class->course->name}.");
+            ->with('success', "Successfully enrolled {$student->full_name} in {$cohortCourse->course->name}.");
     }
 
-    /**
-     * Drop a student from a class
-     */
     public function drop(Enrollment $enrollment)
     {
-        // Check if enrollment has grades
-        // Note: This will be implemented in Phase 3
-        // For now, we can always drop
-
-        $enrollment->update([
-            'status' => 'dropped',
-        ]);
+        $enrollment->update(['status' => 'dropped']);
 
         return redirect()->route('admin.enrollment.index')
-            ->with('success', 'Student dropped from class successfully.');
+            ->with('success', 'Student dropped from course successfully.');
     }
 
-    /**
-     * Show student's schedule
-     */
     public function studentSchedule(Student $student)
     {
         $enrollments = $student->enrollments()
             ->with([
-                'class.course',
-                'class.employee' => fn($q) => $q->withTrashed(),
-                'class.term',
+                'cohortCourse.course',
+                'cohortCourse.employee' => fn($q) => $q->withTrashed(),
+                'cohortCourse.cohort.class',
             ])
             ->enrolled()
             ->get();
 
         return Inertia::render('Admin/Enrollment/StudentSchedule', [
-            'student' => $student,
+            'student'     => $student,
             'enrollments' => $enrollments,
         ]);
-    }
-
-    /**
-     * Check for schedule conflicts with student's enrolled classes
-     */
-    private function checkStudentScheduleConflict($studentId, ClassModel $newClass)
-    {
-        if (empty($newClass->schedule)) {
-            return null;
-        }
-
-        $studentClasses = ClassModel::query()
-            ->whereHas('enrollments', function ($query) use ($studentId) {
-                $query->where('student_id', $studentId)
-                      ->where('status', 'enrolled');
-            })
-            ->where('term_id', $newClass->term_id)
-            ->where('id', '!=', $newClass->id)
-            ->with('course')
-            ->get();
-
-        foreach ($studentClasses as $existingClass) {
-            if (empty($existingClass->schedule)) {
-                continue;
-            }
-
-            foreach ($newClass->schedule as $newSlot) {
-                foreach ($existingClass->schedule as $existingSlot) {
-                    if ($newSlot['day'] === $existingSlot['day']) {
-                        // Check for time overlap
-                        if ($this->timesOverlap(
-                            $newSlot['start_time'], $newSlot['end_time'],
-                            $existingSlot['start_time'], $existingSlot['end_time']
-                        )) {
-                            return $existingClass;
-                        }
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Check if two time ranges overlap
-     */
-    private function timesOverlap($start1, $end1, $start2, $end2)
-    {
-        return ($start1 < $end2) && ($end1 > $start2);
     }
 }
