@@ -107,7 +107,17 @@ A full-stack web application for managing student information, academic records,
 | `admin` | All admin pages, view Audit Log |
 | `site_admin` | All admin pages + Audit Log purge + Feature Settings |
 
-Promote a user via tinker:
+**Default seeded account (created by `php artisan db:seed`):**
+
+| Field | Value |
+|-------|-------|
+| Email | `admin@admin.com` |
+| Password | `admin` |
+| Role | `site_admin` |
+
+> Change the password immediately after first login in a production environment.
+
+To promote an existing user to site admin via tinker:
 ```bash
 php artisan tinker
 User::where('email', 'your@email.com')->first()->update(['role' => 'site_admin']);
