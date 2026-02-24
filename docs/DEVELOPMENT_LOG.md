@@ -1317,32 +1317,239 @@ The Quick Actions grid is split into two independent grids to guarantee Audit Lo
 
 ---
 
-## Project Statistics (as of February 22, 2026)
+## Phase 5: Student Notes
+
+**Date:** February 23, 2026
+**Commit:** `031326e`
+
+Department-scoped notes on student profiles, with a standalone admin index page, inline CRUD, and full audit logging.
+
+### What Was Built
+
+**Data Model (`student_notes` table):**
+- `student_id` — FK to students (cascade delete)
+- `employee_id` — FK to employees, nullable (nullOnDelete — note survives if employee is deleted)
+- `department_id` — FK to departments (restrict) — stored denormalized so notes stay associated with the correct department even if the author later changes departments
+- `title` (string), `body` (text), timestamps
+- Composite index on `(student_id, department_id)` for fast scoped queries
+
+**Access Control:**
+| Actor | Can see | Can create | Can edit | Can delete |
+|-------|---------|------------|----------|------------|
+| Admin | All notes | Any dept (picks dept if no employee record) | Any note | Any note |
+| Employee | Own dept only | Own dept | Own dept notes only | Own dept notes only |
+
+**StudentNoteObserver (`app/Observers/StudentNoteObserver.php`):**
+- Hooks: `created` (logs title/body/department_id), `updated` (tracks title/body changes), `deleted`
+- Label format: `"Note: {title} on {student_id}"`
+- Registered in `AppServiceProvider`
+
+**StudentNoteController (`app/Http/Controllers/Admin/StudentNoteController.php`):**
+- `index()` — standalone notes page; requires at least one filter before showing results (`searched` boolean); full-name search via PostgreSQL concatenation `(first_name || ' ' || last_name) like ?`; paginated 20/page
+- `store()` — admins without an employee record may supply `department_id` from the form; employees use their own `department_id`
+- `update()` / `destroy()` — admin OR same `department_id` as the note
+
+**Routes (added before student resource):**
+```
+GET  admin/student-notes              → admin.student-notes.index
+POST admin/students/{student}/notes   → admin.students.notes.store
+PATCH admin/students/{student}/notes/{note} → admin.students.notes.update
+DELETE admin/students/{student}/notes/{note} → admin.students.notes.destroy
+```
+
+**Students/Show.vue — "Department Notes" card:**
+- Appears after Enrollment History
+- Department badge (color-coded by dept ID) + title + body + author + date
+- Inline edit form replaces note row (title input + textarea + Save/Cancel)
+- Add Note form at bottom (collapsible, shows department picker for admins without an employee record)
+- Edit/Delete shown if `isAdmin` or `note.department_id === userDeptId`
+
+**StudentNotes/Index.vue — standalone admin page:**
+- Breadcrumb: Dashboard → Student Notes
+- Filter bar: student name/ID search, department (admin only), date from/to
+- Shows prompt "Enter search criteria above…" until filters are applied
+- Table: Student | Dept badge | Title | Author | Date | Actions (Edit/Delete inline)
+- Click title → expands body row
+- Pagination
+
+**Dashboard card added:** "Student Notes" in main Quick Actions grid.
+
+### Operations Department & Auto-Employee on User Create
+
+**Migration `2026_02_23_250000_seed_operations_department.php`:**
+- Added "Operations" department via `firstOrCreate` (safe for live DB)
+- Roles: Director, Deputy Director, Commandant, Administrative Assistant, Site Administrator
+
+**UserManagementController `store()` updated:**
+- Now accepts `first_name`, `last_name`, `department_id`, `role_id` on create
+- Automatically creates an Employee record linked to the new User
+- The `name` column on `users` is set to `first_name + last_name`
+
+**UserForm.vue updated:**
+- Create mode: shows separate first/last name fields + department dropdown + role dropdown (filtered by selected department)
+- Edit mode: unchanged — single `name` field only
+
+### Bug Fixes in This Session
+
+**`StudentNoteController::store()` — 403 for admin without employee record:**
+Admin users who have no associated Employee record got a 403. Fixed by allowing admins to supply `department_id` via the form when they have no employee record; `employee_id` is stored as `null` in that case.
+
+**Full-name search in notes index:**
+Searching "Stacy Schuster" returned no results because the query only compared `first_name LIKE` and `last_name LIKE` separately — neither column contains the full string. Fixed by adding `->orWhereRaw("(first_name || ' ' || last_name) like ?", ["%{$search}%"])` to the `whereHas('student', ...)` subquery.
+
+**Notes not requiring a search filter:**
+Notes were displayed on initial page load (empty filter state). Fixed: `$hasFilter = $request->anyFilled([...])` — the query only runs when at least one filter is set; `searched` boolean prop gates the table in Vue.
+
+### Files Changed
+
+**New (5):**
+- `database/migrations/2026_02_23_240000_create_student_notes_table.php`
+- `database/migrations/2026_02_23_250000_seed_operations_department.php`
+- `app/Models/StudentNote.php`
+- `app/Observers/StudentNoteObserver.php`
+- `app/Http/Controllers/Admin/StudentNoteController.php`
+- `resources/js/Pages/Admin/StudentNotes/Index.vue`
+
+**Modified (7):**
+- `app/Models/Student.php` — added `notes()` hasMany
+- `app/Providers/AppServiceProvider.php` — registered StudentNoteObserver
+- `app/Http/Controllers/Admin/StudentController.php` — show() scoped notes + new props
+- `app/Http/Controllers/UserManagementController.php` — auto-create Employee on user create
+- `routes/web.php` — note routes + student-notes index route
+- `resources/js/Pages/Admin/Students/Show.vue` — Notes card
+- `resources/js/Pages/Admin/Dashboard.vue` — Student Notes action card
+- `resources/js/Components/Users/UserForm.vue` — create mode employee fields
+- `resources/js/Pages/Admin/Users/Create.vue` — departments prop
+
+---
+
+## Site Admin Role — Exclusive Audit Log Purge Access
+
+**Date:** February 23, 2026
+**Commit:** `cd46626`
+**GitHub Issue:** #17 (closed)
+
+### What Was Built
+
+A new `site_admin` system role was added, sitting above regular `admin`. The role hierarchy is:
+
+| Role | Admin pages | View Audit Log | Purge Audit Log |
+|------|-------------|---------------|-----------------|
+| User | ✗ | ✗ | ✗ |
+| Admin | ✓ | ✓ | ✗ |
+| Site Admin | ✓ | ✓ | ✓ |
+
+**`app/Models/User.php`:**
+- `isAdmin()` updated to return `true` for both `admin` and `site_admin` — site admins receive full admin access
+- New `isSiteAdmin()` returns `true` only for `site_admin`
+
+**`app/Http/Controllers/Admin/AuditLogController.php`:**
+- `purge()` — `abort_unless(auth()->user()->isSiteAdmin(), 403)` added; regular admins receive 403
+- `index()` — passes `canPurge` boolean prop to Vue (true only for site_admin)
+
+**`resources/js/Pages/Admin/AuditLog/Index.vue`:**
+- Purge panel and purge history table wrapped in `v-if="canPurge"` — invisible to regular admins
+
+**`app/Http/Controllers/UserManagementController.php`:**
+- `site_admin` added to the allowed values in `Rule::in()` for both `store()` and `update()`
+
+**`resources/js/Components/Users/UserForm.vue`:**
+- "Site Admin" added to the system role dropdown
+
+**`tests/Feature/Admin/AuditLogTest.php`:**
+- `siteAdmin()` private helper added
+- 4 new tests: admin blocked from purge (403), site admin can purge, `canPurge=false` for admin, `canPurge=true` for site admin
+
+### Files Changed
+
+**Modified (5):**
+- `app/Models/User.php`
+- `app/Http/Controllers/Admin/AuditLogController.php`
+- `app/Http/Controllers/UserManagementController.php`
+- `resources/js/Components/Users/UserForm.vue`
+- `resources/js/Pages/Admin/AuditLog/Index.vue`
+- `tests/Feature/Admin/AuditLogTest.php`
+
+---
+
+## Feature Settings Restricted to Site Admin
+
+**Date:** February 23, 2026
+**Commit:** `0479dc8`
+**GitHub Issue:** #18 (closed)
+
+Feature Settings page and toggles are now exclusively accessible to the **Site Admin** role. Regular admins and users receive a 403.
+
+### Changes
+
+**`app/Http/Controllers/AdminController.php`:**
+- `featureSettings()` — `abort_unless(isSiteAdmin(), 403)`
+- `updateFeatureSettings()` — `abort_unless(isSiteAdmin(), 403)`
+
+**`resources/js/Pages/Admin/Dashboard.vue`:**
+- Feature Settings card: `v-if="$page.props.auth.user.role === 'site_admin'"`
+
+**`tests/Feature/Admin/ThemeTest.php` + `AttendanceTest.php`:**
+- `siteAdmin()` helper added to each
+- All feature toggle tests updated to act as `site_admin`
+
+---
+
+## User Management: Hire Date Field
+
+**Date:** February 24, 2026
+**Commit:** `5a05787`
+**GitHub Issue:** #19 (closed)
+
+### Problem
+
+Creating a user through User Management failed with a PostgreSQL NOT NULL violation on `hire_date` in the `employees` table. No hire date was being collected from the form or passed to `Employee::create()`.
+
+### Fix
+
+**`UserManagementController`:**
+- `store()` — `hire_date` added as a required validated field; passed to `Employee::create()`
+- `edit()` — loads associated Employee and passes `hire_date` to the Vue page
+- `update()` — validates `hire_date` and updates the Employee record via `Employee::where('user_id', ...)->update()`
+
+**`UserForm.vue`:** Hire Date date input added; shown in both create and edit modes (positioned between department/role and password fields).
+
+**`Create.vue`:** `hire_date` added to Inertia form initial state.
+
+**`Edit.vue`:** `hire_date` prop accepted and pre-populates the form from the existing Employee record; blank if no employee record exists.
+
+### Data Fix
+
+Lynn Walls had a User record but no Employee record — her employee creation had failed before this fix due to the missing `hire_date`. Her user account was deleted so she can be cleanly recreated via User Management with a hire date.
+
+---
+
+## Project Statistics (as of February 24, 2026)
 
 | Metric | Value |
 |--------|-------|
-| Development period | Feb 8–22, 2026 |
-| Phases completed | Phase 0–2 + 3A + 3B + 3D + 3E + 3F + 4 |
-| Database tables | 27 |
-| Eloquent models | 22 |
-| Admin controllers | 17 |
-| Vue pages | 69 |
+| Development period | Feb 8–24, 2026 |
+| Phases completed | Phase 0–2 + 3A + 3B + 3D + 3E + 3F + 4 + 5 |
+| Database tables | 28 |
+| Eloquent models | 23 |
+| Admin controllers | 18 |
+| Vue pages | 71 |
 | Vue components | 25 |
 | Blade PDF templates | 2 |
 | Services | 3 (GradeCalculationService, ReportCardService, TranscriptService) |
 | Seeders | 16 |
 | Factories | 16 |
 | Test files | 27 |
-| Tests passing | 263 (1352 assertions) |
+| Tests passing | 282 (1395 assertions) |
 | Contributors | 1 |
 
 ---
 
 ## Current Status
 
-**Phases 0–2, 3A, 3B, 3D, 3E, 3F, and 4 fully implemented.** 263 tests passing. No known broken pages or known issues.
+**Phases 0–2, 3A, 3B, 3D, 3E, 3F, 4, and 5 fully implemented.** 282 tests passing. No known broken pages or known issues.
 
-**Completed phases:** 0, 1, 2, 3A, 3B, 3D, 3E, 3F, 4
+**Completed phases:** 0, 1, 2, 3A, 3B, 3D, 3E, 3F, 4, 5
 
 ---
 
@@ -1453,7 +1660,6 @@ The following ideas are captured for long-term consideration. They are not yet a
 ### Student Management
 - Implement student progress tracking with visual dashboards
 - Create student profile completion percentage tracker
-- Department-specific note-taking system: each department can add and view notes on student records, with access filtered to that department's focus area (e.g., Medical sees only medical notes, Education sees only education notes)
 
 ### Department-Specific Dashboards
 - Create dedicated dashboards for: Medical, Admissions, Counseling, Post-Residential, Education, and Cadre

@@ -1,7 +1,7 @@
 # Student Management System - Database Architecture
 
-**Version:** 3.1 (Phase 0-3B: Expanded Seed Data)
-**Last Updated:** February 16, 2026
+**Version:** 3.2 (Phase 0-3F + 4 + Student Notes)
+**Last Updated:** February 23, 2026
 **Database:** PostgreSQL 14+
 
 ---
@@ -33,6 +33,7 @@ Student Management System uses PostgreSQL as its primary database. The schema is
 - Enrollment tracking
 - Grade management
 - Attendance records
+- Student notes (department-scoped)
 
 **Design Principles:**
 - Normalized schema (3NF) to reduce data redundancy
@@ -356,6 +357,41 @@ Staff employee profiles and employment details.
 
 ---
 
+#### **student_notes**
+Department-scoped notes written by staff about students.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Primary key |
+| student_id | BIGINT | FK, NOT NULL | Student reference (cascade delete) |
+| employee_id | BIGINT | FK, NULLABLE | Author employee reference (null on delete) |
+| department_id | BIGINT | FK, NOT NULL | Department that owns the note |
+| title | VARCHAR(255) | NOT NULL | Note title |
+| body | TEXT | NOT NULL | Note body |
+| created_at | TIMESTAMP | | Creation timestamp |
+| updated_at | TIMESTAMP | | Last update timestamp |
+
+**Relationships:**
+- Belongs to Student (student_id)
+- Belongs to Employee (employee_id, nullable — preserved if employee deleted)
+- Belongs to Department (department_id)
+
+**Indexes:**
+- PRIMARY KEY (id)
+- INDEX (student_id, department_id) — composite for department-scoped queries
+
+**Constraints:**
+- FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+- FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL
+- FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE RESTRICT
+
+**Access Control:**
+- Admin users: see and manage all notes across all departments
+- Employee users: see and manage only notes belonging to their department
+- Notes survive employee deletion (employee_id set to null)
+
+---
+
 #### **phone_numbers**
 Polymorphic phone number storage for any model.
 
@@ -668,7 +704,8 @@ students
 ├── belongs to → users (user_id)
 ├── has many → guardians (through guardian_student)
 ├── has many → enrollments
-└── has many → attendance_records
+├── has many → attendance_records
+└── has many → student_notes
 
 guardians
 ├── belongs to → users (user_id)
@@ -741,6 +778,11 @@ attendance_records (future)
 ├── belongs to → students
 ├── belongs to → classes
 └── belongs to → users (marked_by)
+
+student_notes
+├── belongs to → students
+├── belongs to → employees (nullable)
+└── belongs to → departments
 
 documents (polymorphic)
 ├── belongs to → documentable (Student, Employee, Course, etc.)
@@ -857,6 +899,10 @@ documents (polymorphic)
 21. **2026_02_15_000003_create_assessments_table.php** - Assessments (per-class)
 22. **2026_02_15_000004_create_grades_table.php** - Student grades with late tracking
 
+**Session (February 23, 2026): Student Notes & Operations Dept**
+- **2026_02_23_240000_create_student_notes_table.php** — Student notes with department scoping
+- **2026_02_23_250000_seed_operations_department.php** — Operations department + 5 roles
+
 ### Pending Migrations (Future Phases)
 
 - Phase 3B/3C: No additional tables (report card/transcript generation, import/export)
@@ -921,8 +967,9 @@ public function run(): void
 - Life Skills: LIFE-101 Financial Literacy
 
 **DepartmentSeeder:**
-- 5 departments: Education, Administration, Counseling, Cadre, Health Services
+- 6 departments: Education, Administration, Counseling, Cadre, Health Services, Operations
 - Roles per department: Teacher/Instructor, Administrator/Coordinator, Counselor/Case Manager, Drill Instructor/Platoon Sergeant, Nurse/Health Aide
+- Operations: Director, Deputy Director, Commandant, Administrative Assistant, Site Administrator
 
 **EmployeeSeeder (23 employees: 20 teachers + 3 staff):**
 - 20 teachers (Education / Teacher role), each assigned to one course:
