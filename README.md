@@ -1,529 +1,271 @@
 # Student Management System
 
-A modern Student Management System built with Laravel, Vue.js, and PostgreSQL.
+A full-stack web application for managing student information, academic records, employee data, and educational administration. Built for **Georgia Job Challenge Academy** with Laravel 12, Vue 3, Inertia.js, and PostgreSQL.
 
-## Overview
-
-Student Management System is a full-stack web application designed for managing student information, academic records, and educational administration with a focus on user management, theme customization, and extensibility. Built with modern technologies and a component-based architecture.
-
-## Features
-
-### ✅ Current Features
-
-- **User Management**
-  - Create, read, update, and delete users
-  - Role-based permissions (Admin/User)
-  - Secure password management with bcrypt encryption
-  - Pagination and sorting
-
-- **Admin Dashboard**
-  - Real-time user statistics
-  - Quick access to all admin features
-  - Clean, intuitive interface
-
-- **Theme Customization**
-  - Live color customization
-  - Real-time preview
-  - Persistent theme settings
-  - 5 customizable color schemes
-  - Dark mode support with system preference detection
-
-- **Authentication System**
-  - User registration and login
-  - Password reset functionality
-  - Email verification ready
-  - Session management
-
-- **Component-Based Architecture**
-  - Reusable Vue components
-  - Organized component library
-  - Consistent UI/UX patterns
-  - Responsive design (desktop and mobile)
-
-- **Student Management** ✨ New
-  - Complete student records with demographics
-  - Student ID auto-generation (STU-YYYY-###)
-  - Status tracking (active, inactive, graduated, withdrawn, suspended)
-  - Guardian relationships and contact information
-  - Photo upload support
-  - Search and filtering capabilities
-
-- **Teacher Management** ✨ New
-  - Teacher profiles with qualifications
-  - Teacher ID auto-generation (TCH-YYYY-###)
-  - Department and specialization tracking
-  - Status management (active, inactive, on_leave)
-  - Assignment tracking
-
-- **Course Catalog** ✨ New
-  - Course offerings with unique codes
-  - Department and level organization
-  - Credit tracking
-  - Active/inactive status
-
-- **Class Scheduling** ✨ New
-  - Class sections with schedules
-  - Teacher assignment
-  - Room allocation
-  - Capacity management (max students)
-  - Schedule conflict detection
-  - Status tracking (open, closed, in_progress, completed)
-
-- **Enrollment Management** ✨ New
-  - Student class enrollment
-  - Enrollment status tracking
-  - Capacity enforcement
-  - Schedule conflict prevention
-  - Drop/withdraw functionality
-  - Student schedule viewing
-
-- **Academic Year & Term Management** ✨ New
-  - Academic year definition
-  - Term/semester organization
-  - Current year/term designation
-  - Date range management
-
-### 🚧 Planned Features (Phase 3+)
-
-- Grade and assessment tracking (Phase 3)
-  - Assessment types and weights
-  - Grade entry and calculation
-  - Report cards and transcripts
-- Attendance management (Phase 4)
-  - Daily attendance tracking
-  - Absence alerts
-  - Attendance reports
-- Parent/Guardian portal (Phase 5)
-  - View student grades and attendance
-  - Communication features
-- Academic calendar (Phase 6)
-  - Events and holidays
-  - Exam schedules
-- Document management (Phase 7)
-  - File uploads and storage
-  - Student documents
-- Academic reporting and analytics (Phase 8)
-  - Performance dashboards
-  - Data exports
-  - Custom reports
+---
 
 ## Tech Stack
 
-### Backend
-- **Framework:** Laravel 12
-- **Database:** PostgreSQL
-- **Authentication:** Laravel Breeze
-- **API:** Inertia.js
-
-### Frontend
-- **Framework:** Vue 3 (Composition API)
-- **Styling:** Tailwind CSS
-- **Build Tool:** Vite
-- **State Management:** Inertia.js
-
-### Development Tools
-- PHP 8.3
-- Node.js 24.13.0
-- Composer 2.7.1
-- npm 11.8.0
-
-## Requirements
-
-- PHP >= 8.3
-- Composer >= 2.7
-- Node.js >= 18.x
-- PostgreSQL >= 13
-- npm >= 8.x
-
-## Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd sms
-```
-
-### 2. Install PHP Dependencies
-
-```bash
-composer install
-```
-
-### 3. Install Node Dependencies
-
-```bash
-npm install --legacy-peer-deps
-```
-
-### 4. Environment Setup
-
-```bash
-# Copy environment file
-cp .env.example .env
-
-# Generate application key
-php artisan key:generate
-```
-
-### 5. Configure Database
-
-Edit `.env` file with your PostgreSQL credentials:
-
-```env
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=sms
-DB_USERNAME=postgres
-DB_PASSWORD=your_password
-```
-
-### 6. Create Database
-
-```bash
-# Using PostgreSQL command line
-createdb sms
-
-# Or via psql
-psql -U postgres
-CREATE DATABASE sms;
-```
-
-### 7. Run Migrations
-
-```bash
-php artisan migrate
-```
-
-### 8. Seed Database (Optional)
-
-```bash
-# Seed all data (recommended for development)
-php artisan db:seed
-
-# Or seed specific tables:
-php artisan db:seed --class=ThemeSeeder
-php artisan db:seed --class=AcademicYearSeeder
-php artisan db:seed --class=CourseSeeder
-php artisan db:seed --class=TeacherSeeder
-php artisan db:seed --class=StudentSeeder
-php artisan db:seed --class=ClassSeeder
-php artisan db:seed --class=EnrollmentSeeder
-
-# Make first user an admin
-php artisan tinker
-User::first()->update(['role' => 'admin']);
-```
-
-**Sample Data Included:**
-- Academic year 2025-2026 with Fall/Spring terms
-- 10 courses across different departments
-- 5 teachers with assignments
-- 20 students with guardians
-- 12 class sections with schedules
-- Sample enrollments
-
-## Running the Application
-
-### Development Mode
-
-Start both servers in separate terminals:
-
-**Terminal 1 - Laravel Backend:**
-```bash
-php artisan serve
-```
-
-**Terminal 2 - Vite Frontend:**
-```bash
-npm run dev
-```
-
-Access the application at: **http://localhost:8000**
-
-### Production Build
-
-```bash
-# Build frontend assets
-npm run build
-
-# Configure web server to point to /public directory
-```
-
-## Project Structure
-
-```
-sms/
-├── app/
-│   ├── Http/Controllers/     # Backend controllers
-│   ├── Models/                # Database models
-│   └── Providers/             # Service providers
-├── database/
-│   ├── migrations/            # Database migrations
-│   └── seeders/               # Database seeders
-├── resources/
-│   ├── js/
-│   │   ├── Components/        # Vue components
-│   │   │   ├── Admin/         # Admin-specific components
-│   │   │   ├── Form/          # Form components
-│   │   │   ├── UI/            # UI components
-│   │   │   ├── Theme/         # Theme components
-│   │   │   └── Users/         # User components
-│   │   ├── Layouts/           # Page layouts
-│   │   ├── Pages/             # Vue pages
-│   │   │   ├── Admin/         # Admin pages
-│   │   │   └── Auth/          # Authentication pages
-│   │   └── composables/       # Vue composables
-│   └── css/                   # Stylesheets
-├── routes/
-│   ├── web.php                # Web routes
-│   └── auth.php               # Authentication routes
-├── public/                    # Public assets
-└── storage/                   # File storage
-```
-
-## Key URLs
-
-- **Homepage:** http://localhost:8000
-- **Admin Dashboard:** http://localhost:8000/admin
-- **Login:** http://localhost:8000/login
-- **Register:** http://localhost:8000/register
-
-### Admin Features
-
-- **User Management:** http://localhost:8000/admin/users
-- **Theme Settings:** http://localhost:8000/admin/theme
-- **Student Management:** http://localhost:8000/admin/students
-- **Teacher Management:** http://localhost:8000/admin/teachers
-- **Course Catalog:** http://localhost:8000/admin/courses
-- **Class Management:** http://localhost:8000/admin/classes
-- **Enrollment:** http://localhost:8000/admin/enrollment
-- **Academic Years:** http://localhost:8000/admin/academic-years
-
-## Default Credentials
-
-After registration, promote your user to admin:
-
-```bash
-php artisan tinker
-User::where('email', 'your@email.com')->first()->update(['role' => 'admin']);
-```
-
-## Available Commands
-
-### Development
-
-```bash
-# Start Laravel server
-php artisan serve
-
-# Start Vite dev server
-npm run dev
-
-# Run migrations
-php artisan migrate
-
-# Rollback migrations
-php artisan migrate:rollback
-
-# Seed database
-php artisan db:seed
-
-# Clear cache
-php artisan cache:clear
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
-```
-
-### Production
-
-```bash
-# Build frontend assets
-npm run build
-
-# Optimize autoloader
-composer install --optimize-autoloader --no-dev
-
-# Cache configuration
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-```
-
-## Component Library
-
-### Admin Components
-- `StatCard` - Statistics display cards
-- `AdminActionCard` - Feature navigation cards
-
-### Form Components
-- `ColorPicker` - Color input with hex preview
-- `UserForm` - Reusable user create/edit form
-
-### UI Components
-- `Card` - Content container
-- `PageHeader` - Page title sections
-- `Alert` - Success/error messages
-
-### Theme Components
-- `ThemePreview` - Live theme preview
-
-See `COMPONENTS.md` for detailed component documentation.
-
-## Documentation
-
-Comprehensive documentation is available in the `docs/` directory:
-
-### Architecture & Design
-- [Architecture Overview](docs/ARCHITECTURE.md) - System architecture and design patterns
-- [Database Schema](docs/DATABASE.md) - Complete database documentation
-- [Backend Documentation](docs/BACKEND.md) - Controllers, models, and business logic
-- [Frontend Documentation](docs/FRONTEND.md) - Vue components and pages
-- [API Documentation](docs/API.md) - API endpoints and usage
-
-### Features & Guides
-- [Component Guide](docs/COMPONENTS.md) - Vue component library
-- [User Management](docs/USER_MANAGEMENT.md) - User and role management
-- [Dark Mode](docs/DARK_MODE.md) - Dark mode implementation
-- [Security](docs/SECURITY.md) - Security features and best practices
+| Layer | Technology |
+|-------|-----------|
+| Backend | Laravel 12, PHP 8.3 |
+| Frontend | Vue 3 (Composition API, `<script setup>`) |
+| Bridge | Inertia.js (no REST API layer) |
+| Database | PostgreSQL |
+| Build | Vite + Tailwind CSS |
+| Testing | PHPUnit (302 tests, 1495 assertions) |
+| Deploy | AWS Lightsail via GitHub Actions CI/CD |
+
+---
+
+## Completed Features
+
+### Phase 0 — Foundation & Theme System
+- Laravel Breeze authentication (login, register, password reset)
+- Role-based access: `admin`, `site_admin`, default user
+- Dynamic theme system: 5 customizable color schemes via CSS variables, no rebuild required
+- Dark mode with `localStorage` persistence and no flash on load
+- Responsive layout with mobile hamburger nav
+
+### Phase 1 — Student & Course Foundation
+- **Students:** full profile with auto-ID (`STU-YYYY-###`), demographics, status tracking, photo upload, soft deletes (7-year retention), restore UI
+- **Guardians:** linked to students with `is_primary` flag
+- **Employees:** full profile with auto-ID (`EMP-YYYY-###`), department/role assignment, soft deletes, restore UI
+- **Courses:** unique course codes, department/level organization, credit tracking
+- **Departments & Employee Roles:** configurable reference data
+- Polymorphic phone numbers shared by Students and Employees
+
+### Phase 2 — Class Scheduling & Enrollment
+- Class sections with JSON schedule, room, capacity, instructor assignment
+- Schedule conflict detection (same instructor, overlapping time slots)
+- Enrollment management with status tracking (enrolled/dropped/completed/failed)
+- Capacity enforcement and academic year/term organization
+
+### Phase 3A — Grading & Assessments
+- Assessment types with weighted grading
+- Grade entry, GPA calculation, grade points
+- Per-student grade history
+
+### Phase 3B — Report Cards & Transcripts
+- PDF report card generation (DomPDF, Blade templates)
+- Transcript PDF generation
+- Term-based grade summaries
+
+### Phase 3D — Soft Delete Restore UI
+- Trashed Students and Trashed Employees index pages
+- Bulk and single restore functionality
+
+### Phase 3E — Audit Logging
+- Automatic audit trail via Eloquent observers (create/update/delete)
+- Admin audit log viewer with filtering and record type display
+- Purge with reason (site_admin only) + immutable purge log
+- Dashboard card
+
+### Phase 3F — Custom Fields
+- EAV (Entity–Attribute–Value) custom fields on Students, Employees, Courses, Classes, Enrollments
+- Admin-defined fields: text, textarea, number, date, select, checkbox
+- Inline enable/disable toggle per entity type
+- Show pages display active custom field values
+
+### Phase 4 — Attendance Management
+- Daily attendance tracking per class session
+- Status types: present, absent, tardy, excused
+- Attendance reports and summaries
+- Feature flag: `feature_attendance_enabled`
+
+### Phase 5 — Student Notes
+- Department-scoped notes on student profiles
+- Standalone notes index for Operations department
+- Audit logged; auto-employee creation on user create
+- Para-Pro role support
+
+### Phase 7 — Document Management
+- Private file storage on `local` disk (never publicly accessible)
+- Documents linked to Students, Employees, or the Institution
+- Per-entity document cards on Student and Employee Show pages (upload, download, delete)
+- Institution-wide document library (`/admin/documents`) with filter bar (search, entity type, category)
+- Upload form with entity selector — documents always linked to the correct person/org
+- Secure download via authenticated controller route (`Storage::disk('local')->download()`)
+- Accepted file types: PDF, Word, Excel, PNG/JPG/GIF/WebP — 10 MB max
+- Feature flag: `feature_documents_enabled`
+- Dashboard quick-action card
+
+### Cross-Cutting
+- **Breadcrumb navigation** on all admin child pages
+- **Feature Settings** page (site_admin only): toggle Attendance, Theme, Documents, Grade Management, Report Cards
+- **User Management**: create/edit/delete users; hire date; employee record auto-created on user create
+- **Site Admin role**: full admin access + exclusive Audit Log purge and Feature Settings management
+- **Dashboard**: stat cards + quick-action grid + fixed admin config row (Audit Log | Custom Fields | Feature Settings)
+
+---
 
 ## User Roles
 
-### Administrator
-- Full access to all features
-- User management capabilities
-- Theme customization
-- System configuration
+| Role | Access |
+|------|--------|
+| `user` | Profile page only |
+| `admin` | All admin pages, view Audit Log |
+| `site_admin` | All admin pages + Audit Log purge + Feature Settings |
 
-### User
-- Standard user access
-- Limited permissions
-- Profile management
+Promote a user via tinker:
+```bash
+php artisan tinker
+User::where('email', 'your@email.com')->first()->update(['role' => 'site_admin']);
+```
 
-## Security Features
+---
 
-- ✅ Bcrypt password hashing
-- ✅ CSRF protection
-- ✅ SQL injection protection (Eloquent ORM)
-- ✅ XSS protection (Vue escaping)
-- ✅ Rate limiting on authentication
-- ✅ Secure session management
-- ✅ Password reset functionality
+## Installation
+
+### Requirements
+- PHP 8.3+
+- PostgreSQL 14+
+- Node.js 18+
+- Composer 2+
+
+### Setup
+
+```bash
+git clone https://github.com/BrianKRich/Student-Management-System.git
+cd Student-Management-System
+
+# Install dependencies
+composer install
+npm install --legacy-peer-deps
+
+# Environment
+cp .env.example .env
+php artisan key:generate
+
+# Configure .env: DB_CONNECTION=pgsql, DB_DATABASE=sms, etc.
+
+# Database
+php artisan migrate
+php artisan db:seed
+
+# Build frontend
+npm run build
+
+# First-time setup shortcut
+composer run setup
+```
+
+### Development Server
+
+```bash
+# Start Laravel server in background
+php artisan serve --host=127.0.0.1 --port=8000
+
+# Or start all services (Laravel + queue + log viewer + Vite HMR)
+composer run dev
+```
+
+---
 
 ## Testing
 
 ```bash
-# Run all tests
+# Run all tests (PostgreSQL sms_testing database required)
 php artisan test
 
-# Run specific test
-php artisan test --filter UserTest
+# Run a specific test class
+php artisan test --filter DocumentTest
+
+# Clear config cache first (recommended)
+composer run test
 ```
 
-## Troubleshooting
+**Current status:** 302 tests, 1495 assertions, all passing.
 
-### Database Connection Issues
+---
 
-```bash
-# Check PostgreSQL is running
-sudo service postgresql status
+## Key URLs
 
-# Verify database exists
-psql -U postgres -l
+| URL | Description |
+|-----|-------------|
+| `/` | Landing page |
+| `/admin` | Dashboard |
+| `/admin/students` | Student management |
+| `/admin/employees` | Employee management |
+| `/admin/courses` | Course catalog |
+| `/admin/classes` | Class scheduling |
+| `/admin/documents` | Document library |
+| `/admin/audit-log` | Audit log viewer |
+| `/admin/feature-settings` | Feature flag toggles (site_admin) |
+| `/admin/theme` | Theme customization |
 
-# Test connection
-php artisan tinker
-DB::connection()->getPdo();
+---
+
+## Project Structure
+
+```
+app/
+├── Http/Controllers/Admin/    # Feature controllers
+├── Models/                    # Eloquent models (24)
+├── Observers/                 # Audit log observers
+└── Http/Middleware/           # HandleInertiaRequests (shared props)
+
+resources/js/
+├── Pages/Admin/               # Vue page components (72)
+├── Components/UI/             # Reusable UI components
+├── Components/Users/          # User form components
+├── Layouts/                   # AuthenticatedLayout, GuestLayout
+└── composables/               # useTheme.js, useDarkMode.js
+
+database/
+├── migrations/                # 29 tables
+├── seeders/                   # 16 seeders
+└── factories/                 # 17 factories
+
+tests/Feature/Admin/           # 28 test files
+docs/                          # Architecture, database, backend, frontend docs
 ```
 
-### Permission Errors
+---
 
-```bash
-# Fix storage permissions
-sudo chmod -R 775 storage bootstrap/cache
-sudo chown -R $USER:www-data storage bootstrap/cache
-```
+## Documentation
 
-### Asset Build Failures
+| Document | Contents |
+|----------|---------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design and patterns |
+| [DATABASE.md](docs/DATABASE.md) | Schema and relationships |
+| [BACKEND.md](docs/BACKEND.md) | Controllers, models, business logic |
+| [FRONTEND.md](docs/FRONTEND.md) | Vue components and pages |
+| [DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md) | Per-phase implementation history |
+| [SECURITY.md](docs/SECURITY.md) | Security features and practices |
+| [COMPONENTS.md](docs/COMPONENTS.md) | Vue component library reference |
 
-```bash
-# Clear npm cache
-npm cache clean --force
+---
 
-# Reinstall dependencies
-rm -rf node_modules package-lock.json
-npm install --legacy-peer-deps
-```
+## Roadmap
 
-## Development Workflow
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 0 | Foundation, Auth, Theme | ✅ Done |
+| Phase 1 | Students, Employees, Courses | ✅ Done |
+| Phase 2 | Classes, Enrollment, Terms | ✅ Done |
+| Phase 3A | Grading & Assessments | ✅ Done |
+| Phase 3B | Report Cards & Transcripts | ✅ Done |
+| Phase 3D | Soft Delete Restore UI | ✅ Done |
+| Phase 3E | Audit Logging | ✅ Done |
+| Phase 3F | Custom Fields | ✅ Done |
+| Phase 4 | Attendance Management | ✅ Done |
+| Phase 5 | Student Notes | ✅ Done |
+| Phase 7 | Document Management | ✅ Done |
+| Phase 3G | Custom Report Builder | 🔜 Next |
+| Phase 3C | CSV Import & Bulk Export | ⏸ Deferred |
+| Phase 5 | Parent/Guardian Portal | 📋 Planned |
+| Phase 6 | Academic Calendar | 📋 Planned |
+| Phase 8 | Reporting & Analytics | 📋 Planned |
 
-1. **Feature Development**
-   ```bash
-   # Create feature branch
-   git checkout -b feature/feature-name
-
-   # Make changes and commit
-   git add .
-   git commit -m "Add feature description"
-   ```
-
-2. **Database Changes**
-   ```bash
-   # Create migration
-   php artisan make:migration create_table_name
-
-   # Run migration
-   php artisan migrate
-   ```
-
-3. **Adding Components**
-   - Place in appropriate `resources/js/Components/` subdirectory
-   - Follow naming conventions (PascalCase)
-   - Document props and usage
-
-## Contributing
-
-1. Follow the existing code structure
-2. Use component-based architecture for Vue features
-3. Write descriptive commit messages
-4. Test changes before committing
-5. Update documentation as needed
-
-## Performance Tips
-
-### Production Optimization
-
-```bash
-# Optimize Composer autoloader
-composer install --optimize-autoloader --no-dev
-
-# Cache routes and config
-php artisan config:cache
-php artisan route:cache
-
-# Build optimized assets
-npm run build
-```
+---
 
 ## License
 
 © 2026 Brian K. Rich. All rights reserved.
 
-## Support
-
-For issues or questions, please contact the development team.
-
 ---
 
-**Version:** 2.0.0 (Phase 0-2 Complete)
-**Last Updated:** February 9, 2026
+**Version:** 2.0.0
+**Last Updated:** February 24, 2026
 **Status:** Active Development
-
-**Completed Phases:**
-- ✅ Phase 0: Theme System Integration
-- ✅ Phase 1: Student & Course Foundation (Backend + Frontend)
-- ✅ Phase 2: Class Scheduling & Enrollment (Backend + Frontend)
-
-**Next Phase:** Phase 3 - Grading & Assessments
