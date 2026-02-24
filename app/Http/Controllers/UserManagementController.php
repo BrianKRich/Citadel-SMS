@@ -48,6 +48,7 @@ class UserManagementController extends Controller
             'role'          => ['required', Rule::in(['admin', 'site_admin', 'user'])],
             'department_id' => ['required', 'exists:departments,id'],
             'role_id'       => ['required', 'exists:employee_roles,id'],
+            'hire_date'     => ['required', 'date'],
         ]);
 
         $user = User::create([
@@ -64,6 +65,7 @@ class UserManagementController extends Controller
             'email'         => $validated['email'],
             'department_id' => $validated['department_id'],
             'role_id'       => $validated['role_id'],
+            'hire_date'     => $validated['hire_date'],
             'status'        => 'active',
         ]);
 
@@ -76,8 +78,11 @@ class UserManagementController extends Controller
      */
     public function edit(User $user)
     {
+        $employee = Employee::where('user_id', $user->id)->first();
+
         return Inertia::render('Admin/Users/Edit', [
-            'user' => $user,
+            'user'      => $user,
+            'hire_date' => $employee?->hire_date?->toDateString(),
         ]);
     }
 
@@ -87,10 +92,11 @@ class UserManagementController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => ['required', Rule::in(['admin', 'site_admin', 'user'])],
-            'password' => ['nullable', 'confirmed', Password::min(8)],
+            'name'      => 'required|string|max:255',
+            'email'     => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'role'      => ['required', Rule::in(['admin', 'site_admin', 'user'])],
+            'password'  => ['nullable', 'confirmed', Password::min(8)],
+            'hire_date' => ['required', 'date'],
         ]);
 
         // Only update password if provided
@@ -100,7 +106,18 @@ class UserManagementController extends Controller
             unset($validated['password']);
         }
 
-        $user->update($validated);
+        $userFields = [
+            'name'  => $validated['name'],
+            'email' => $validated['email'],
+            'role'  => $validated['role'],
+        ];
+        if (!empty($validated['password'])) {
+            $userFields['password'] = $validated['password'];
+        }
+        $user->update($userFields);
+
+        Employee::where('user_id', $user->id)
+            ->update(['hire_date' => $validated['hire_date']]);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully!');

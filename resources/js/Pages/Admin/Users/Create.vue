@@ -19,6 +19,7 @@ const form = useForm({
     password_confirmation: '',
     department_id: '',
     role_id: '',
+    hire_date: '',
 });
 
 const submit = () => {

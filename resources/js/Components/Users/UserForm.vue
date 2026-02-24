@@ -154,6 +154,19 @@ function onDepartmentChange() {
             </div>
         </template>
 
+        <!-- Hire Date -->
+        <div>
+            <InputLabel for="hire_date" value="Hire Date" />
+            <TextInput
+                id="hire_date"
+                v-model="form.hire_date"
+                type="date"
+                class="mt-1 block w-full"
+                required
+            />
+            <InputError class="mt-2" :message="form.errors.hire_date" />
+        </div>
+
         <!-- Password -->
         <div>
             <InputLabel for="password" :value="isEditing ? 'New Password (leave blank to keep current)' : 'Password'" />

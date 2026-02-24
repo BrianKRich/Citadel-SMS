@@ -8,6 +8,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     user: Object,
+    hire_date: { type: String, default: '' },
 });
 
 const form = useForm({
@@ -16,6 +17,7 @@ const form = useForm({
     role: props.user.role,
     password: '',
     password_confirmation: '',
+    hire_date: props.hire_date ?? '',
 });
 
 const submit = () => {
