@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -28,7 +30,9 @@ class UserManagementController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/Users/Create');
+        return Inertia::render('Admin/Users/Create', [
+            'departments' => Department::with('roles')->orderBy('name')->get(),
+        ]);
     }
 
     /**
@@ -37,18 +41,34 @@ class UserManagementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', 'confirmed', Password::min(8)],
-            'role' => ['required', Rule::in(['admin', 'user'])],
+            'first_name'    => 'required|string|max:255',
+            'last_name'     => 'required|string|max:255',
+            'email'         => 'required|string|email|max:255|unique:users',
+            'password'      => ['required', 'confirmed', Password::min(8)],
+            'role'          => ['required', Rule::in(['admin', 'user'])],
+            'department_id' => ['required', 'exists:departments,id'],
+            'role_id'       => ['required', 'exists:employee_roles,id'],
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
+        $user = User::create([
+            'name'     => $validated['first_name'] . ' ' . $validated['last_name'],
+            'email'    => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role'     => $validated['role'],
+        ]);
 
-        User::create($validated);
+        Employee::create([
+            'user_id'       => $user->id,
+            'first_name'    => $validated['first_name'],
+            'last_name'     => $validated['last_name'],
+            'email'         => $validated['email'],
+            'department_id' => $validated['department_id'],
+            'role_id'       => $validated['role_id'],
+            'status'        => 'active',
+        ]);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully!');
+            ->with('success', 'User and employee record created successfully!');
     }
 
     /**

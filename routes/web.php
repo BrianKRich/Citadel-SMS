@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AcademicYearController;
+use App\Http\Controllers\Admin\StudentNoteController;
 use App\Http\Controllers\Admin\AssessmentCategoryController;
 use App\Http\Controllers\Admin\AssessmentController;
 use App\Http\Controllers\Admin\ClassController;
@@ -58,6 +59,16 @@ Route::middleware('auth')->group(function () {
     ]);
 
     // Phase 1: Student & Course Management
+    // Student Notes (must precede student resource route)
+    Route::get('admin/student-notes', [StudentNoteController::class, 'index'])
+        ->name('admin.student-notes.index');
+    Route::post('admin/students/{student}/notes', [StudentNoteController::class, 'store'])
+        ->name('admin.students.notes.store');
+    Route::patch('admin/students/{student}/notes/{note}', [StudentNoteController::class, 'update'])
+        ->name('admin.students.notes.update');
+    Route::delete('admin/students/{student}/notes/{note}', [StudentNoteController::class, 'destroy'])
+        ->name('admin.students.notes.destroy');
+
     // Student trash management (must precede resource route to avoid {student} binding)
     Route::get('admin/students/trashed', [StudentController::class, 'trashed'])
         ->name('admin.students.trashed');

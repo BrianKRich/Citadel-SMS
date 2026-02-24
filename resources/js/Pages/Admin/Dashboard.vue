@@ -162,6 +162,14 @@ const props = defineProps({
                             color="primary"
                         />
 
+                        <AdminActionCard
+                            title="Student Notes"
+                            description="View and manage department notes across all students"
+                            icon="📝"
+                            :href="route('admin.student-notes.index')"
+                            color="secondary"
+                        />
+
                     </div>
 
                     <!-- Admin config row — always pinned as the bottom row, always 3 columns -->

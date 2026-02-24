@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Concerns\SavesCustomFieldValues;
 use App\Http\Controllers\Controller;
 use App\Models\CustomField;
+use App\Models\Department;
+use App\Models\Employee;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -114,9 +116,23 @@ class StudentController extends Controller
     {
         $student->load(['guardians', 'user', 'enrollments.class.course', 'phoneNumbers']);
 
+        $isAdmin  = auth()->user()->isAdmin();
+        $employee = Employee::where('user_id', auth()->id())->first();
+
+        $notesQuery = $student->notes()->with(['employee', 'department'])->latest();
+        if (!$isAdmin && $employee) {
+            $notesQuery->where('department_id', $employee->department_id);
+        }
+
         return Inertia::render('Admin/Students/Show', [
-            'student' => $student,
+            'student'      => $student,
             'customFields' => CustomField::forEntityWithValues('Student', $student->id),
+            'notes'        => $notesQuery->get(),
+            'canAddNote'   => $isAdmin || $employee !== null,
+            'userDeptId'   => $employee?->department_id,
+            'isAdmin'      => $isAdmin,
+            // Admins without an employee record must pick a department when adding a note
+            'departments'  => ($isAdmin && !$employee) ? Department::orderBy('name')->get() : [],
         ]);
     }
 

@@ -124,6 +124,14 @@ class Student extends Model
     }
 
     /**
+     * Get the notes for the student
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(StudentNote::class);
+    }
+
+    /**
      * Scope to filter active students
      */
     public function scopeActive($query)

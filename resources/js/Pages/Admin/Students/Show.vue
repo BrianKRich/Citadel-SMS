@@ -7,10 +7,16 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({
     student: Object,
     customFields: { type: Array, default: () => [] },
+    notes: { type: Array, default: () => [] },
+    canAddNote: { type: Boolean, default: false },
+    userDeptId: { type: Number, default: null },
+    isAdmin: { type: Boolean, default: false },
+    departments: { type: Array, default: () => [] },
 });
 
 function getStatusBadgeClass(status) {
@@ -47,6 +53,57 @@ function formatAddress() {
 function destroy() {
     if (confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
         router.delete(route('admin.students.destroy', props.student.id));
+    }
+}
+
+// Department badge colors (cycle through a set)
+const deptColors = [
+    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+    'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300',
+    'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+    'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300',
+    'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
+];
+function deptBadgeClass(deptId) {
+    return deptColors[(deptId ?? 0) % deptColors.length];
+}
+
+function canManageNote(note) {
+    return props.isAdmin || note.department_id === props.userDeptId;
+}
+
+// Add note form
+const showAddNote = ref(false);
+const addNoteForm = useForm({ title: '', body: '', department_id: '' });
+function submitAddNote() {
+    addNoteForm.post(route('admin.students.notes.store', props.student.id), {
+        onSuccess: () => {
+            addNoteForm.reset();
+            showAddNote.value = false;
+        },
+    });
+}
+
+// Edit note
+const editingNoteId = ref(null);
+const editForms = ref({});
+function startEdit(note) {
+    editingNoteId.value = note.id;
+    editForms.value[note.id] = useForm({ title: note.title, body: note.body });
+}
+function cancelEdit() {
+    editingNoteId.value = null;
+}
+function submitEdit(note) {
+    editForms.value[note.id].patch(route('admin.students.notes.update', [props.student.id, note.id]), {
+        onSuccess: () => { editingNoteId.value = null; },
+    });
+}
+
+function deleteNote(note) {
+    if (confirm('Delete this note? This cannot be undone.')) {
+        router.delete(route('admin.students.notes.destroy', [props.student.id, note.id]));
     }
 }
 </script>
@@ -281,6 +338,159 @@ function destroy() {
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </Card>
+
+                <!-- Card 4: Department Notes -->
+                <Card>
+                    <div class="mb-4 flex items-center justify-between">
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Department Notes</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Staff notes about this student</p>
+                        </div>
+                        <button
+                            v-if="canAddNote"
+                            @click="showAddNote = !showAddNote"
+                            class="inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
+                            {{ showAddNote ? 'Cancel' : '+ Add Note' }}
+                        </button>
+                    </div>
+
+                    <!-- Add Note Form -->
+                    <div v-if="showAddNote" class="mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">New Note</h4>
+                        <div class="space-y-3">
+                            <!-- Department picker: only shown for admins with no employee record -->
+                            <div v-if="isAdmin && !userDeptId && departments.length">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
+                                <select
+                                    v-model="addNoteForm.department_id"
+                                    class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                >
+                                    <option value="" disabled>Select a department</option>
+                                    <option v-for="dept in departments" :key="dept.id" :value="dept.id">
+                                        {{ dept.name }}
+                                    </option>
+                                </select>
+                                <p v-if="addNoteForm.errors.department_id" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ addNoteForm.errors.department_id }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                                <input
+                                    v-model="addNoteForm.title"
+                                    type="text"
+                                    maxlength="255"
+                                    class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                    placeholder="Note title"
+                                />
+                                <p v-if="addNoteForm.errors.title" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ addNoteForm.errors.title }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Body</label>
+                                <textarea
+                                    v-model="addNoteForm.body"
+                                    rows="4"
+                                    class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                    placeholder="Write your note here…"
+                                ></textarea>
+                                <p v-if="addNoteForm.errors.body" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ addNoteForm.errors.body }}</p>
+                            </div>
+                            <div class="flex justify-end gap-2">
+                                <button
+                                    @click="showAddNote = false"
+                                    type="button"
+                                    class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                                >Cancel</button>
+                                <button
+                                    @click="submitAddNote"
+                                    :disabled="addNoteForm.processing"
+                                    class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50"
+                                >Save Note</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes List -->
+                    <div class="space-y-3">
+                        <div
+                            v-for="note in notes"
+                            :key="note.id"
+                            class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4"
+                        >
+                            <!-- View mode -->
+                            <template v-if="editingNoteId !== note.id">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                            <span
+                                                :class="deptBadgeClass(note.department_id)"
+                                                class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                                            >{{ note.department?.name || 'Unknown Dept' }}</span>
+                                            <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ note.title }}</span>
+                                        </div>
+                                        <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ note.body }}</p>
+                                    </div>
+                                    <div class="flex-shrink-0 text-right">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ note.employee ? `${note.employee.first_name} ${note.employee.last_name}` : 'Unknown' }}
+                                        </p>
+                                        <p class="text-xs text-gray-400 dark:text-gray-500">{{ formatDate(note.created_at) }}</p>
+                                        <div v-if="canManageNote(note)" class="flex gap-2 mt-2 justify-end">
+                                            <button
+                                                @click="startEdit(note)"
+                                                class="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                            >Edit</button>
+                                            <button
+                                                @click="deleteNote(note)"
+                                                class="text-xs text-red-600 dark:text-red-400 hover:underline"
+                                            >Delete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Edit mode -->
+                            <template v-else>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                                        <input
+                                            v-model="editForms[note.id].title"
+                                            type="text"
+                                            maxlength="255"
+                                            class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                        />
+                                        <p v-if="editForms[note.id].errors.title" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ editForms[note.id].errors.title }}</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Body</label>
+                                        <textarea
+                                            v-model="editForms[note.id].body"
+                                            rows="4"
+                                            class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                        ></textarea>
+                                        <p v-if="editForms[note.id].errors.body" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ editForms[note.id].errors.body }}</p>
+                                    </div>
+                                    <div class="flex justify-end gap-2">
+                                        <button
+                                            @click="cancelEdit"
+                                            type="button"
+                                            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                                        >Cancel</button>
+                                        <button
+                                            @click="submitEdit(note)"
+                                            :disabled="editForms[note.id].processing"
+                                            class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 disabled:opacity-50"
+                                        >Save</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <p v-if="!notes.length" class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                            No notes recorded for this student.
+                        </p>
                     </div>
                 </Card>
 

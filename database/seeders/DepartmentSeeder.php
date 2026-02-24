@@ -15,6 +15,7 @@ class DepartmentSeeder extends Seeder
             'Counseling' => ['Counselor', 'Case Manager'],
             'Cadre' => ['Drill Instructor', 'Platoon Sergeant'],
             'Health Services' => ['Nurse', 'Health Aide'],
+            'Operations' => ['Director', 'Deputy Director', 'Commandant', 'Administrative Assistant', 'Site Administrator'],
         ];
 
         foreach ($data as $departmentName => $roles) {

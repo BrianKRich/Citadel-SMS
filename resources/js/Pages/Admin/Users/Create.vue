@@ -6,12 +6,19 @@ import UserForm from '@/Components/Users/UserForm.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
+defineProps({
+    departments: { type: Array, default: () => [] },
+});
+
 const form = useForm({
-    name: '',
+    first_name: '',
+    last_name: '',
     email: '',
     role: 'user',
     password: '',
     password_confirmation: '',
+    department_id: '',
+    role_id: '',
 });
 
 const submit = () => {
@@ -45,7 +52,7 @@ const submit = () => {
                         />
                     </div>
 
-                    <UserForm :form="form" @submit="submit" />
+                    <UserForm :form="form" :departments="departments" @submit="submit" />
 
                     <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
                         <Link
