@@ -86,6 +86,7 @@ useTheme();
                                             Profile
                                         </DropdownLink>
                                         <DropdownLink
+                                            v-if="$page.props.features?.theme_enabled"
                                             :href="route('admin.theme')"
                                         >
                                             Theme Settings

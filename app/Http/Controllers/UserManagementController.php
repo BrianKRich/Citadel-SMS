@@ -18,6 +18,8 @@ class UserManagementController extends Controller
      */
     public function index()
     {
+        abort_unless(auth()->user()->isAdmin(), 403);
+
         $users = User::latest()->paginate(10);
 
         return Inertia::render('Admin/Users/Index', [
@@ -30,6 +32,8 @@ class UserManagementController extends Controller
      */
     public function create()
     {
+        abort_unless(auth()->user()->isAdmin(), 403);
+
         return Inertia::render('Admin/Users/Create', [
             'departments' => Department::with('roles')->orderBy('name')->get(),
         ]);
@@ -40,6 +44,7 @@ class UserManagementController extends Controller
      */
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->isAdmin(), 403);
         $validated = $request->validate([
             'first_name'    => 'required|string|max:255',
             'last_name'     => 'required|string|max:255',
@@ -78,6 +83,8 @@ class UserManagementController extends Controller
      */
     public function edit(User $user)
     {
+        abort_unless(auth()->user()->isAdmin(), 403);
+
         $employee = Employee::where('user_id', $user->id)->first();
 
         return Inertia::render('Admin/Users/Edit', [
@@ -91,6 +98,7 @@ class UserManagementController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        abort_unless(auth()->user()->isAdmin(), 403);
         $validated = $request->validate([
             'name'      => 'required|string|max:255',
             'email'     => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
@@ -128,6 +136,8 @@ class UserManagementController extends Controller
      */
     public function destroy(User $user)
     {
+        abort_unless(auth()->user()->isAdmin(), 403);
+
         // Prevent deleting yourself
         if ($user->id === auth()->id()) {
             return redirect()->route('admin.users.index')

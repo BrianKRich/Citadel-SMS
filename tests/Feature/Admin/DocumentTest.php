@@ -119,11 +119,22 @@ class DocumentTest extends TestCase
         $admin = $this->adminUser();
         Document::factory()->count(3)->create();
 
+        // Without filters, documents is null (deferred results)
         $this->actingAs($admin)
             ->get(route('admin.documents.index'))
             ->assertInertia(fn (Assert $page) =>
                 $page->component('Admin/Documents/Index')
+                     ->where('documents', null)
+                     ->where('searched', false)
+            );
+
+        // With a filter applied, results are returned
+        $this->actingAs($admin)
+            ->get(route('admin.documents.index', ['entity_type' => 'Institution']))
+            ->assertInertia(fn (Assert $page) =>
+                $page->component('Admin/Documents/Index')
                      ->has('documents.data', 3)
+                     ->where('searched', true)
             );
     }
 
