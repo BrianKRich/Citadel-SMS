@@ -10,6 +10,7 @@ const props = defineProps({
     filters: Object,
     users: Array,
     purgeLogs: Array,
+    canPurge: { type: Boolean, default: false },
 });
 
 const form = ref({
@@ -159,8 +160,8 @@ function olderThanLabel(val) {
                     </div>
                 </div>
 
-                <!-- Purge panel -->
-                <div class="mb-6 rounded-lg bg-white p-4 shadow dark:bg-gray-800">
+                <!-- Purge panel — site admin only -->
+                <div v-if="canPurge" class="mb-6 rounded-lg bg-white p-4 shadow dark:bg-gray-800">
                     <h3 class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Purge Logs</h3>
                     <div class="flex flex-wrap items-end gap-4">
                         <div>
@@ -187,8 +188,8 @@ function olderThanLabel(val) {
                     </div>
                 </div>
 
-                <!-- Purge history -->
-                <div v-if="purgeLogs.length > 0" class="mb-6 overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                <!-- Purge history — site admin only -->
+                <div v-if="canPurge && purgeLogs.length > 0" class="mb-6 overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
                     <div class="px-6 py-3">
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Purge History</h3>
                     </div>

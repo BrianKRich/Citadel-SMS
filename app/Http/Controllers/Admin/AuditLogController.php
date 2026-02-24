@@ -34,15 +34,18 @@ class AuditLogController extends Controller
         }
 
         return Inertia::render('Admin/AuditLog/Index', [
-            'logs'      => $query->paginate(20)->withQueryString(),
-            'filters'   => $request->only(['model_type', 'user_id', 'action', 'date_from', 'date_to']),
-            'users'     => User::orderBy('name')->get(['id', 'name']),
-            'purgeLogs' => PurgeLog::with('user')->latest()->get(),
+            'logs'        => $query->paginate(20)->withQueryString(),
+            'filters'     => $request->only(['model_type', 'user_id', 'action', 'date_from', 'date_to']),
+            'users'       => User::orderBy('name')->get(['id', 'name']),
+            'purgeLogs'   => PurgeLog::with('user')->latest()->get(),
+            'canPurge'    => auth()->user()->isSiteAdmin(),
         ]);
     }
 
     public function purge(Request $request)
     {
+        abort_unless(auth()->user()->isSiteAdmin(), 403);
+
         $validated = $request->validate([
             'older_than' => ['required', Rule::in(['30', '90', '180', '365', 'all'])],
             'reason'     => ['required', 'string', 'max:1000'],

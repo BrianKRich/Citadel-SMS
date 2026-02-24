@@ -48,11 +48,19 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is an admin
+     * Check if user has admin-level access (admin or site_admin)
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return in_array($this->role, ['admin', 'site_admin']);
+    }
+
+    /**
+     * Check if user is a site admin (elevated above admin; can access Audit Log)
+     */
+    public function isSiteAdmin(): bool
+    {
+        return $this->role === 'site_admin';
     }
 
     /**

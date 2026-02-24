@@ -25,6 +25,7 @@ defineEmits(['submit']);
 const systemRoles = [
     { value: 'user', label: 'User' },
     { value: 'admin', label: 'Administrator' },
+    { value: 'site_admin', label: 'Site Admin' },
 ];
 
 const filteredRoles = computed(() => {

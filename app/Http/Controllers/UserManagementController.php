@@ -45,7 +45,7 @@ class UserManagementController extends Controller
             'last_name'     => 'required|string|max:255',
             'email'         => 'required|string|email|max:255|unique:users',
             'password'      => ['required', 'confirmed', Password::min(8)],
-            'role'          => ['required', Rule::in(['admin', 'user'])],
+            'role'          => ['required', Rule::in(['admin', 'site_admin', 'user'])],
             'department_id' => ['required', 'exists:departments,id'],
             'role_id'       => ['required', 'exists:employee_roles,id'],
         ]);
@@ -89,7 +89,7 @@ class UserManagementController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => ['required', Rule::in(['admin', 'user'])],
+            'role' => ['required', Rule::in(['admin', 'site_admin', 'user'])],
             'password' => ['nullable', 'confirmed', Password::min(8)],
         ]);
 

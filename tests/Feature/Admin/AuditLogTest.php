@@ -21,6 +21,11 @@ class AuditLogTest extends TestCase
         return User::factory()->create(['role' => 'admin']);
     }
 
+    private function siteAdmin(): User
+    {
+        return User::factory()->create(['role' => 'site_admin']);
+    }
+
     // -----------------------------------------------------------------------
     // Auth guards
     // -----------------------------------------------------------------------
@@ -34,6 +39,46 @@ class AuditLogTest extends TestCase
     {
         $log = AuditLog::factory()->create();
         $this->get(route('admin.audit-log.show', $log))->assertRedirect(route('login'));
+    }
+
+    // -----------------------------------------------------------------------
+    // Purge access control
+    // -----------------------------------------------------------------------
+
+    public function test_purge_blocked_for_regular_admin(): void
+    {
+        $this->actingAs($this->admin())
+            ->delete(route('admin.audit-log.purge'), ['older_than' => 'all', 'reason' => 'test'])
+            ->assertForbidden();
+    }
+
+    public function test_purge_allowed_for_site_admin(): void
+    {
+        AuditLog::factory()->count(3)->create();
+
+        $this->actingAs($this->siteAdmin())
+            ->delete(route('admin.audit-log.purge'), ['older_than' => 'all', 'reason' => 'Clearing test data'])
+            ->assertRedirect(route('admin.audit-log.index'));
+
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
+    public function test_index_shows_can_purge_false_for_regular_admin(): void
+    {
+        $this->actingAs($this->admin())
+            ->get(route('admin.audit-log.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('canPurge', false)
+            );
+    }
+
+    public function test_index_shows_can_purge_true_for_site_admin(): void
+    {
+        $this->actingAs($this->siteAdmin())
+            ->get(route('admin.audit-log.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('canPurge', true)
+            );
     }
 
     // -----------------------------------------------------------------------
