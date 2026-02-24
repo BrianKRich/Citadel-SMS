@@ -170,6 +170,15 @@ const props = defineProps({
                             color="secondary"
                         />
 
+                        <AdminActionCard
+                            v-if="$page.props.features?.documents_enabled"
+                            title="Document Management"
+                            description="Upload and manage documents for students, employees, and the institution"
+                            icon="📁"
+                            :href="route('admin.documents.index')"
+                            color="secondary"
+                        />
+
                     </div>
 
                     <!-- Admin config row — always pinned as the bottom row, always 3 columns -->

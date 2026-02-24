@@ -45,6 +45,7 @@ class AdminController extends Controller
             'recent_activity_enabled' => ['sometimes', 'boolean'],
             'grades_enabled'          => ['sometimes', 'boolean'],
             'report_cards_enabled'    => ['sometimes', 'boolean'],
+            'documents_enabled'       => ['sometimes', 'boolean'],
         ]);
 
         if (array_key_exists('attendance_enabled', $validated)) {
@@ -65,6 +66,10 @@ class AdminController extends Controller
 
         if (array_key_exists('report_cards_enabled', $validated)) {
             Setting::set('feature_report_cards_enabled', $validated['report_cards_enabled'] ? '1' : '0', 'boolean');
+        }
+
+        if (array_key_exists('documents_enabled', $validated)) {
+            Setting::set('feature_documents_enabled', $validated['documents_enabled'] ? '1' : '0', 'boolean');
         }
 
         return back()->with('success', 'Feature settings updated.');

@@ -41,6 +41,7 @@ class HandleInertiaRequests extends Middleware
                 'recent_activity_enabled' => Setting::get('feature_recent_activity_enabled', '0') === '1',
                 'grades_enabled'          => Setting::get('feature_grades_enabled', '0') === '1',
                 'report_cards_enabled'    => Setting::get('feature_report_cards_enabled', '0') === '1',
+                'documents_enabled'       => Setting::get('feature_documents_enabled', '0') === '1',
             ],
         ];
     }

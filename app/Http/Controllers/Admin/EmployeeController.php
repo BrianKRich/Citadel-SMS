@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Models\ClassModel;
 use App\Models\CustomField;
 use App\Models\Department;
+use App\Models\Document;
 use App\Models\Employee;
 use App\Models\EmployeeRole;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -118,9 +120,19 @@ class EmployeeController extends Controller
     {
         $employee->load(['user', 'department', 'role', 'classes.course', 'phoneNumbers']);
 
+        $documentsEnabled = Setting::get('feature_documents_enabled', '0') === '1';
+
         return Inertia::render('Admin/Employees/Show', [
-            'employee' => $employee,
-            'customFields' => CustomField::forEntityWithValues('Employee', $employee->id),
+            'employee'         => $employee,
+            'customFields'     => CustomField::forEntityWithValues('Employee', $employee->id),
+            'documentsEnabled' => $documentsEnabled,
+            'documents'        => $documentsEnabled
+                ? Document::with('uploader')
+                    ->where('entity_type', 'Employee')
+                    ->where('entity_id', $employee->id)
+                    ->latest()
+                    ->get()
+                : [],
         ]);
     }
 

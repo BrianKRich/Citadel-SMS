@@ -26,6 +26,10 @@ const reportCardsForm = useForm({
     report_cards_enabled: page.props.features?.report_cards_enabled ?? false,
 });
 
+const documentsForm = useForm({
+    documents_enabled: page.props.features?.documents_enabled ?? false,
+});
+
 function toggleAttendance() {
     attendanceForm.attendance_enabled = !attendanceForm.attendance_enabled;
     attendanceForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
@@ -49,6 +53,11 @@ function toggleGrades() {
 function toggleReportCards() {
     reportCardsForm.report_cards_enabled = !reportCardsForm.report_cards_enabled;
     reportCardsForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
+}
+
+function toggleDocuments() {
+    documentsForm.documents_enabled = !documentsForm.documents_enabled;
+    documentsForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
 }
 
 const features = [
@@ -91,6 +100,14 @@ const features = [
         enabled: () => page.props.features?.report_cards_enabled,
         processing: () => reportCardsForm.processing,
         toggle: toggleReportCards,
+    },
+    {
+        key: 'documents',
+        label: 'Document Management',
+        description: 'Enable document uploads for students, employees, and institution-wide files. All documents are stored privately and require authentication to download.',
+        enabled: () => page.props.features?.documents_enabled,
+        processing: () => documentsForm.processing,
+        toggle: toggleDocuments,
     },
 ];
 </script>

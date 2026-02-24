@@ -6,7 +6,9 @@ use App\Http\Controllers\Concerns\SavesCustomFieldValues;
 use App\Http\Controllers\Controller;
 use App\Models\CustomField;
 use App\Models\Department;
+use App\Models\Document;
 use App\Models\Employee;
+use App\Models\Setting;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -124,15 +126,25 @@ class StudentController extends Controller
             $notesQuery->where('department_id', $employee->department_id);
         }
 
+        $documentsEnabled = Setting::get('feature_documents_enabled', '0') === '1';
+
         return Inertia::render('Admin/Students/Show', [
-            'student'      => $student,
-            'customFields' => CustomField::forEntityWithValues('Student', $student->id),
-            'notes'        => $notesQuery->get(),
-            'canAddNote'   => $isAdmin || $employee !== null,
-            'userDeptId'   => $employee?->department_id,
-            'isAdmin'      => $isAdmin,
+            'student'          => $student,
+            'customFields'     => CustomField::forEntityWithValues('Student', $student->id),
+            'notes'            => $notesQuery->get(),
+            'canAddNote'       => $isAdmin || $employee !== null,
+            'userDeptId'       => $employee?->department_id,
+            'isAdmin'          => $isAdmin,
             // Admins without an employee record must pick a department when adding a note
-            'departments'  => ($isAdmin && !$employee) ? Department::orderBy('name')->get() : [],
+            'departments'      => ($isAdmin && !$employee) ? Department::orderBy('name')->get() : [],
+            'documentsEnabled' => $documentsEnabled,
+            'documents'        => $documentsEnabled
+                ? Document::with('uploader')
+                    ->where('entity_type', 'Student')
+                    ->where('entity_id', $student->id)
+                    ->latest()
+                    ->get()
+                : [],
         ]);
     }
 

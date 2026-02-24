@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\AcademicYearController;
 use App\Http\Controllers\Admin\StudentNoteController;
 use App\Http\Controllers\Admin\AssessmentCategoryController;
@@ -220,6 +221,16 @@ Route::middleware('auth')->group(function () {
     Route::get('admin/audit-log', [AuditLogController::class, 'index'])->name('admin.audit-log.index');
     Route::delete('admin/audit-log', [AuditLogController::class, 'purge'])->name('admin.audit-log.purge');
     Route::get('admin/audit-log/{auditLog}', [AuditLogController::class, 'show'])->name('admin.audit-log.show');
+
+    // Phase 7: Documents (download must be BEFORE resource to avoid {document} swallowing it)
+    Route::get('admin/documents/{document}/download', [DocumentController::class, 'download'])
+        ->name('admin.documents.download');
+    Route::get('admin/documents', [DocumentController::class, 'index'])
+        ->name('admin.documents.index');
+    Route::post('admin/documents', [DocumentController::class, 'store'])
+        ->name('admin.documents.store');
+    Route::delete('admin/documents/{document}', [DocumentController::class, 'destroy'])
+        ->name('admin.documents.destroy');
 
     // Phase 4: Attendance (student route BEFORE classModel wildcard)
     Route::get('admin/attendance/student/{student}', [AttendanceController::class, 'studentHistory'])
