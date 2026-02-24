@@ -60,6 +60,8 @@ class DocumentController extends Controller
             'categories' => $categories,
             'filters'    => $request->only(['search', 'entity_type', 'category']),
             'searched'   => $hasFilter,
+            'employees'  => Employee::orderBy('last_name')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'employee_id']),
+            'students'   => Student::orderBy('last_name')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'student_id']),
         ]);
     }
 

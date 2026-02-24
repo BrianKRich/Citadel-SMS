@@ -12,6 +12,8 @@ const props = defineProps({
     categories: { type: Array, default: () => [] },
     filters:    { type: Object, default: () => ({}) },
     searched:   { type: Boolean, default: false },
+    employees:  { type: Array, default: () => [] },
+    students:   { type: Array, default: () => [] },
 });
 
 const entityTypes = [
@@ -40,6 +42,10 @@ const uploadForm = useForm({
     category:    '',
     description: '',
 });
+
+function onEntityTypeChange() {
+    uploadForm.entity_id = uploadForm.entity_type === 'Institution' ? 0 : '';
+}
 
 function submitUpload() {
     uploadForm.post(route('admin.documents.store'), {
@@ -147,17 +153,49 @@ const hasFilters = props.filters.search || props.filters.entity_type || props.fi
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Max 10 MB. Allowed: PDF, Word, Excel, images.</p>
                         </div>
 
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Belongs To <span class="text-red-500">*</span></label>
                                 <select
                                     v-model="uploadForm.entity_type"
+                                    @change="onEntityTypeChange"
                                     class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                                 >
                                     <option v-for="et in entityTypes" :key="et.value" :value="et.value">{{ et.label }}</option>
                                 </select>
                                 <p v-if="uploadForm.errors.entity_type" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ uploadForm.errors.entity_type }}</p>
                             </div>
+
+                            <!-- Employee selector -->
+                            <div v-if="uploadForm.entity_type === 'Employee'">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Employee <span class="text-red-500">*</span></label>
+                                <select
+                                    v-model="uploadForm.entity_id"
+                                    class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                >
+                                    <option value="" disabled>Select an employee</option>
+                                    <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+                                        {{ emp.last_name }}, {{ emp.first_name }} ({{ emp.employee_id }})
+                                    </option>
+                                </select>
+                                <p v-if="uploadForm.errors.entity_id" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ uploadForm.errors.entity_id }}</p>
+                            </div>
+
+                            <!-- Student selector -->
+                            <div v-if="uploadForm.entity_type === 'Student'">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Student <span class="text-red-500">*</span></label>
+                                <select
+                                    v-model="uploadForm.entity_id"
+                                    class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                >
+                                    <option value="" disabled>Select a student</option>
+                                    <option v-for="stu in students" :key="stu.id" :value="stu.id">
+                                        {{ stu.last_name }}, {{ stu.first_name }} ({{ stu.student_id }})
+                                    </option>
+                                </select>
+                                <p v-if="uploadForm.errors.entity_id" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ uploadForm.errors.entity_id }}</p>
+                            </div>
+
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                                 <input
@@ -246,8 +284,8 @@ const hasFilters = props.filters.search || props.filters.entity_type || props.fi
                                 <thead class="bg-gray-50 dark:bg-gray-800">
                                     <tr>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Name</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Type</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Category</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Type</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Size</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Uploaded By</th>
                                         <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Date</th>
@@ -260,6 +298,7 @@ const hasFilters = props.filters.search || props.filters.entity_type || props.fi
                                             <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ doc.original_name }}</p>
                                             <p v-if="doc.description" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ doc.description }}</p>
                                         </td>
+                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ doc.category || '—' }}</td>
                                         <td class="px-4 py-3 whitespace-nowrap">
                                             <span
                                                 :class="entityBadgeClass[doc.entity_type] ?? 'bg-gray-100 text-gray-700'"
@@ -268,7 +307,6 @@ const hasFilters = props.filters.search || props.filters.entity_type || props.fi
                                                 {{ entityLabel(doc.entity_type) }}
                                             </span>
                                         </td>
-                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ doc.category || '—' }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ doc.formatted_size }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ doc.uploader?.name || '—' }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ formatDate(doc.created_at) }}</td>
