@@ -13,7 +13,7 @@ A full-stack web application for managing student information, academic records,
 | Bridge | Inertia.js (no REST API layer) |
 | Database | PostgreSQL |
 | Build | Vite + Tailwind CSS |
-| Testing | PHPUnit (302 tests, 1495 assertions) |
+| Testing | PHPUnit (334 tests, 1728 assertions) |
 | Deploy | AWS Lightsail via GitHub Actions CI/CD |
 
 ---
@@ -81,7 +81,7 @@ A full-stack web application for managing student information, academic records,
 
 ### Phase 7 — Document Management
 - Private file storage on `local` disk (never publicly accessible)
-- Documents linked to Students, Employees, or the Institution
+- Documents linked to Students, Employees, the Institution, or Training Records
 - Per-entity document cards on Student and Employee Show pages (upload, download, delete)
 - Institution-wide document library (`/admin/documents`) with filter bar (search, entity type, category)
 - Upload form with entity selector — documents always linked to the correct person/org
@@ -90,9 +90,20 @@ A full-stack web application for managing student information, academic records,
 - Feature flag: `feature_documents_enabled`
 - Dashboard quick-action card
 
+### Phase 8 — Staff Training Management
+- Training course catalog with name, assigned trainer, description, and active/inactive status
+- Training completion records: employee, course, date completed, trainer name, notes
+- **Batch logging**: select multiple employees at once from a searchable checklist — one submission creates a record for each
+- Trainer Name auto-populates from the selected course when logging a completion
+- Document attachments on each training record (certificates, sign-in sheets) via the existing document system
+- Staff Training card on the Employee Show page: table of completions with course, date, and trainer columns
+- `Trainer` role added to all six departments (Education, Administration, Counseling, Cadre, Health Services, Operations)
+- Feature flag: `feature_staff_training_enabled`
+- Dashboard quick-action card
+
 ### Cross-Cutting
 - **Breadcrumb navigation** on all admin child pages
-- **Feature Settings** page (site_admin only): toggle Attendance, Theme, Documents, Grade Management, Report Cards
+- **Feature Settings** page (site_admin only): toggle Attendance, Theme, Documents, Grade Management, Report Cards, Staff Training
 - **User Management**: create/edit/delete users; hire date; employee record auto-created on user create
 - **Site Admin role**: full admin access + exclusive Audit Log purge and Feature Settings management
 - **Dashboard**: stat cards + quick-action grid + fixed admin config row (Audit Log | Custom Fields | Feature Settings)
@@ -185,7 +196,7 @@ php artisan test --filter DocumentTest
 composer run test
 ```
 
-**Current status:** 302 tests, 1495 assertions, all passing.
+**Current status:** 334 tests, 1728 assertions, all passing.
 
 ---
 
@@ -200,6 +211,8 @@ composer run test
 | `/admin/courses` | Course catalog |
 | `/admin/classes` | Class scheduling |
 | `/admin/documents` | Document library |
+| `/admin/training-courses` | Training course catalog |
+| `/admin/training-records` | Staff training completion records |
 | `/admin/audit-log` | Audit log viewer |
 | `/admin/feature-settings` | Feature flag toggles (site_admin) |
 | `/admin/theme` | Theme customization |
@@ -211,23 +224,23 @@ composer run test
 ```
 app/
 ├── Http/Controllers/Admin/    # Feature controllers
-├── Models/                    # Eloquent models (24)
+├── Models/                    # Eloquent models (26)
 ├── Observers/                 # Audit log observers
 └── Http/Middleware/           # HandleInertiaRequests (shared props)
 
 resources/js/
-├── Pages/Admin/               # Vue page components (72)
+├── Pages/Admin/               # Vue page components (79)
 ├── Components/UI/             # Reusable UI components
 ├── Components/Users/          # User form components
 ├── Layouts/                   # AuthenticatedLayout, GuestLayout
 └── composables/               # useTheme.js, useDarkMode.js
 
 database/
-├── migrations/                # 29 tables
+├── migrations/                # 33 tables
 ├── seeders/                   # 16 seeders
-└── factories/                 # 17 factories
+└── factories/                 # 19 factories
 
-tests/Feature/Admin/           # 28 test files
+tests/Feature/Admin/           # 30 test files
 docs/                          # Architecture, database, backend, frontend docs
 ```
 
@@ -262,11 +275,12 @@ docs/                          # Architecture, database, backend, frontend docs
 | Phase 4 | Attendance Management | ✅ Done |
 | Phase 5 | Student Notes | ✅ Done |
 | Phase 7 | Document Management | ✅ Done |
+| Phase 8 | Staff Training Management | ✅ Done |
 | Phase 3G | Custom Report Builder | 🔜 Next |
 | Phase 3C | CSV Import & Bulk Export | ⏸ Deferred |
 | Phase 5 | Parent/Guardian Portal | 📋 Planned |
 | Phase 6 | Academic Calendar | 📋 Planned |
-| Phase 8 | Reporting & Analytics | 📋 Planned |
+| Phase 9 | Reporting & Analytics | 📋 Planned |
 
 ---
 

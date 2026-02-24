@@ -30,6 +30,10 @@ const documentsForm = useForm({
     documents_enabled: page.props.features?.documents_enabled ?? false,
 });
 
+const staffTrainingForm = useForm({
+    staff_training_enabled: page.props.features?.staff_training_enabled ?? false,
+});
+
 function toggleAttendance() {
     attendanceForm.attendance_enabled = !attendanceForm.attendance_enabled;
     attendanceForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
@@ -58,6 +62,11 @@ function toggleReportCards() {
 function toggleDocuments() {
     documentsForm.documents_enabled = !documentsForm.documents_enabled;
     documentsForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
+}
+
+function toggleStaffTraining() {
+    staffTrainingForm.staff_training_enabled = !staffTrainingForm.staff_training_enabled;
+    staffTrainingForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
 }
 
 const features = [
@@ -108,6 +117,14 @@ const features = [
         enabled: () => page.props.features?.documents_enabled,
         processing: () => documentsForm.processing,
         toggle: toggleDocuments,
+    },
+    {
+        key: 'staff_training',
+        label: 'Staff Training',
+        description: 'Track annual staff training courses and completions. Log who completed which courses, when, and who trained them. Supports certificate uploads.',
+        enabled: () => page.props.features?.staff_training_enabled,
+        processing: () => staffTrainingForm.processing,
+        toggle: toggleStaffTraining,
     },
 ];
 </script>

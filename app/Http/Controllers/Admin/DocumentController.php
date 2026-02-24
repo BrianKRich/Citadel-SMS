@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\Employee;
 use App\Models\Setting;
 use App\Models\Student;
+use App\Models\TrainingRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -60,8 +61,9 @@ class DocumentController extends Controller
             'categories' => $categories,
             'filters'    => $request->only(['search', 'entity_type', 'category']),
             'searched'   => $hasFilter,
-            'employees'  => Employee::orderBy('last_name')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'employee_id']),
-            'students'   => Student::orderBy('last_name')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'student_id']),
+            'employees'       => Employee::orderBy('last_name')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'employee_id']),
+            'students'        => Student::orderBy('last_name')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'student_id']),
+            'trainingRecords' => TrainingRecord::with(['employee', 'trainingCourse'])->orderBy('date_completed', 'desc')->get(['id', 'employee_id', 'training_course_id', 'date_completed']),
         ]);
     }
 
@@ -71,7 +73,7 @@ class DocumentController extends Controller
         abort_unless(auth()->user()->isAdmin(), 403);
 
         $validated = $request->validate([
-            'entity_type' => ['required', 'string', 'in:Student,Employee,Institution'],
+            'entity_type' => ['required', 'string', 'in:Student,Employee,Institution,TrainingRecord'],
             'entity_id'   => ['required', 'integer', 'min:0'],
             'file'        => ['required', 'file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg,gif,webp'],
             'category'    => ['nullable', 'string', 'max:100'],
@@ -83,6 +85,8 @@ class DocumentController extends Controller
             abort_unless(Student::where('id', $validated['entity_id'])->exists(), 422, 'Student not found.');
         } elseif ($validated['entity_type'] === 'Employee') {
             abort_unless(Employee::where('id', $validated['entity_id'])->exists(), 422, 'Employee not found.');
+        } elseif ($validated['entity_type'] === 'TrainingRecord') {
+            abort_unless(TrainingRecord::where('id', $validated['entity_id'])->exists(), 422, 'Training record not found.');
         }
         // Institution: entity_id must be 0
         if ($validated['entity_type'] === 'Institution') {

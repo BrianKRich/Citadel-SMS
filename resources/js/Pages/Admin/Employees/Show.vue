@@ -14,6 +14,8 @@ const props = defineProps({
     customFields: { type: Array, default: () => [] },
     documentsEnabled: { type: Boolean, default: false },
     documents: { type: Array, default: () => [] },
+    trainingEnabled: { type: Boolean, default: false },
+    trainingRecords: { type: Array, default: () => [] },
 });
 
 function getStatusBadgeClass(status) {
@@ -389,6 +391,57 @@ function deleteDocument(doc) {
                         <p v-if="!documents.length" class="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                             No documents uploaded for this employee.
                         </p>
+                    </div>
+                </Card>
+
+                <!-- Staff Training -->
+                <Card v-if="trainingEnabled" class="mb-6">
+                    <div class="mb-4 flex items-center justify-between gap-4 flex-wrap">
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Staff Training</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Recent training completions for this employee</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <Link
+                                :href="route('admin.training-records.create', { employee_id: employee.id })"
+                                class="inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >+ Log Training</Link>
+                            <Link
+                                :href="route('admin.training-records.index', { employee_id: employee.id })"
+                                class="inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >View All</Link>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Course Name</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Date Completed</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Trainer</th>
+                                    <th class="px-4 py-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+                                <tr v-for="record in trainingRecords" :key="record.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{{ record.training_course?.name }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ record.date_completed?.substring(0, 10) }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ record.trainer_name }}</td>
+                                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                                        <Link
+                                            :href="route('admin.training-records.show', record.id)"
+                                            class="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                                        >View</Link>
+                                    </td>
+                                </tr>
+                                <tr v-if="!trainingRecords.length">
+                                    <td colspan="4" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                                        No training completions recorded for this employee.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </Card>
 

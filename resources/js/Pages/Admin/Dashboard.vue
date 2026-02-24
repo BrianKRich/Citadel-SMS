@@ -179,6 +179,15 @@ const props = defineProps({
                             color="secondary"
                         />
 
+                        <AdminActionCard
+                            v-if="$page.props.features?.staff_training_enabled"
+                            title="Staff Training"
+                            description="Manage staff training courses and track completion records"
+                            icon="🎓"
+                            :href="route('admin.training-records.index')"
+                            color="primary"
+                        />
+
                     </div>
 
                     <!-- Admin config row — always pinned as the bottom row, always 3 columns -->

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\DocumentController;
+use App\Http\Controllers\Admin\TrainingCourseController;
+use App\Http\Controllers\Admin\TrainingRecordController;
 use App\Http\Controllers\Admin\AcademicYearController;
 use App\Http\Controllers\Admin\StudentNoteController;
 use App\Http\Controllers\Admin\AssessmentCategoryController;
@@ -231,6 +233,26 @@ Route::middleware('auth')->group(function () {
         ->name('admin.documents.store');
     Route::delete('admin/documents/{document}', [DocumentController::class, 'destroy'])
         ->name('admin.documents.destroy');
+
+    // Staff Training
+    Route::resource('admin/training-courses', TrainingCourseController::class)->names([
+        'index'   => 'admin.training-courses.index',
+        'create'  => 'admin.training-courses.create',
+        'store'   => 'admin.training-courses.store',
+        'edit'    => 'admin.training-courses.edit',
+        'update'  => 'admin.training-courses.update',
+        'destroy' => 'admin.training-courses.destroy',
+    ]);
+
+    Route::resource('admin/training-records', TrainingRecordController::class)->names([
+        'index'   => 'admin.training-records.index',
+        'create'  => 'admin.training-records.create',
+        'store'   => 'admin.training-records.store',
+        'show'    => 'admin.training-records.show',
+        'edit'    => 'admin.training-records.edit',
+        'update'  => 'admin.training-records.update',
+        'destroy' => 'admin.training-records.destroy',
+    ]);
 
     // Phase 4: Attendance (student route BEFORE classModel wildcard)
     Route::get('admin/attendance/student/{student}', [AttendanceController::class, 'studentHistory'])

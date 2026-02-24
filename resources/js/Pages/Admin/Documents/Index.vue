@@ -8,18 +8,20 @@ import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
-    documents:  { type: Object, default: null },
-    categories: { type: Array, default: () => [] },
-    filters:    { type: Object, default: () => ({}) },
-    searched:   { type: Boolean, default: false },
-    employees:  { type: Array, default: () => [] },
-    students:   { type: Array, default: () => [] },
+    documents:       { type: Object, default: null },
+    categories:      { type: Array, default: () => [] },
+    filters:         { type: Object, default: () => ({}) },
+    searched:        { type: Boolean, default: false },
+    employees:       { type: Array, default: () => [] },
+    students:        { type: Array, default: () => [] },
+    trainingRecords: { type: Array, default: () => [] },
 });
 
 const entityTypes = [
-    { value: 'Student',     label: 'Student' },
-    { value: 'Employee',    label: 'Employee' },
-    { value: 'Institution', label: 'Organization' },
+    { value: 'Student',        label: 'Student' },
+    { value: 'Employee',       label: 'Employee' },
+    { value: 'Institution',    label: 'Organization' },
+    { value: 'TrainingRecord', label: 'Training Record' },
 ];
 
 function entityLabel(type) {
@@ -27,9 +29,10 @@ function entityLabel(type) {
 }
 
 const entityBadgeClass = {
-    Student:     'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    Employee:    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-    Institution: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+    Student:        'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+    Employee:       'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+    Institution:    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+    TrainingRecord: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300',
 };
 
 const showUploadForm = ref(false);
@@ -191,6 +194,21 @@ const hasFilters = props.filters.search || props.filters.entity_type || props.fi
                                     <option value="" disabled>Select a student</option>
                                     <option v-for="stu in students" :key="stu.id" :value="stu.id">
                                         {{ stu.last_name }}, {{ stu.first_name }} ({{ stu.student_id }})
+                                    </option>
+                                </select>
+                                <p v-if="uploadForm.errors.entity_id" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ uploadForm.errors.entity_id }}</p>
+                            </div>
+
+                            <!-- Training Record selector -->
+                            <div v-if="uploadForm.entity_type === 'TrainingRecord'">
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Training Record <span class="text-red-500">*</span></label>
+                                <select
+                                    v-model="uploadForm.entity_id"
+                                    class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                >
+                                    <option value="" disabled>Select a training record</option>
+                                    <option v-for="tr in trainingRecords" :key="tr.id" :value="tr.id">
+                                        {{ tr.employee?.last_name }}, {{ tr.employee?.first_name }} — {{ tr.training_course?.name }} ({{ tr.date_completed?.substring(0,10) }})
                                     </option>
                                 </select>
                                 <p v-if="uploadForm.errors.entity_id" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ uploadForm.errors.entity_id }}</p>

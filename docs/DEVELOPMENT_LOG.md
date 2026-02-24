@@ -1653,32 +1653,109 @@ When the Theme Settings feature flag was disabled, the "Theme Settings" link in 
 
 ---
 
+## Phase 8: Staff Training Management
+
+**Date:** February 24, 2026
+**Commit:** `57ebdb1` → current
+
+### What Was Built
+
+A complete staff training tracking system allowing administrators to manage a catalog of training courses and log employee completions, with support for batch logging, document attachments, and per-employee training history.
+
+**Database — 4 new migrations:**
+- `training_courses` — `id, name, trainer (string), description (text nullable), is_active (boolean default true), timestamps`
+- `training_records` — `id, employee_id (FK cascadeOnDelete), training_course_id (FK restrictOnDelete), date_completed (date), trainer_name (string), notes (text nullable), timestamps`
+- `add_trainer_role_to_all_departments` — idempotent migration adding `Trainer` role to all 6 departments (Education, Administration, Counseling, Cadre, Health Services, Operations)
+- `add_trainer_to_training_courses` — added `trainer` string column to `training_courses`
+
+**Models:**
+- `TrainingCourse` — fillable: name, trainer, description, is_active; `scopeActive()`, `scopeSearch()`; hasMany TrainingRecord
+- `TrainingRecord` — fillable: employee_id, training_course_id, date_completed, trainer_name, notes; `scopeSearch()` (joins employee + course names); belongsTo Employee + TrainingCourse
+
+**Controllers:**
+- `TrainingCourseController` — full CRUD; `destroy()` blocks deletion if training records exist; all methods guarded by `requireStaffTrainingEnabled()`
+- `TrainingRecordController` — full CRUD + show; `store()` accepts `employee_ids[]` array and creates one record per employee; single → redirect to show page, batch → redirect to index with count message; `show()` passes document data when documents enabled
+
+**Batch Logging:**
+The "Log Training Completion" create form accepts multiple employees simultaneously via a searchable checklist:
+- `employeeSearch` ref filters the visible list client-side
+- `form.employee_ids` array accumulates selections via toggles
+- "Select all matching" and "Clear" convenience buttons
+- Submit button shows "Log N Completions" for batch operations
+- One `TrainingRecord` row is created per selected employee in the controller loop
+
+**Trainer Name Auto-Population:**
+When a training course is selected, a Vue `watch()` on `form.training_course_id` auto-fills `form.trainer_name` from the course's trainer field. Works on both Create and Edit forms. The `trainer` field is included in the courses query so it's available client-side.
+
+**Document Integration:**
+- `DocumentController` extended to accept `entity_type='TrainingRecord'`
+- Training record show page includes upload + download + delete for attached documents (certificates, sign-in sheets)
+- Documents/Index filter includes "Training Record" entity type with amber badge
+- `trainingRecords` prop added to Documents/Index for the entity selector dropdown
+
+**Feature Flag:** `feature_staff_training_enabled` — all 10 controller methods return 403 when disabled. Toggle exposed in Feature Settings (site_admin only).
+
+**Employee Show Page:**
+- `trainingEnabled` and `trainingRecords` (limit 10, ordered by date_completed desc) props added to EmployeeController show()
+- Staff Training card added to Employee Show page: table with Course Name, Date Completed, and Trainer columns
+- "Log Training" button pre-selects the employee via `?employee_id=` query param
+- "View All" link filters the training records index to this employee
+
+**Dashboard:**
+- Staff Training quick-action card added to main grid (feature-flagged)
+- Links: "View Records" → index, "Courses" → course catalog
+
+**Vue Pages (7 new):**
+- `Admin/Training/Courses/Index.vue` — table: name, trainer, description, status badge; search + active filter; pagination
+- `Admin/Training/Courses/Create.vue` — form: name (required), trainer (required), description, is_active
+- `Admin/Training/Courses/Edit.vue` — same form pre-populated
+- `Admin/Training/Records/Index.vue` — table: employee, course, date, trainer; filters: search, employee, course, date range
+- `Admin/Training/Records/Create.vue` — searchable multi-select employee checklist + course + date + trainer (auto-populated) + notes
+- `Admin/Training/Records/Edit.vue` — single employee select + same fields
+- `Admin/Training/Records/Show.vue` — record detail + documents section
+
+**Tests (32 new):**
+- `TrainingCourseTest.php` — 14 tests: feature flag 403, toggle, index, create form, store validation (name + trainer required), edit form, update, delete protection when records exist, non-admin block
+- `TrainingRecordTest.php` — 18 tests: feature flag, index filters, batch store (4 employees → 4 DB rows), single store, required fields, show with documents, edit, update, delete, document upload on training record, employee show training card
+
+**DepartmentSeeder updated:**
+Added `'Trainer'` to all 6 department role arrays so fresh installs include the role without requiring the migration.
+
+### Key Decisions
+
+- **Separate from student courses:** `TrainingCourse` is a wholly distinct model from `Course` (the student course catalog). No shared tables or relationships.
+- **`restrictOnDelete` on course FK:** Prevents accidental deletion of a training course that has completion records. Admin must delete records first; controller enforces this with a user-friendly error message.
+- **`cascadeOnDelete` on employee FK:** If an employee is deleted, their training records go with them (consistent with other employee-linked data).
+- **Batch array pattern:** `store()` accepts `employee_ids[]` instead of `employee_id` to enable batch operations. Edit always operates on a single record (no batch edit).
+
+---
+
 ## Project Statistics (as of February 24, 2026)
 
 | Metric | Value |
 |--------|-------|
 | Development period | Feb 8–24, 2026 |
-| Phases completed | Phase 0–2 + 3A + 3B + 3D + 3E + 3F + 4 + 5 + 7 |
-| Database tables | 29 |
-| Eloquent models | 24 |
-| Admin controllers | 19 |
-| Vue pages | 72 |
+| Phases completed | Phase 0–2 + 3A + 3B + 3D + 3E + 3F + 4 + 5 + 7 + 8 |
+| Database tables | 33 |
+| Eloquent models | 26 |
+| Admin controllers | 21 |
+| Vue pages | 79 |
 | Vue components | 25 |
 | Blade PDF templates | 2 |
 | Services | 3 (GradeCalculationService, ReportCardService, TranscriptService) |
 | Seeders | 16 |
-| Factories | 17 |
-| Test files | 28 |
-| Tests passing | 302 (1495 assertions) |
+| Factories | 19 |
+| Test files | 30 |
+| Tests passing | 334 (1728 assertions) |
 | Contributors | 1 |
 
 ---
 
 ## Current Status
 
-**Phases 0–2, 3A, 3B, 3D, 3E, 3F, 4, 5, and 7 fully implemented.** 302 tests passing. No known broken pages or known issues.
+**Phases 0–2, 3A, 3B, 3D, 3E, 3F, 4, 5, 7, and 8 fully implemented.** 334 tests passing. No known broken pages or known issues.
 
-**Completed phases:** 0, 1, 2, 3A, 3B, 3D, 3E, 3F, 4, 5, 7
+**Completed phases:** 0, 1, 2, 3A, 3B, 3D, 3E, 3F, 4, 5, 7, 8
 
 ---
 
@@ -1729,7 +1806,7 @@ Structured calendar for the school year:
 - Integration with attendance (auto-mark excused on school holidays)
 - iCal export for personal calendar sync
 
-### Phase 8: Reporting & Analytics
+### Phase 9: Reporting & Analytics
 **GitHub Issue:** #1
 
 Dashboard-level insights beyond the current StatCards:

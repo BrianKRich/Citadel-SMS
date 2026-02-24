@@ -11,6 +11,7 @@ use App\Models\Document;
 use App\Models\Employee;
 use App\Models\EmployeeRole;
 use App\Models\Setting;
+use App\Models\TrainingRecord;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -120,7 +121,8 @@ class EmployeeController extends Controller
     {
         $employee->load(['user', 'department', 'role', 'classes.course', 'phoneNumbers']);
 
-        $documentsEnabled = Setting::get('feature_documents_enabled', '0') === '1';
+        $documentsEnabled      = Setting::get('feature_documents_enabled', '0') === '1';
+        $trainingEnabled       = Setting::get('feature_staff_training_enabled', '0') === '1';
 
         return Inertia::render('Admin/Employees/Show', [
             'employee'         => $employee,
@@ -131,6 +133,14 @@ class EmployeeController extends Controller
                     ->where('entity_type', 'Employee')
                     ->where('entity_id', $employee->id)
                     ->latest()
+                    ->get()
+                : [],
+            'trainingEnabled'  => $trainingEnabled,
+            'trainingRecords'  => $trainingEnabled
+                ? TrainingRecord::with('trainingCourse')
+                    ->where('employee_id', $employee->id)
+                    ->orderBy('date_completed', 'desc')
+                    ->limit(10)
                     ->get()
                 : [],
         ]);
