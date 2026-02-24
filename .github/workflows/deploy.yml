@@ -39,7 +39,7 @@ jobs:
 
             echo "--- Building frontend assets ---"
             npm ci --prefer-offline --legacy-peer-deps
-            npm run build
+            NODE_OPTIONS=--max-old-space-size=512 npm run build
 
             echo "--- Running database migrations ---"
             php artisan migrate --force
