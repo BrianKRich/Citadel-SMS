@@ -1524,32 +1524,161 @@ Lynn Walls had a User record but no Employee record — her employee creation ha
 
 ---
 
+## Phase 7: Document Management
+
+**Date:** February 24, 2026
+**Commits:** `60ea0ff`, `57ebdb1`
+**GitHub Issue:** #2 (closed)
+
+### What Was Built
+
+Private document storage for students, employees, and the institution. All files stored on the `local` disk (never publicly accessible). Downloads are gated through an authenticated controller route. The entire feature is behind the `feature_documents_enabled` flag.
+
+**Database (1 table):**
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | bigserial PK | |
+| `entity_type` | varchar(50) | `'Student'`, `'Employee'`, or `'Institution'` |
+| `entity_id` | bigint default 0 | 0 for Institution docs |
+| `uploaded_by` | bigint FK → users | `RESTRICT` on delete |
+| `uuid` | char(36) UNIQUE | auto-generated in model `boot()` |
+| `original_name` | varchar(255) | shown in UI + `Content-Disposition` header |
+| `stored_path` | varchar(500) | `documents/{EntityType}/{entity_id}/{uuid}_{filename}` |
+| `mime_type` | varchar(100) | stored for accurate `Content-Type` on download |
+| `size_bytes` | bigint unsigned | displayed as "1.2 MB" via accessor |
+| `category` | varchar(100) nullable | IEP, Contract, Policy, etc. |
+| `description` | text nullable | |
+| timestamps | | |
+
+Indexes: `(entity_type, entity_id)`, `uploaded_by`
+
+**Model (`app/Models/Document.php`):**
+- UUID auto-generated in `static::creating()` boot hook
+- `uploader()` — `belongsTo(User::class, 'uploaded_by')`
+- `getFormattedSizeAttribute()` — returns `"1.2 MB"` / `"34 KB"` / `"512 B"`; `$appends = ['formatted_size']`
+
+**Factory (`database/factories/DocumentFactory.php`):**
+- Default state: Institution doc (`entity_type='Institution'`, `entity_id=0`)
+- `forStudent(int $studentId)` state
+- `forEmployee(int $employeeId)` state
+
+**Controller (`app/Http/Controllers/Admin/DocumentController.php`):**
+- All methods guarded by `requireDocumentsEnabled()` — returns 403 when flag is off
+- `index()` — deferred results: only queries when at least one filter is active (`searched` boolean prop); filter bar offers text search (name/category/description), entity type dropdown, and category dropdown; passes `employees` and `students` lists for the upload form's entity selector
+- `store()` — validates entity_type, entity_id, file (PDF/Word/Excel/images, max 10 MB); verifies entity exists; writes to `Storage::disk('local')`; creates `Document` record
+- `download(Document $document)` — no role restriction (any authenticated user); 404 if file missing; streams via `Storage::disk('local')->download()` with original filename and MIME type
+- `destroy(Document $document)` — admin only; deletes file from disk then DB record
+
+**Routes (`routes/web.php`):**
+```
+GET  admin/documents/{document}/download  → admin.documents.download
+GET  admin/documents                       → admin.documents.index
+POST admin/documents                       → admin.documents.store
+DELETE admin/documents/{document}          → admin.documents.destroy
+```
+All four routes defined before any resource route to prevent wildcard conflicts.
+
+**HandleInertiaRequests:** `documents_enabled` boolean added to `features` array; shared to all pages as `$page.props.features.documents_enabled`.
+
+**Feature Settings:** `documents_enabled` toggle added to FeatureSettings.vue and `AdminController::updateFeatureSettings()`.
+
+**StudentController / EmployeeController `show()`:** Now pass `documentsEnabled` (boolean) and `documents` (feature-gated query results) props to their respective Show pages.
+
+**Pages:**
+
+| Page | Key Details |
+|------|-------------|
+| `Admin/Documents/Index.vue` | Institution library showing ALL entity types; filter bar (search + entity type + category); deferred table (show message before search, "no results" after); upload form with entity type selector + dynamic employee/student dropdown; hidden file input with styled "Select File" label |
+| `Admin/Students/Show.vue` | Documents card after Department Notes; upload form (admin only); list with filename, category, size, date, download link, delete button (admin only) |
+| `Admin/Employees/Show.vue` | Same Documents card pattern as Students/Show |
+| `Admin/Dashboard.vue` | "Document Management" quick-action card in main grid, gated on `features.documents_enabled` |
+
+**Tests (`tests/Feature/Admin/DocumentTest.php`):** 20 tests covering feature flag blocking (all 4 routes), flag shared props (true/false), toggle enable/disable, index render, auth required, upload (institution/student/employee), validation (oversized file, invalid entity_type, missing file), download stream, download 404, destroy, destroy requires admin (403), student/employee show props when enabled/disabled.
+
+### Key Decisions
+
+1. **`local` disk only** — Files are never web-accessible. The only access path is `GET admin/documents/{document}/download` through the authenticated controller, which calls `Storage::disk('local')->download()`.
+2. **Soft polymorphic** — `entity_type` + `entity_id` string/int pair instead of Eloquent polymorphic relations. Supports `entity_id=0` for institution-level documents with no foreign key constraint issues.
+3. **UUID in stored path** — Prevents filename collisions and enumeration of document paths even if the path format became known.
+4. **Plain `<a href>` for downloads** — Inertia `<Link>` intercepts navigation and expects an Inertia JSON response. File stream responses are not valid Inertia responses, causing a browser error. A plain anchor tag with `target="_blank"` bypasses Inertia.
+5. **Deferred index results** — The documents index performs no query until at least one filter is active. This prevents loading every document on page load and encourages intentional searching.
+6. **No update()** — Documents are immutable. The workflow is delete-and-reupload, not edit-in-place.
+7. **Entity selector on index upload form** — Documents uploaded from the global index must be explicitly linked to a student or employee (or the institution). A dynamic dropdown populated from the entity lists prevents documents from being incorrectly assigned to `entity_id=0`.
+
+### Files Changed
+
+**New (6):**
+- `database/migrations/2026_02_24_000001_create_documents_table.php`
+- `app/Models/Document.php`
+- `database/factories/DocumentFactory.php`
+- `app/Http/Controllers/Admin/DocumentController.php`
+- `resources/js/Pages/Admin/Documents/Index.vue`
+- `tests/Feature/Admin/DocumentTest.php`
+
+**Modified (9):**
+- `routes/web.php`
+- `app/Http/Middleware/HandleInertiaRequests.php`
+- `app/Http/Controllers/AdminController.php`
+- `app/Http/Controllers/Admin/StudentController.php`
+- `app/Http/Controllers/Admin/EmployeeController.php`
+- `resources/js/Pages/Admin/FeatureSettings.vue`
+- `resources/js/Pages/Admin/Students/Show.vue`
+- `resources/js/Pages/Admin/Employees/Show.vue`
+- `resources/js/Pages/Admin/Dashboard.vue`
+
+---
+
+## Bug Fix: Theme Settings Nav Link — Feature Gate
+
+**Date:** February 24, 2026
+**Commit:** `57ebdb1`
+
+### Problem
+
+When the Theme Settings feature flag was disabled, the "Theme Settings" link in the user profile dropdown (top nav) still appeared. Clicking it returned a 403 Forbidden because the route enforces the feature flag. The link should not be visible when the feature is off.
+
+### Fix
+
+`resources/js/Layouts/AuthenticatedLayout.vue` — added `v-if="$page.props.features?.theme_enabled"` to the Theme Settings `<DropdownLink>`:
+
+```vue
+<DropdownLink
+    v-if="$page.props.features?.theme_enabled"
+    :href="route('admin.theme')"
+>
+    Theme Settings
+</DropdownLink>
+```
+
+---
+
 ## Project Statistics (as of February 24, 2026)
 
 | Metric | Value |
 |--------|-------|
 | Development period | Feb 8–24, 2026 |
-| Phases completed | Phase 0–2 + 3A + 3B + 3D + 3E + 3F + 4 + 5 |
-| Database tables | 28 |
-| Eloquent models | 23 |
-| Admin controllers | 18 |
-| Vue pages | 71 |
+| Phases completed | Phase 0–2 + 3A + 3B + 3D + 3E + 3F + 4 + 5 + 7 |
+| Database tables | 29 |
+| Eloquent models | 24 |
+| Admin controllers | 19 |
+| Vue pages | 72 |
 | Vue components | 25 |
 | Blade PDF templates | 2 |
 | Services | 3 (GradeCalculationService, ReportCardService, TranscriptService) |
 | Seeders | 16 |
-| Factories | 16 |
-| Test files | 27 |
-| Tests passing | 282 (1395 assertions) |
+| Factories | 17 |
+| Test files | 28 |
+| Tests passing | 302 (1495 assertions) |
 | Contributors | 1 |
 
 ---
 
 ## Current Status
 
-**Phases 0–2, 3A, 3B, 3D, 3E, 3F, 4, and 5 fully implemented.** 282 tests passing. No known broken pages or known issues.
+**Phases 0–2, 3A, 3B, 3D, 3E, 3F, 4, 5, and 7 fully implemented.** 302 tests passing. No known broken pages or known issues.
 
-**Completed phases:** 0, 1, 2, 3A, 3B, 3D, 3E, 3F, 4, 5
+**Completed phases:** 0, 1, 2, 3A, 3B, 3D, 3E, 3F, 4, 5, 7
 
 ---
 
@@ -1557,22 +1686,7 @@ Lynn Walls had a User record but no Employee record — her employee creation ha
 
 The following phases are planned in priority order. GitHub issue numbers are noted where issues exist.
 
-### Phase 7: Document Management *(Plan Ready — Next Up)*
-**GitHub Issue:** #2
-
-Upload, categorize, and retrieve documents for students, employees, and the institution:
-- Per-entity document cards on Student and Employee Show pages (upload, download, delete)
-- Institution-wide document library (policies, handbooks, forms) in the global Documents index
-- Private storage (`local` disk) — all downloads gated via authenticated controller route
-- File types: PDF, Word, Excel, images — 10 MB max
-- Categories per entity type (IEP, medical form, certificate, contract, policy, etc.)
-- Feature flag (`feature_documents_enabled`) with toggle on Feature Settings page
-- Dashboard card (conditional on flag)
-- ~18 tests
-
-Full implementation plan saved at `/home/keith/.claude/plans/recursive-gathering-prism.md`.
-
-### Phase 3G: Custom Reports *(Plan Ready)*
+### Phase 3G: Custom Reports *(Next Up)*
 **GitHub Issue:** #15
 
 Admins can define, save, and run reusable reports across all data categories without developer help:
@@ -1614,16 +1728,6 @@ Structured calendar for the school year:
 - Frontend calendar view (monthly grid)
 - Integration with attendance (auto-mark excused on school holidays)
 - iCal export for personal calendar sync
-
-### Phase 7: Document Management
-**GitHub Issue:** #2
-
-Store and associate documents with students and employees:
-- `documents` table: model_type, model_id, category, filename, storage_path, uploaded_by, uploaded_at
-- Categories: enrollment agreement, IEP, medical form, disciplinary record, certificate, etc.
-- Admin upload/download/delete UI per student and per employee
-- Access control: admin only, or guardian-accessible for specific categories
-- Storage: `Storage::disk('public')` or S3 for production
 
 ### Phase 8: Reporting & Analytics
 **GitHub Issue:** #1
