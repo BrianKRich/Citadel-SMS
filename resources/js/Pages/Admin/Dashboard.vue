@@ -192,6 +192,7 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
+                            v-if="$page.props.auth.user.role === 'site_admin'"
                             title="Feature Settings"
                             description="Enable or disable application features"
                             icon="⚙️"

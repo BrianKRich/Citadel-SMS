@@ -17,6 +17,11 @@ class ThemeTest extends TestCase
         return User::factory()->create(['role' => 'admin']);
     }
 
+    private function siteAdmin(): User
+    {
+        return User::factory()->create(['role' => 'site_admin']);
+    }
+
     private function enableTheme(): void
     {
         Setting::set('feature_theme_enabled', '1', 'boolean');
@@ -40,7 +45,7 @@ class ThemeTest extends TestCase
 
     public function test_toggle_disables_theme(): void
     {
-        $user = $this->admin();
+        $user = $this->siteAdmin();
 
         $this->actingAs($user)->post(route('admin.feature-settings.update'), [
             'theme_enabled' => false,
@@ -55,7 +60,7 @@ class ThemeTest extends TestCase
     public function test_toggle_enables_theme(): void
     {
         $this->disableTheme();
-        $user = $this->admin();
+        $user = $this->siteAdmin();
 
         $this->actingAs($user)->post(route('admin.feature-settings.update'), [
             'theme_enabled' => true,

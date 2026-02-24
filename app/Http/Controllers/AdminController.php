@@ -31,11 +31,14 @@ class AdminController extends Controller
 
     public function featureSettings()
     {
+        abort_unless(auth()->user()->isSiteAdmin(), 403);
+
         return Inertia::render('Admin/FeatureSettings');
     }
 
     public function updateFeatureSettings(Request $request)
     {
+        abort_unless(auth()->user()->isSiteAdmin(), 403);
         $validated = $request->validate([
             'attendance_enabled'      => ['sometimes', 'boolean'],
             'theme_enabled'           => ['sometimes', 'boolean'],

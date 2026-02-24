@@ -21,6 +21,11 @@ class AttendanceTest extends TestCase
         return User::factory()->create(['role' => 'admin']);
     }
 
+    private function siteAdmin(): User
+    {
+        return User::factory()->create(['role' => 'site_admin']);
+    }
+
     private function enableAttendance(): void
     {
         Setting::set('feature_attendance_enabled', '1', 'boolean');
@@ -54,7 +59,7 @@ class AttendanceTest extends TestCase
 
     public function test_toggle_enables_attendance(): void
     {
-        $user = $this->adminUser();
+        $user = $this->siteAdmin();
 
         $this->assertDatabaseMissing('settings', [
             'key'   => 'feature_attendance_enabled',
@@ -74,7 +79,7 @@ class AttendanceTest extends TestCase
     public function test_toggle_disables_attendance(): void
     {
         $this->enableAttendance();
-        $user = $this->adminUser();
+        $user = $this->siteAdmin();
 
         $this->actingAs($user)->post(route('admin.feature-settings.update'), [
             'attendance_enabled' => false,
@@ -428,7 +433,7 @@ class AttendanceTest extends TestCase
     public function test_existing_records_preserved_when_disabled(): void
     {
         $this->enableAttendance();
-        $user    = $this->adminUser();
+        $user    = $this->siteAdmin();
         $student = Student::factory()->create();
 
         AttendanceRecord::factory()->count(5)->create(['student_id' => $student->id]);
