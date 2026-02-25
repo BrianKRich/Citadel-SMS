@@ -45,7 +45,7 @@ function cancelEdit() {
 
 const quickActions = [
     {
-        title: 'Academy Structure',
+        title: 'Department Management',
         description: 'Manage departments within the academy.',
         icon: '🏛️',
         href: route('admin.departments.index'),

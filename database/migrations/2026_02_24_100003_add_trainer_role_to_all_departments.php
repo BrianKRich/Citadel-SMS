@@ -8,15 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Department::all()->each(function ($dept) {
-            if (!EmployeeRole::where('department_id', $dept->id)->where('name', 'Trainer')->exists()) {
-                EmployeeRole::create(['department_id' => $dept->id, 'name' => 'Trainer']);
-            }
-        });
+        // Trainer role is no longer seeded by migration; manage via UI
     }
 
     public function down(): void
     {
-        EmployeeRole::where('name', 'Trainer')->delete();
+        //
     }
 };
