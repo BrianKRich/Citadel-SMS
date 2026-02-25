@@ -17,12 +17,12 @@ const props = defineProps({
 </script>
 
 <template>
-    <Head title="Course Catalog" />
+    <Head title="Curriculum Management" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Course Catalog
+                Curriculum Management
             </h2>
         </template>
 

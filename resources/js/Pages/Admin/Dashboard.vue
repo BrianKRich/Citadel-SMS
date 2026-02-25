@@ -96,7 +96,7 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
-                            title="Class Layout"
+                            title="Class Management"
                             description="Manage academic years, classes, and course catalog"
                             icon="📖"
                             :href="route('admin.class-layout.index')"
@@ -112,7 +112,7 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
-                            title="Institutions"
+                            title="Institution Management"
                             description="Manage technical colleges and universities used as course instructors"
                             icon="🏫"
                             :href="route('admin.institutions.index')"

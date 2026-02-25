@@ -34,6 +34,8 @@ class EnrollmentController extends Controller
             })
             ->when($request->status, function ($query, $status) {
                 $query->status($status);
+            }, function ($query) {
+                $query->where('status', '!=', 'dropped');
             })
             ->when($request->search, function ($query, $search) {
                 $query->whereHas('student', function ($q) use ($search) {

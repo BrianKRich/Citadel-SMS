@@ -152,35 +152,47 @@ const hasFilters = props.filters.search || props.filters.employee_id || props.fi
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                <tr v-for="record in records?.data ?? []" :key="record.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                                        {{ record.employee?.first_name }} {{ record.employee?.last_name }}
-                                    </td>
-                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ record.training_course?.name }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                        {{ record.date_completed?.substring(0, 10) }}
-                                    </td>
-                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ record.trainer_name }}</td>
-                                    <td class="px-4 py-3 text-right whitespace-nowrap">
-                                        <Link
-                                            :href="route('admin.training-records.show', record.id)"
-                                            class="text-sm text-primary-600 dark:text-primary-400 hover:underline mr-3"
-                                        >View</Link>
-                                        <Link
-                                            :href="route('admin.training-records.edit', record.id)"
-                                            class="text-sm text-primary-600 dark:text-primary-400 hover:underline mr-3"
-                                        >Edit</Link>
-                                        <button
-                                            @click="destroy(record)"
-                                            class="text-sm text-red-600 dark:text-red-400 hover:underline"
-                                        >Delete</button>
-                                    </td>
-                                </tr>
-                                <tr v-if="!records?.data?.length">
+                                <!-- No search performed yet -->
+                                <tr v-if="records === null">
                                     <td colspan="5" class="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-                                        No training records found.
+                                        Use the filters above and click <strong>Filter</strong> to search for training records.
                                     </td>
                                 </tr>
+
+                                <!-- Search performed, no results -->
+                                <tr v-else-if="!records?.data?.length">
+                                    <td colspan="5" class="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                                        No training records found matching your search.
+                                    </td>
+                                </tr>
+
+                                <!-- Results -->
+                                <template v-else>
+                                    <tr v-for="record in records.data" :key="record.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                                            {{ record.employee?.first_name }} {{ record.employee?.last_name }}
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ record.training_course?.name }}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                            {{ record.date_completed?.substring(0, 10) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ record.trainer_name }}</td>
+                                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                                            <Link
+                                                :href="route('admin.employees.show', record.employee?.id)"
+                                                class="text-sm text-primary-600 dark:text-primary-400 hover:underline mr-3"
+                                            >View</Link>
+                                            <Link
+                                                :href="route('admin.training-records.edit', record.id)"
+                                                class="text-sm text-primary-600 dark:text-primary-400 hover:underline mr-3"
+                                            >Edit</Link>
+                                            <button
+                                                @click="destroy(record)"
+                                                class="text-sm text-red-600 dark:text-red-400 hover:underline"
+                                            >Delete</button>
+                                        </td>
+                                    </tr>
+                                </template>
                             </tbody>
                         </table>
                     </div>

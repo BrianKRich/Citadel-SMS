@@ -23,29 +23,39 @@ class TrainingRecordController extends Controller
         $this->requireStaffTrainingEnabled();
         abort_unless(auth()->user()->isAdmin(), 403);
 
-        $query = TrainingRecord::with(['employee', 'trainingCourse']);
+        $hasFilters = $request->filled('search')
+            || $request->filled('employee_id')
+            || $request->filled('training_course_id')
+            || $request->filled('date_from')
+            || $request->filled('date_to');
 
-        if ($request->filled('search')) {
-            $query->search($request->search);
+        $records = null;
+
+        if ($hasFilters) {
+            $query = TrainingRecord::with(['employee', 'trainingCourse']);
+
+            if ($request->filled('search')) {
+                $query->search($request->search);
+            }
+
+            if ($request->filled('employee_id')) {
+                $query->where('employee_id', $request->employee_id);
+            }
+
+            if ($request->filled('training_course_id')) {
+                $query->where('training_course_id', $request->training_course_id);
+            }
+
+            if ($request->filled('date_from')) {
+                $query->where('date_completed', '>=', $request->date_from);
+            }
+
+            if ($request->filled('date_to')) {
+                $query->where('date_completed', '<=', $request->date_to);
+            }
+
+            $records = $query->orderBy('date_completed', 'desc')->paginate(15)->withQueryString();
         }
-
-        if ($request->filled('employee_id')) {
-            $query->where('employee_id', $request->employee_id);
-        }
-
-        if ($request->filled('training_course_id')) {
-            $query->where('training_course_id', $request->training_course_id);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->where('date_completed', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->where('date_completed', '<=', $request->date_to);
-        }
-
-        $records = $query->orderBy('date_completed', 'desc')->paginate(15)->withQueryString();
 
         return Inertia::render('Admin/Training/Records/Index', [
             'records'  => $records,

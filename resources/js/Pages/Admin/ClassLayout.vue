@@ -38,7 +38,7 @@ import { Head } from '@inertiajs/vue3';
                     />
 
                     <AdminActionCard
-                        title="Class Management"
+                        title="Class Setup"
                         description="Manage class schedules and enrollment"
                         icon="📖"
                         :href="route('admin.classes.index')"
@@ -46,7 +46,7 @@ import { Head } from '@inertiajs/vue3';
                     />
 
                     <AdminActionCard
-                        title="Course Catalog"
+                        title="Curriculum Management"
                         description="Manage course offerings and curriculum"
                         icon="📚"
                         :href="route('admin.courses.index')"

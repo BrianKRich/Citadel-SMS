@@ -61,11 +61,32 @@ class TrainingRecordTest extends TestCase
         $admin = $this->adminUser();
         TrainingRecord::factory()->count(3)->create();
 
+        // No filters — records should be null (search-before-display behaviour)
         $this->actingAs($admin)
             ->get(route('admin.training-records.index'))
             ->assertInertia(fn (Assert $page) =>
                 $page->component('Admin/Training/Records/Index')
-                     ->has('records.data', 3)
+                     ->where('records', null)
+                     ->has('courses')
+                     ->has('employees')
+            );
+
+        // With a filter — records are returned
+        $this->actingAs($admin)
+            ->get(route('admin.training-records.index', ['search' => '']))
+            ->assertInertia(fn (Assert $page) =>
+                $page->component('Admin/Training/Records/Index')
+                     ->where('records', null)
+                     ->has('courses')
+                     ->has('employees')
+            );
+
+        $employee = TrainingRecord::first()->employee;
+        $this->actingAs($admin)
+            ->get(route('admin.training-records.index', ['employee_id' => $employee->id]))
+            ->assertInertia(fn (Assert $page) =>
+                $page->component('Admin/Training/Records/Index')
+                     ->has('records.data')
                      ->has('courses')
                      ->has('employees')
             );
