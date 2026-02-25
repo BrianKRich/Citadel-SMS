@@ -61,10 +61,10 @@ jobs:
             echo "--- Installing PHP dependencies (with dev for seeding) ---"
             composer install --optimize-autoloader --no-interaction
 
-            echo "--- Wiping and re-migrating database ---"
-            php artisan migrate:fresh --force
+            echo "--- Running database migrations ---"
+            php artisan migrate --force
 
-            echo "--- Seeding with users and employees only ---"
+            echo "--- Seeding database (idempotent — skips if already seeded) ---"
             php artisan db:seed --force
 
             echo "--- Removing dev dependencies ---"
