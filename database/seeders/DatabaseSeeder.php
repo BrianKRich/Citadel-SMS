@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Keith Rich',
             'email' => 'krmoble@gmail.com',
             'password' => 'password',
-            'role' => 'admin',
+            'role' => 'site_admin',
         ]);
 
         $this->call([
