@@ -1981,6 +1981,120 @@ As data volume grows, these improvements will become necessary:
 
 ---
 
+## Post-Phase 9 UI & UX Improvements
+
+**Date:** February 24, 2026
+**Commit range:** After `33e19c8`
+
+### What Was Built
+
+#### Academy Setup (feature-flagged)
+
+A new feature-flagged hub for academy-level configuration, accessible via the Dashboard quick-action grid when enabled.
+
+**Feature flag:** `feature_academy_setup_enabled` (toggle in Feature Settings)
+
+**`AcademyController`** (`app/Http/Controllers/Admin/AcademyController.php`):
+- `index()` — reads five `academy_*` settings keys and passes them as props; gates on `feature_academy_setup_enabled`
+- `update()` — validates and saves via `Setting::set()`; redirects back with success flash
+
+**Settings keys stored:** `academy_name`, `academy_address`, `academy_phone`, `academy_director`, `academy_year_started`
+
+**`DepartmentController`** (`app/Http/Controllers/Admin/DepartmentController.php`):
+- Full resource minus `show`; paginated index with name search; `withCount('roles', 'employees')`
+- `destroy` guards against deletion if any employees are assigned to the department
+- Unique name validation on store; unique-except-self on update
+
+**`EmployeeRoleController`** (`app/Http/Controllers/Admin/EmployeeRoleController.php`):
+- Full resource minus `show`; paginated index with name search and department filter
+- `destroy` guards against deletion if any employees hold the role
+- Unique name within department on store; unique-except-self on update
+
+**Vue pages created:**
+- `Admin/Academy.vue` — two sections: (1) Academy Information card with read-only display + Edit button (form shown on first visit before data exists; collapses to `<dl>` view once saved); (2) Configuration grid with 6 cards (Academy Structure → Departments, Employee Roles → EmployeeRoles, 4 "Coming Soon" placeholders)
+- `Admin/Departments/Index.vue` — paginated table with role count, employee count, Edit/Delete
+- `Admin/Departments/Create.vue` — single Name field
+- `Admin/Departments/Edit.vue` — pre-populated Name field
+- `Admin/EmployeeRoles/Index.vue` — paginated table with department name, employee count, department filter dropdown
+- `Admin/EmployeeRoles/Create.vue` — Department select + Role Name
+- `Admin/EmployeeRoles/Edit.vue` — pre-populated Department + Role Name
+
+**Routes added:**
+```php
+GET  admin/academy              → admin.academy.index
+POST admin/academy              → admin.academy.update
+Resource admin/departments      → admin.departments.{index,create,store,edit,update,destroy}
+Resource admin/employee-roles   → admin.employee-roles.{index,create,store,edit,update,destroy}
+```
+
+**Other modifications:**
+- `HandleInertiaRequests.php` — added `academy_setup_enabled` to shared `features` array
+- `AdminController.php` — added `academy_setup_enabled` validation + `Setting::set()` save block
+- `FeatureSettings.vue` — added `academySetupForm` + `toggleAcademySetup()` + feature list entry
+- `Dashboard.vue` — added feature-flagged `Academy Setup` card to main grid
+
+#### Academy Information — Read-Only / Edit Mode
+
+The Academy Information card on `Academy.vue` implements a view/edit toggle:
+- **No saved data:** form is shown directly (first-time setup); no Edit button visible
+- **Data exists:** collapses to a `<dl>` read-only display; an **Edit** button appears in the card header
+- **Edit clicked:** form re-opens with current values; a **Cancel** button restores the previous values without saving
+- **On save success:** `onSuccess` callback sets `editing.value = false`, collapsing back to read-only
+
+#### Class Layout Hub
+
+Academic Years, Class Management, and Course Catalog removed from the Dashboard main grid and consolidated under a new navigation hub.
+
+**`ClassLayoutController`** (`app/Http/Controllers/Admin/ClassLayoutController.php`):
+- Single `index()` method; admin-gated; renders `Admin/ClassLayout`
+
+**`Admin/ClassLayout.vue`:**
+- Breadcrumb: Dashboard → Class Layout
+- Three `AdminActionCard` components: Academic Years, Class Management, Course Catalog
+
+**Route added:**
+```php
+GET admin/class-layout → admin.class-layout.index
+```
+
+**Dashboard change:** Three individual cards (Academic Years, Class Management, Course Catalog) replaced with one **Class Layout** card linking to `/admin/class-layout`.
+
+#### Course Catalog — Delete Button
+
+Added delete capability to the Course Catalog index page (`Admin/Courses/Index.vue`):
+- Desktop table: **Delete** button after Edit link, styled `text-red-600`
+- Mobile card: full-width **Delete** button below Edit button, styled `bg-red-600`
+- Both use `router.delete()` with `confirm()` guard
+- Backend `CourseController@destroy` was already implemented; no backend changes needed
+
+#### Enrollment Date Format — MM-DD-YYYY
+
+All enrollment date display locations standardised to `MM-DD-YYYY` format using string manipulation (avoids timezone shift that `new Date("YYYY-MM-DD")` causes with UTC parsing):
+
+```javascript
+function fmtDate(dateStr) {
+    if (!dateStr) return '—';
+    const [y, m, d] = dateStr.substring(0, 10).split('-');
+    return `${m}-${d}-${y}`;
+}
+```
+
+Files updated:
+| File | Change |
+|------|--------|
+| `Admin/Students/Index.vue` | Added `fmtDate()`; replaced two `toLocaleDateString()` calls |
+| `Admin/Students/Show.vue` | Updated existing `formatDate()` helper (also applies to DOB, deleted_at, note timestamps) |
+| `Admin/Enrollment/Index.vue` | Added `fmtDate()`; replaced two raw date string displays |
+| `Admin/CohortCourses/Show.vue` | Added `fmtDate()`; replaced `.substring(0, 10)` display |
+
+HTML `type="date"` inputs left unchanged — browsers require `YYYY-MM-DD` internally.
+
+### Tests
+
+No new tests added in this session. All 368 pre-existing tests continue to pass (1927 assertions).
+
+---
+
 ## Future Ideas & Enhancements
 
 The following ideas are captured for long-term consideration. They are not yet assigned to a phase or issue.

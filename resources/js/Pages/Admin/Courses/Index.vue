@@ -3,7 +3,13 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
+
+function destroy(course) {
+    if (confirm(`Delete "${course.name}"? This cannot be undone.`)) {
+        router.delete(route('admin.courses.destroy', course.id), { preserveScroll: true });
+    }
+}
 
 const props = defineProps({
     courses: Object,
@@ -104,8 +110,12 @@ const props = defineProps({
                                         >View</Link>
                                         <Link
                                             :href="route('admin.courses.edit', course.id)"
-                                            class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
+                                            class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 mr-4"
                                         >Edit</Link>
+                                        <button
+                                            @click="destroy(course)"
+                                            class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                                        >Delete</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -142,6 +152,10 @@ const props = defineProps({
                                     :href="route('admin.courses.edit', course.id)"
                                     class="flex-1 text-center rounded-md bg-secondary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-700 min-h-[44px] flex items-center justify-center"
                                 >Edit</Link>
+                                <button
+                                    @click="destroy(course)"
+                                    class="flex-1 text-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 min-h-[44px] flex items-center justify-center"
+                                >Delete</button>
                             </div>
                         </div>
                     </div>

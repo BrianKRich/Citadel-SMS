@@ -14,6 +14,12 @@ const props = defineProps({
 const cc = computed(() => props.cohortCourse);
 const courseName = computed(() => cc.value.course?.name ?? 'Course Assignment');
 
+function fmtDate(dateStr) {
+    if (!dateStr) return '—';
+    const [y, m, d] = dateStr.substring(0, 10).split('-');
+    return `${m}-${d}-${y}`;
+}
+
 const getStatusBadge = (s) => {
     const map = {
         open:        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
@@ -196,7 +202,7 @@ function destroy() {
                                         <span v-else>—</span>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ enrollment.enrollment_date ? enrollment.enrollment_date.substring(0, 10) : '—' }}
+                                        {{ fmtDate(enrollment.enrollment_date) }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <span :class="getEnrollmentStatusBadge(enrollment.status)" class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 capitalize">

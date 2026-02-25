@@ -34,6 +34,10 @@ const staffTrainingForm = useForm({
     staff_training_enabled: page.props.features?.staff_training_enabled ?? false,
 });
 
+const academySetupForm = useForm({
+    academy_setup_enabled: page.props.features?.academy_setup_enabled ?? false,
+});
+
 function toggleAttendance() {
     attendanceForm.attendance_enabled = !attendanceForm.attendance_enabled;
     attendanceForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
@@ -67,6 +71,11 @@ function toggleDocuments() {
 function toggleStaffTraining() {
     staffTrainingForm.staff_training_enabled = !staffTrainingForm.staff_training_enabled;
     staffTrainingForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
+}
+
+function toggleAcademySetup() {
+    academySetupForm.academy_setup_enabled = !academySetupForm.academy_setup_enabled;
+    academySetupForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
 }
 
 const features = [
@@ -125,6 +134,14 @@ const features = [
         enabled: () => page.props.features?.staff_training_enabled,
         processing: () => staffTrainingForm.processing,
         toggle: toggleStaffTraining,
+    },
+    {
+        key: 'academy_setup',
+        label: 'Academy Setup',
+        description: 'Academy name, address, contact info, and structure configuration. Manage departments and employee roles.',
+        enabled: () => page.props.features?.academy_setup_enabled,
+        processing: () => academySetupForm.processing,
+        toggle: toggleAcademySetup,
     },
 ];
 </script>

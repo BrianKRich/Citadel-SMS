@@ -44,7 +44,8 @@ function getEnrollmentStatusBadgeClass(status) {
 
 function formatDate(dateStr) {
     if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString();
+    const [y, m, d] = dateStr.substring(0, 10).split('-');
+    return `${m}-${d}-${y}`;
 }
 
 function formatAddress() {

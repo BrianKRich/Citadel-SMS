@@ -96,10 +96,10 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
-                            title="Class Management"
-                            description="Manage class schedules and enrollment"
+                            title="Class Layout"
+                            description="Manage academic years, classes, and course catalog"
                             icon="📖"
-                            :href="route('admin.classes.index')"
+                            :href="route('admin.class-layout.index')"
                             color="primary"
                         />
 
@@ -109,22 +109,6 @@ const props = defineProps({
                             icon="👨‍🏫"
                             :href="route('admin.employees.index')"
                             color="secondary"
-                        />
-
-                        <AdminActionCard
-                            title="Course Catalog"
-                            description="Manage course offerings and curriculum"
-                            icon="📚"
-                            :href="route('admin.courses.index')"
-                            color="accent"
-                        />
-
-                        <AdminActionCard
-                            title="Academic Years"
-                            description="Manage academic years, classes, and cohorts"
-                            icon="📅"
-                            :href="route('admin.academic-years.index')"
-                            color="primary"
                         />
 
                         <AdminActionCard
@@ -193,6 +177,15 @@ const props = defineProps({
                             description="Manage staff training courses and track completion records"
                             icon="🎓"
                             :href="route('admin.training-records.index')"
+                            color="primary"
+                        />
+
+                        <AdminActionCard
+                            v-if="$page.props.features?.academy_setup_enabled"
+                            title="Academy Setup"
+                            description="Configure academy information and organizational structure."
+                            icon="🏫"
+                            :href="route('admin.academy.index')"
                             color="primary"
                         />
 

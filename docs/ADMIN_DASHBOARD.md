@@ -30,15 +30,29 @@ Real-time statistics displayed in cards:
 - **Average GPA**: Average GPA across all graded enrollments (Phase 3A)
 
 ### Quick Actions
-Direct access to admin features:
 
-1. **Theme Settings** (`/admin/theme`) - Customize application colors
-2. **Student Management** (`/admin/students`) - Student records, enrollment, profiles
-3. **User Management** (`/admin/users`) - View and manage users
-4. **Course Management** (`/admin/courses`) - Course catalog
-5. **Employee Management** (`/admin/employees`) - Staff directory
-6. **Class Management** (`/admin/classes`) - Class sections and schedules
-7. **Grade Management** (`/admin/grades`) - Grade book, assessments, grading scales (Phase 3A)
+The dashboard uses two grids:
+
+**Main grid** (`lg:grid-cols-3`) — operational cards, some feature-flagged:
+1. **Theme Settings** (`/admin/theme`) - feature-flagged: `feature_theme_enabled`
+2. **Student Management** (`/admin/students`)
+3. **User Management** (`/admin/users`)
+4. **Class Layout** (`/admin/class-layout`) - hub for Academic Years, Class Management, Course Catalog
+5. **Employee Management** (`/admin/employees`)
+6. **Institutions** (`/admin/institutions`)
+7. **Grade Management** (`/admin/grades`) - feature-flagged: `feature_grades_enabled`
+8. **Report Cards** (`/admin/report-cards`) - feature-flagged: `feature_report_cards_enabled`
+9. **Transcripts** (`/admin/transcripts`)
+10. **Attendance** (`/admin/attendance`) - feature-flagged: `feature_attendance_enabled`
+11. **Student Notes** (`/admin/student-notes`)
+12. **Document Management** (`/admin/documents`) - feature-flagged: `feature_documents_enabled`
+13. **Staff Training** (`/admin/training-records`) - feature-flagged: `feature_staff_training_enabled`
+14. **Academy Setup** (`/admin/academy`) - feature-flagged: `feature_academy_setup_enabled`
+
+**Admin config row** (`sm:grid-cols-3`) — always pinned as the bottom row:
+1. **Audit Log** (`/admin/audit-log`)
+2. **Custom Fields** (`/admin/custom-fields`)
+3. **Feature Settings** (`/admin/feature-settings`) - visible to `site_admin` only
 
 ## Components Used
 

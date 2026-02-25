@@ -139,7 +139,7 @@
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        {{ enrollment.enrollment_date }}
+                                        {{ fmtDate(enrollment.enrollment_date) }}
                                     </td>
                                     <td class="px-4 py-3 text-sm">
                                         <div class="flex items-center gap-3">
@@ -202,7 +202,7 @@
                                 &bull; {{ enrollment.cohortCourse?.employee?.first_name }} {{ enrollment.cohortCourse?.employee?.last_name }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Enrolled: {{ enrollment.enrollment_date }}
+                                Enrolled: {{ fmtDate(enrollment.enrollment_date) }}
                             </p>
                             <div class="flex items-center gap-4 pt-1">
                                 <Link
@@ -264,6 +264,12 @@ const props = defineProps({
     classes: Array,
     filters: Object,
 });
+
+function fmtDate(dateStr) {
+    if (!dateStr) return '—';
+    const [y, m, d] = dateStr.substring(0, 10).split('-');
+    return `${m}-${d}-${y}`;
+}
 
 const search = ref(props.filters?.search ?? '');
 const selectedClass = ref(props.filters?.class_id ?? '');

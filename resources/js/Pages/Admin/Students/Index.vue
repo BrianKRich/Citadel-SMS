@@ -11,6 +11,12 @@ const props = defineProps({
     trashedCount: Number,
 });
 
+function fmtDate(dateStr) {
+    if (!dateStr) return '—';
+    const [y, m, d] = dateStr.substring(0, 10).split('-');
+    return `${m}-${d}-${y}`;
+}
+
 const getStatusBadgeClass = (status) => {
     const classes = {
         active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
@@ -116,7 +122,7 @@ const getStatusBadgeClass = (status) => {
                                         </span>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ new Date(student.enrollment_date).toLocaleDateString() }}
+                                        {{ fmtDate(student.enrollment_date) }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                         <Link
@@ -158,7 +164,7 @@ const getStatusBadgeClass = (status) => {
                             </div>
 
                             <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                                Enrolled {{ new Date(student.enrollment_date).toLocaleDateString() }}
+                                Enrolled {{ fmtDate(student.enrollment_date) }}
                             </div>
 
                             <div class="flex gap-2">

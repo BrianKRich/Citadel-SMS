@@ -1,6 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\AcademyController;
+use App\Http\Controllers\Admin\ClassLayoutController;
+use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\DocumentController;
+use App\Http\Controllers\Admin\EmployeeRoleController;
 use App\Http\Controllers\Admin\TrainingCourseController;
 use App\Http\Controllers\Admin\TrainingRecordController;
 use App\Http\Controllers\Admin\AcademicYearController;
@@ -234,6 +238,19 @@ Route::middleware('auth')->group(function () {
         ->name('admin.documents.store');
     Route::delete('admin/documents/{document}', [DocumentController::class, 'destroy'])
         ->name('admin.documents.destroy');
+
+    // Class Layout hub
+    Route::get('admin/class-layout', [ClassLayoutController::class, 'index'])->name('admin.class-layout.index');
+
+    // Academy Setup
+    Route::get('admin/academy', [AcademyController::class, 'index'])->name('admin.academy.index');
+    Route::post('admin/academy', [AcademyController::class, 'update'])->name('admin.academy.update');
+    Route::resource('admin/departments', DepartmentController::class)
+        ->names('admin.departments')
+        ->except(['show']);
+    Route::resource('admin/employee-roles', EmployeeRoleController::class)
+        ->names('admin.employee-roles')
+        ->except(['show']);
 
     // Staff Training
     Route::resource('admin/training-courses', TrainingCourseController::class)->names([

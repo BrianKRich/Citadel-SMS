@@ -117,9 +117,17 @@ A full-stack web application for managing student information, academic records,
 - **CohortCourse Show page:** "+ Enroll Student" button pre-populates the enrollment form with the course pre-selected
 - **Enrollment Create form:** supports `?cohort_course_id=` query param for pre-selection
 
+### Post-Phase 9 UI & UX Improvements
+- **Academy Setup** (feature-flagged): configure academy name, address, phone, director, year founded; read-only display with Edit button once data is saved; quick-action cards for Departments CRUD and Employee Roles CRUD; 4 "Coming Soon" placeholder cards
+- **Departments CRUD**: create, edit, delete departments; delete guarded if employees exist
+- **Employee Roles CRUD**: create, edit, delete roles scoped to a department; filter by department; delete guarded if employees exist
+- **Class Layout hub**: dashboard navigation hub grouping Academic Years, Class Management, and Course Catalog under a single card
+- **Course Catalog delete**: delete button added to the Courses index (desktop table + mobile card)
+- **Enrollment date format**: all enrollment date displays standardised to `MM-DD-YYYY` (Students index, Students show, Enrollment index, CohortCourse show)
+
 ### Cross-Cutting
 - **Breadcrumb navigation** on all admin child pages
-- **Feature Settings** page (site_admin only): toggle Attendance, Theme, Documents, Grade Management, Report Cards, Staff Training
+- **Feature Settings** page (site_admin only): toggle Attendance, Theme, Documents, Grade Management, Report Cards, Staff Training, Academy Setup
 - **User Management**: create/edit/delete users; hire date; employee record auto-created on user create
 - **Site Admin role**: full admin access + exclusive Audit Log purge and Feature Settings management
 - **Dashboard**: stat cards + quick-action grid + fixed admin config row (Audit Log | Custom Fields | Feature Settings)
@@ -233,6 +241,10 @@ composer run test
 | `/admin/training-courses` | Training course catalog |
 | `/admin/training-records` | Staff training completion records |
 | `/admin/audit-log` | Audit log viewer |
+| `/admin/academy` | Academy information & setup hub |
+| `/admin/departments` | Departments CRUD |
+| `/admin/employee-roles` | Employee roles CRUD |
+| `/admin/class-layout` | Class Layout hub (Academic Years, Classes, Courses) |
 | `/admin/feature-settings` | Feature flag toggles (site_admin) |
 | `/admin/theme` | Theme customization |
 
@@ -248,7 +260,7 @@ app/
 └── Http/Middleware/           # HandleInertiaRequests (shared props)
 
 resources/js/
-├── Pages/Admin/               # Vue page components (87+)
+├── Pages/Admin/               # Vue page components (97+)
 ├── Components/UI/             # Reusable UI components
 ├── Components/Users/          # User form components
 ├── Layouts/                   # AuthenticatedLayout, GuestLayout
@@ -330,6 +342,6 @@ The frontend build runs on GitHub's runner (7GB RAM) to avoid memory limits on t
 
 ---
 
-**Version:** 2.1.0
+**Version:** 2.2.0
 **Last Updated:** February 24, 2026
 **Status:** Active Development
