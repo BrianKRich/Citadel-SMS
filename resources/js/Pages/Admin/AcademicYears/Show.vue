@@ -62,17 +62,21 @@ const getStatusBadgeClass = (status) => {
                             <div class="flex items-center gap-3 flex-wrap">
                                 <PageHeader :title="academicYear.name" />
                                 <span
-                                    v-if="academicYear.is_current"
-                                    class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 font-medium"
+                                    :class="{
+                                        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': academicYear.status === 'current',
+                                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300': academicYear.status === 'forming',
+                                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': academicYear.status === 'completed',
+                                    }"
+                                    class="px-2 py-1 rounded-full text-xs font-medium capitalize"
                                 >
-                                    Current
+                                    {{ academicYear.status }}
                                 </span>
                             </div>
                         </div>
 
                         <div class="flex gap-3 flex-wrap flex-shrink-0">
                             <button
-                                v-if="!academicYear.is_current"
+                                v-if="academicYear.status !== 'current'"
                                 @click="setCurrent"
                                 class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700"
                             >

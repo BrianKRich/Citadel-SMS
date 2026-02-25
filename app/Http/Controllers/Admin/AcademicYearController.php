@@ -31,17 +31,12 @@ class AcademicYearController extends Controller
             'name'       => ['required', 'string', 'max:255'],
             'start_date' => ['required', 'date'],
             'end_date'   => ['required', 'date', 'after:start_date'],
-            'is_current' => ['boolean'],
+            'status'     => ['required', 'in:forming,current,completed'],
         ]);
 
-        $academicYear = AcademicYear::create([
-            'name'       => $validated['name'],
-            'start_date' => $validated['start_date'],
-            'end_date'   => $validated['end_date'],
-            'is_current' => $validated['is_current'] ?? false,
-        ]);
+        $academicYear = AcademicYear::create($validated);
 
-        if ($validated['is_current'] ?? false) {
+        if ($validated['status'] === 'current') {
             $academicYear->setCurrent();
         }
 
@@ -71,12 +66,12 @@ class AcademicYearController extends Controller
             'name'       => ['required', 'string', 'max:255'],
             'start_date' => ['required', 'date'],
             'end_date'   => ['required', 'date', 'after:start_date'],
-            'is_current' => ['boolean'],
+            'status'     => ['required', 'in:forming,current,completed'],
         ]);
 
         $academicYear->update($validated);
 
-        if ($validated['is_current'] ?? false) {
+        if ($validated['status'] === 'current') {
             $academicYear->setCurrent();
         }
 

@@ -12,10 +12,10 @@ const props = defineProps({
 });
 
 const form = useForm({
-    name: props.academicYear.name ?? '',
+    name:       props.academicYear.name ?? '',
     start_date: props.academicYear.start_date ? props.academicYear.start_date.substring(0, 10) : '',
-    end_date: props.academicYear.end_date ? props.academicYear.end_date.substring(0, 10) : '',
-    is_current: props.academicYear.is_current ?? false,
+    end_date:   props.academicYear.end_date ? props.academicYear.end_date.substring(0, 10) : '',
+    status:     props.academicYear.status ?? 'forming',
 });
 
 function submit() {
@@ -104,20 +104,22 @@ function submit() {
                             </p>
                         </div>
 
-                        <!-- Is Current -->
+                        <!-- Status -->
                         <div>
-                            <label class="flex items-center gap-2">
-                                <input
-                                    v-model="form.is_current"
-                                    type="checkbox"
-                                    class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
-                                />
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Set as current academic year
-                                </span>
+                            <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Status <span class="text-red-500">*</span>
                             </label>
-                            <p v-if="form.errors.is_current" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                {{ form.errors.is_current }}
+                            <select
+                                id="status"
+                                v-model="form.status"
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                            >
+                                <option value="forming">Forming</option>
+                                <option value="current">Current</option>
+                                <option value="completed">Complete</option>
+                            </select>
+                            <p v-if="form.errors.status" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.status }}
                             </p>
                         </div>
 

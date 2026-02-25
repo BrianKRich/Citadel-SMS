@@ -27,7 +27,7 @@ class ClassController extends Controller
             ->withQueryString();
 
         $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
-        $currentYear   = AcademicYear::where('is_current', true)->first();
+        $currentYear   = AcademicYear::where('status', 'current')->first();
 
         return Inertia::render('Admin/Classes/Index', [
             'classes'       => $classes,

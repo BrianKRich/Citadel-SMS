@@ -14,13 +14,12 @@ class AcademicYear extends Model
         'name',
         'start_date',
         'end_date',
-        'is_current',
+        'status',
     ];
 
     protected $casts = [
         'start_date' => 'date',
-        'end_date' => 'date',
-        'is_current' => 'boolean',
+        'end_date'   => 'date',
     ];
 
     public function classes(): HasMany
@@ -30,13 +29,13 @@ class AcademicYear extends Model
 
     public function scopeCurrent($query)
     {
-        return $query->where('is_current', true);
+        return $query->where('status', 'current');
     }
 
     public function setCurrent(): void
     {
-        static::query()->update(['is_current' => false]);
-        static::query()->where('id', $this->id)->update(['is_current' => true]);
-        $this->is_current = true;
+        static::query()->update(['status' => 'forming']);
+        static::query()->where('id', $this->id)->update(['status' => 'current']);
+        $this->status = 'current';
     }
 }
