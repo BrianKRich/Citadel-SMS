@@ -40,8 +40,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Create employee records for the two default admin users
-        $adminDept = Department::where('name', 'Administration')->first();
-        $adminRole = EmployeeRole::where('department_id', $adminDept->id)->where('name', 'Administrator')->first();
+        $adminDept = Department::where('name', 'Operations')->first();
+        $adminRole = EmployeeRole::where('department_id', $adminDept->id)->where('name', 'Site Administrator')->first();
 
         Employee::create([
             'user_id'       => $siteAdmin->id,
