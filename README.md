@@ -316,6 +316,20 @@ See [docs/OPEN_ISSUES.md](docs/OPEN_ISSUES.md) for decisions pending resolution.
 
 ---
 
+## CI/CD
+
+Pushes to `main` auto-deploy to AWS Lightsail via GitHub Actions (`.github/workflows/deploy.yml`).
+
+**Pipeline steps:**
+1. GitHub runner: `composer install` (for Ziggy), `npm ci`, `npm run build`
+2. Server via SSH: `git pull`, `composer install`, `migrate`, `seed`, `composer --no-dev`
+3. GitHub runner → server: `rsync public/build/` (compiled frontend assets)
+4. Server via SSH: rebuild PHP caches, restart queue
+
+The frontend build runs on GitHub's runner (7GB RAM) to avoid memory limits on the small Lightsail instance.
+
+---
+
 **Version:** 2.1.0
 **Last Updated:** February 24, 2026
 **Status:** Active Development

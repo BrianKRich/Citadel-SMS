@@ -1919,6 +1919,56 @@ Created `docs/OPEN_ISSUES.md` to track decisions pending resolution.
 
 ---
 
+## CI/CD: Build on GitHub Runner
+
+**Date:** February 24, 2026
+**Commits:** `b273bd5` → `292216d`
+
+### Problem
+
+After Phase 9 added new Vue pages (CohortCourses, Institutions), the Vite bundle grew to 876 modules. The Lightsail server's Node.js process ran out of heap memory (`FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory`) during `npm run build`, causing deploy failures.
+
+A temporary fix (`NODE_OPTIONS=--max-old-space-size=512`) worked once but is fragile — the bundle will only grow over time.
+
+### Solution
+
+Moved the frontend build step off the server and onto the GitHub Actions runner, which has ~7GB RAM. The compiled `public/build/` directory is then uploaded to the server via `rsync`.
+
+### New Deploy Pipeline
+
+```
+GitHub Actions Runner (ubuntu-latest, ~7GB RAM)
+  1. Checkout code
+  2. Setup PHP 8.3 + Composer (needed for Ziggy route generation)
+  3. composer install --no-dev  (generates vendor/tightenco/ziggy for Vite)
+  4. npm ci --legacy-peer-deps
+  5. npm run build              (compiles all Vue pages → public/build/)
+
+Server via SSH (Lightsail)
+  6. git pull origin main
+  7. php artisan config/route/view/event:clear
+  8. composer install           (with dev, for seeding)
+  9. php artisan migrate --force
+  10. php artisan db:seed --force
+  11. composer install --no-dev  (strip dev deps)
+
+GitHub Actions Runner → Server
+  12. rsync public/build/ → $DEPLOY_PATH/public/build/
+
+Server via SSH
+  13. php artisan config/route/view/event:cache
+  14. php artisan queue:restart
+```
+
+### Key Details
+
+- **Why `composer install` on runner:** Ziggy (`tightenco/ziggy`) generates `vendor/tightenco/ziggy/dist/vue.m.js` which `resources/js/app.js` imports at build time. Without it, Vite fails with "Could not resolve ../../vendor/tightenco/ziggy".
+- **rsync `--delete`:** Removes stale files from `public/build/` on the server (e.g. old hashed JS/CSS chunks from previous builds).
+- **No Node.js required on server:** The server no longer needs Node.js or npm installed for deployments.
+- **SSH key reuse:** The same `LIGHTSAIL_SSH_KEY` secret is used by both `appleboy/ssh-action` and the rsync step (written to `~/.ssh/deploy_key` with `chmod 600`).
+
+---
+
 ### Performance & Infrastructure (No Phase Number)
 **GitHub Issue:** #14
 
