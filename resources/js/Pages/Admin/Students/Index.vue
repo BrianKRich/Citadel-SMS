@@ -96,8 +96,8 @@ const getStatusBadgeClass = (status) => {
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                <tr v-for="student in students.data" :key="student.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <tr v-for="student in students.data" :key="student.id" class="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700">
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                             {{ student.student_id }}

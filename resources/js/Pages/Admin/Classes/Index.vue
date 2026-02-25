@@ -11,12 +11,13 @@ const props = defineProps({
     classes:       { type: Object, required: true },
     academicYears: { type: Array, default: () => [] },
     filters:       { type: Object, default: () => ({}) },
+    currentYearId: { type: Number, default: null },
 });
 
 const inputClass = 'mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm';
 
 const search           = ref(props.filters.search ?? '');
-const academicYearId   = ref(props.filters.academic_year_id ?? '');
+const academicYearId   = ref(props.filters.academic_year_id ?? props.currentYearId ?? '');
 const status           = ref(props.filters.status ?? '');
 
 let debounceTimer = null;

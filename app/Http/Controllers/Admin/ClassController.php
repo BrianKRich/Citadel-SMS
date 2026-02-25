@@ -27,11 +27,13 @@ class ClassController extends Controller
             ->withQueryString();
 
         $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
+        $currentYear   = AcademicYear::where('is_current', true)->first();
 
         return Inertia::render('Admin/Classes/Index', [
             'classes'       => $classes,
             'academicYears' => $academicYears,
             'filters'       => $request->only(['search', 'academic_year_id', 'status']),
+            'currentYearId' => $currentYear?->id,
         ]);
     }
 

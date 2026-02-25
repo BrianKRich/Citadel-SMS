@@ -6,6 +6,7 @@ import Alert from '@/Components/UI/Alert.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 
 const props = defineProps({
     academy: { type: Object, default: () => ({}) },
@@ -43,7 +44,10 @@ function cancelEdit() {
     editing.value = false;
 }
 
-const quickActions = [
+const page = usePage();
+const isSiteAdmin = computed(() => page.props.auth.user.role === 'site_admin');
+
+const allQuickActions = [
     {
         title: 'Department Management',
         description: 'Manage departments within the academy.',
@@ -51,6 +55,7 @@ const quickActions = [
         href: route('admin.departments.index'),
         color: 'primary',
         disabled: false,
+        siteAdminOnly: true,
     },
     {
         title: 'Employee Roles',
@@ -93,6 +98,10 @@ const quickActions = [
         disabled: true,
     },
 ];
+
+const quickActions = computed(() =>
+    allQuickActions.filter(a => !a.siteAdminOnly || isSiteAdmin.value)
+);
 </script>
 
 <template>

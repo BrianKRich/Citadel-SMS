@@ -82,8 +82,8 @@ const getRoleBadgeClass = (role) => {
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white dark:bg-gray-800 dark:divide-gray-700">
-                                <tr v-for="user in users.data" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <tr v-for="user in users.data" :key="user.id" class="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600">
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                             {{ user.name }}

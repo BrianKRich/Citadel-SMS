@@ -105,6 +105,7 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
+                            v-if="$page.props.auth.user.role !== 'user'"
                             title="Employee Management"
                             description="Manage employee profiles and assignments"
                             icon="👨‍🏫"

@@ -104,7 +104,7 @@ class UserManagementController extends Controller
             'email'     => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'role'      => ['required', Rule::in(['admin', 'site_admin', 'user'])],
             'password'  => ['nullable', 'confirmed', Password::min(8)],
-            'hire_date' => ['required', 'date'],
+            'hire_date' => ['nullable', 'date'],
         ]);
 
         // Only update password if provided
@@ -124,8 +124,10 @@ class UserManagementController extends Controller
         }
         $user->update($userFields);
 
-        Employee::where('user_id', $user->id)
-            ->update(['hire_date' => $validated['hire_date']]);
+        if (!empty($validated['hire_date'])) {
+            Employee::where('user_id', $user->id)
+                ->update(['hire_date' => $validated['hire_date']]);
+        }
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully!');

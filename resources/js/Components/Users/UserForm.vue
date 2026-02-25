@@ -156,13 +156,13 @@ function onDepartmentChange() {
 
         <!-- Hire Date -->
         <div>
-            <InputLabel for="hire_date" value="Hire Date" />
+            <InputLabel for="hire_date" :value="isEditing ? 'Hire Date (leave blank if not yet assigned)' : 'Hire Date'" />
             <TextInput
                 id="hire_date"
                 v-model="form.hire_date"
                 type="date"
                 class="mt-1 block w-full"
-                required
+                :required="!isEditing"
             />
             <InputError class="mt-2" :message="form.errors.hire_date" />
         </div>
