@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
 import Card from '@/Components/UI/Card.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
@@ -28,6 +29,12 @@ const props = defineProps({
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <Breadcrumb :items="[
+                    { label: 'Dashboard', href: route('admin.dashboard') },
+                    { label: 'Class Management', href: route('admin.class-layout.index') },
+                    { label: 'Curriculum Management' },
+                ]" class="mb-4" />
+
                 <!-- Alerts -->
                 <div v-if="$page.props.flash?.success" class="mb-4">
                     <Alert type="success" :message="$page.props.flash.success" />

@@ -70,7 +70,8 @@ const formatDateRange = (cohort) => {
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <Breadcrumb :items="[
                     { label: 'Dashboard', href: route('admin.dashboard') },
-                    { label: 'Class Management' },
+                    { label: 'Class Management', href: route('admin.class-layout.index') },
+                    { label: 'Class Setup' },
                 ]" />
 
                 <div v-if="$page.props.flash?.success" class="mb-4">

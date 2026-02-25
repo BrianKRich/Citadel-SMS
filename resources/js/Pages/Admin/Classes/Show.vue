@@ -93,7 +93,8 @@ function removeCourse(cc) {
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
                 <Breadcrumb :items="[
                     { label: 'Dashboard', href: route('admin.dashboard') },
-                    { label: 'Class Management', href: route('admin.classes.index') },
+                    { label: 'Class Management', href: route('admin.class-layout.index') },
+                    { label: 'Class Setup', href: route('admin.classes.index') },
                     { label: `Class ${cls?.class_number}` },
                 ]" />
 

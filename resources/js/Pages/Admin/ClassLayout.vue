@@ -7,12 +7,12 @@ import { Head } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <Head title="Class Layout" />
+    <Head title="Class Management" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Class Layout
+                Class Management
             </h2>
         </template>
 
@@ -20,11 +20,11 @@ import { Head } from '@inertiajs/vue3';
             <div class="mx-auto max-w-5xl sm:px-6 lg:px-8 space-y-6">
                 <Breadcrumb :items="[
                     { label: 'Dashboard', href: route('admin.dashboard') },
-                    { label: 'Class Layout' },
+                    { label: 'Class Management' },
                 ]" />
 
                 <PageHeader
-                    title="Class Layout"
+                    title="Class Management"
                     description="Manage the academic structure — years, classes, and course catalog."
                 />
 
