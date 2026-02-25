@@ -125,6 +125,7 @@ const formatDate = (d) => d ? d.substring(0, 10) : '—';
                             <thead class="bg-gray-50 dark:bg-gray-800">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Class Number</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Name</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">NGB Number</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Academic Year</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
@@ -135,7 +136,7 @@ const formatDate = (d) => d ? d.substring(0, 10) : '—';
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                 <tr v-if="classes.data.length === 0">
-                                    <td colspan="7" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    <td colspan="8" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                         No classes found.
                                     </td>
                                 </tr>
@@ -146,6 +147,9 @@ const formatDate = (d) => d ? d.substring(0, 10) : '—';
                                 >
                                     <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
                                         Class {{ cls.class_number }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                        {{ cls.name || '—' }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                         {{ cls.ngb_number ?? '—' }}
@@ -195,6 +199,7 @@ const formatDate = (d) => d ? d.substring(0, 10) : '—';
                                     <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
                                         Class {{ cls.class_number }}
                                     </h3>
+                                    <p v-if="cls.name" class="text-sm text-gray-700 dark:text-gray-300">{{ cls.name }}</p>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ cls.ngb_number ?? '—' }}</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ cls.academic_year?.name ?? '—' }}</p>
                                 </div>

@@ -66,7 +66,12 @@ class ClassController extends Controller
 
     public function show(ClassModel $class)
     {
-        $class->load('academicYear');
+        $class->load([
+            'academicYear',
+            'classCourses.course',
+            'classCourses.employee',
+            'classCourses.institution',
+        ]);
 
         return Inertia::render('Admin/Classes/Show', [
             'class' => $class,

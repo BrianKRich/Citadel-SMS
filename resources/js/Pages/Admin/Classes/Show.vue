@@ -103,6 +103,63 @@ function destroy() {
                         </div>
                     </div>
                 </Card>
+
+                <!-- Course Assignments Card -->
+                <Card>
+                    <div class="flex items-center justify-between mb-4">
+                        <PageHeader title="Course Assignments" description="Courses assigned to this class." />
+                        <Link
+                            :href="route('admin.class-courses.create') + '?class_id=' + cls?.id"
+                            class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700"
+                        >+ Add Course</Link>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Course</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Instructor</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Room</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Capacity</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+                                <tr
+                                    v-for="cc in cls?.class_courses"
+                                    :key="cc.id"
+                                    class="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                >
+                                    <td class="px-6 py-4 text-sm">
+                                        <div class="font-medium text-gray-900 dark:text-gray-100">{{ cc.course?.name ?? '—' }}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ cc.course?.course_code }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                        <span v-if="cc.employee">{{ cc.employee.first_name }} {{ cc.employee.last_name }}</span>
+                                        <span v-else-if="cc.institution">{{ cc.institution.name }}</span>
+                                        <span v-else class="text-gray-400 dark:text-gray-500">—</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ cc.room || '—' }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ cc.max_students ?? '—' }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 capitalize">{{ cc.status?.replace('_', ' ') ?? '—' }}</td>
+                                    <td class="px-6 py-4 text-sm">
+                                        <Link
+                                            :href="route('admin.class-courses.show', cc.id)"
+                                            class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                                        >View</Link>
+                                    </td>
+                                </tr>
+                                <tr v-if="!cls?.class_courses?.length">
+                                    <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                                        No courses assigned to this class yet.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
             </div>
         </div>
     </AuthenticatedLayout>
