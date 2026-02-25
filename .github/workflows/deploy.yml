@@ -12,7 +12,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Deploy PHP app via SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
@@ -37,10 +52,6 @@ jobs:
             echo "--- Installing PHP dependencies (with dev for seeding) ---"
             composer install --optimize-autoloader --no-interaction
 
-            echo "--- Building frontend assets ---"
-            npm ci --prefer-offline --legacy-peer-deps
-            NODE_OPTIONS=--max-old-space-size=512 npm run build
-
             echo "--- Running database migrations ---"
             php artisan migrate --force
 
@@ -49,6 +60,29 @@ jobs:
 
             echo "--- Removing dev dependencies ---"
             composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Upload built assets
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            public/build/ \
+            ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}:${{ secrets.DEPLOY_PATH }}/public/build/
+
+      - name: Rebuild caches and restart queue
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_USER }}
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          envs: DEPLOY_PATH
+          script: |
+            set -e
+            cd "$DEPLOY_PATH"
 
             echo "--- Rebuilding application caches ---"
             php artisan config:cache
