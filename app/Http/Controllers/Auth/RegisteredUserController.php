@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -40,6 +41,15 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+        ]);
+
+        $nameParts = explode(' ', trim($request->name), 2);
+        Employee::create([
+            'user_id'    => $user->id,
+            'first_name' => $nameParts[0],
+            'last_name'  => $nameParts[1] ?? '',
+            'email'      => $request->email,
+            'status'     => 'active',
         ]);
 
         event(new Registered($user));
