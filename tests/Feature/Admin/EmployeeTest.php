@@ -27,13 +27,14 @@ class EmployeeTest extends TestCase
         $role = EmployeeRole::factory()->create(['department_id' => $dept->id]);
 
         return array_merge([
-            'first_name'   => 'Alice',
-            'last_name'    => 'Smith',
-            'email'        => 'alice.smith@example.com',
+            'first_name'    => 'Alice',
+            'last_name'     => 'Smith',
+            'email'         => 'alice.smith@example.com',
             'department_id' => $dept->id,
-            'role_id'      => $role->id,
-            'hire_date'    => '2023-01-15',
-            'status'       => 'active',
+            'role_id'       => $role->id,
+            'hire_date'     => '2023-01-15',
+            'status'        => 'active',
+            'password'      => 'Password1!',
         ], $overrides);
     }
 
@@ -107,13 +108,15 @@ class EmployeeTest extends TestCase
         $response->assertRedirect(route('admin.employees.show', $employee));
         $this->assertDatabaseHas('employees', ['first_name' => 'Alice', 'last_name' => 'Smith']);
         $this->assertStringStartsWith('EMP-', $employee->employee_id);
+        $this->assertDatabaseHas('users', ['email' => $payload['email'], 'role' => 'employee']);
+        $this->assertNotNull($employee->fresh()->user_id);
     }
 
     public function test_store_validates_required_fields(): void
     {
         $this->actingAs($this->admin())
             ->post(route('admin.employees.store'), [])
-            ->assertSessionHasErrors(['first_name', 'last_name', 'email', 'department_id', 'role_id', 'hire_date', 'status']);
+            ->assertSessionHasErrors(['first_name', 'last_name', 'email', 'department_id', 'role_id', 'hire_date', 'status', 'password']);
     }
 
     public function test_store_validates_unique_email(): void

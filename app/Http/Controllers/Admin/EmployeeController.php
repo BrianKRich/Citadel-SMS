@@ -71,7 +71,7 @@ class EmployeeController extends Controller
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:employees,email'],
+            'email' => ['required', 'email', 'unique:employees,email', 'unique:users,email'],
             'department_id' => ['required', 'exists:departments,id'],
             'role_id' => ['required', 'exists:employee_roles,id'],
             'secondary_role_id' => ['nullable', 'exists:employee_roles,id'],
@@ -82,31 +82,26 @@ class EmployeeController extends Controller
             'qualifications' => ['nullable', 'string'],
             'photo' => ['nullable', 'image', 'max:2048'],
             'status' => ['required', Rule::in(['active', 'inactive', 'on_leave'])],
-            'create_user_account' => ['boolean'],
-            'password' => ['required_if:create_user_account,true', 'nullable', Rules\Password::defaults()],
+            'password' => ['required', Rules\Password::defaults()],
         ]);
 
         $phone = $validated['phone'] ?? null;
         $phoneAreaCode = $validated['phone_area_code'] ?? null;
         unset($validated['phone'], $validated['phone_area_code']);
 
-        $userId = null;
-        if ($request->boolean('create_user_account') && !empty($validated['password'])) {
-            $user = User::create([
-                'name' => "{$validated['first_name']} {$validated['last_name']}",
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role' => 'employee',
-            ]);
-            $userId = $user->id;
-        }
+        $user = User::create([
+            'name' => "{$validated['first_name']} {$validated['last_name']}",
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'employee',
+        ]);
 
         if ($request->hasFile('photo')) {
             $validated['photo'] = $request->file('photo')->store('employees/photos', 'public');
         }
 
-        $validated['user_id'] = $userId;
-        unset($validated['create_user_account'], $validated['password']);
+        $validated['user_id'] = $user->id;
+        unset($validated['password']);
 
         $employee = Employee::create($validated);
 

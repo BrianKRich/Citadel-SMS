@@ -6,7 +6,7 @@ import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import CustomFieldsSection from '@/Components/Admin/CustomFieldsSection.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
 
 const props = defineProps({
@@ -29,7 +29,6 @@ const form = useForm({
     qualifications: '',
     photo: null,
     status: 'active',
-    create_user_account: false,
     password: '',
     custom_field_values: {},
 });
@@ -327,35 +326,27 @@ function submit() {
                             </div>
                         </div>
 
-                        <!-- Section 5: User Account -->
+                        <!-- Section 5: Login Password -->
                         <div>
                             <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
                                 System Access
                             </h3>
-                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                <label class="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        v-model="form.create_user_account"
-                                        class="rounded border-gray-300 dark:border-gray-600 text-primary-600 shadow-sm focus:ring-primary-500"
-                                    />
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Create login account for this employee
-                                    </span>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Password <span class="text-red-500">*</span>
                                 </label>
-                                <div v-if="form.create_user_account" class="mt-4">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Password <span class="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="password"
-                                        v-model="form.password"
-                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
-                                    />
-                                    <p v-if="form.errors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                        {{ form.errors.password }}
-                                    </p>
-                                </div>
+                                <input
+                                    type="password"
+                                    v-model="form.password"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                                    required
+                                />
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    A login account will be created for this employee.
+                                </p>
+                                <p v-if="form.errors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                    {{ form.errors.password }}
+                                </p>
                             </div>
                         </div>
 
