@@ -24,3 +24,5 @@ Homestead.yaml
 Thumbs.db
 lmstudio.settings.json
 notes.md
+*:Zone.Identifier
+docs/*.pdf
