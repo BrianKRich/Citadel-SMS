@@ -42,6 +42,10 @@ const customFieldsForm = useForm({
     custom_fields_enabled: page.props.features?.custom_fields_enabled ?? false,
 });
 
+const transcriptsForm = useForm({
+    transcripts_enabled: page.props.features?.transcripts_enabled ?? false,
+});
+
 function toggleAttendance() {
     attendanceForm.attendance_enabled = !attendanceForm.attendance_enabled;
     attendanceForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
@@ -85,6 +89,11 @@ function toggleAcademySetup() {
 function toggleCustomFields() {
     customFieldsForm.custom_fields_enabled = !customFieldsForm.custom_fields_enabled;
     customFieldsForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
+}
+
+function toggleTranscripts() {
+    transcriptsForm.transcripts_enabled = !transcriptsForm.transcripts_enabled;
+    transcriptsForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
 }
 
 const features = [
@@ -159,6 +168,14 @@ const features = [
         enabled: () => page.props.features?.custom_fields_enabled,
         processing: () => customFieldsForm.processing,
         toggle: toggleCustomFields,
+    },
+    {
+        key: 'transcripts',
+        label: 'Transcripts',
+        description: 'Enable the Transcripts Quick Action card and transcript generation for students.',
+        enabled: () => page.props.features?.transcripts_enabled,
+        processing: () => transcriptsForm.processing,
+        toggle: toggleTranscripts,
     },
 ];
 </script>

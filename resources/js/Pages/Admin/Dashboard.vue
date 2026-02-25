@@ -140,6 +140,7 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
+                            v-if="$page.props.features?.transcripts_enabled"
                             title="Transcripts"
                             description="Generate official and unofficial student transcripts"
                             icon="📜"

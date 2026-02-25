@@ -49,6 +49,7 @@ class AdminController extends Controller
             'staff_training_enabled'  => ['sometimes', 'boolean'],
             'academy_setup_enabled'   => ['sometimes', 'boolean'],
             'custom_fields_enabled'   => ['sometimes', 'boolean'],
+            'transcripts_enabled'     => ['sometimes', 'boolean'],
         ]);
 
         if (array_key_exists('attendance_enabled', $validated)) {
@@ -85,6 +86,10 @@ class AdminController extends Controller
 
         if (array_key_exists('custom_fields_enabled', $validated)) {
             Setting::set('feature_custom_fields_enabled', $validated['custom_fields_enabled'] ? '1' : '0', 'boolean');
+        }
+
+        if (array_key_exists('transcripts_enabled', $validated)) {
+            Setting::set('feature_transcripts_enabled', $validated['transcripts_enabled'] ? '1' : '0', 'boolean');
         }
 
         return back()->with('success', 'Feature settings updated.');

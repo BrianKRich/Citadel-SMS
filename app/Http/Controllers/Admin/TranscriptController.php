@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\Student;
 use App\Services\TranscriptService;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class TranscriptController extends Controller
      */
     public function index(Request $request)
     {
+        abort_if(Setting::get('feature_transcripts_enabled') !== '1', 403);
         $students = Student::active()
             ->when($request->input('search'), fn ($q, $s) => $q->search($s))
             ->orderBy('last_name')
@@ -37,6 +39,7 @@ class TranscriptController extends Controller
      */
     public function show(Request $request, Student $student)
     {
+        abort_if(Setting::get('feature_transcripts_enabled') !== '1', 403);
         $official = $request->boolean('official');
 
         $data = $this->transcriptService->getData($student, $official);
