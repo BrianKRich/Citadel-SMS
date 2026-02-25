@@ -92,8 +92,10 @@ function destroy() {
                         </div>
 
                         <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Credits</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ course.credits ?? '—' }}</dd>
+                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Grading</dt>
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                {{ course.grading_type === 'pass_fail' ? 'Pass / Fail' : ('Credit System' + (course.credits ? ' — ' + course.credits + ' credits' : '')) }}
+                            </dd>
                         </div>
 
                         <div v-if="course.description" class="border-t border-gray-200 dark:border-gray-700 pt-4 sm:col-span-2 lg:col-span-3">
@@ -103,15 +105,15 @@ function destroy() {
                     </dl>
                 </Card>
 
-                <!-- Card 2: Cohort Courses -->
+                <!-- Card 2: Classes Using This Course -->
                 <Card>
-                    <PageHeader title="Cohort Courses Using This Course" />
+                    <PageHeader title="Classes Using This Course" />
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-800">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Class / Cohort</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Class</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Instructor</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Enrolled / Capacity</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</th>
@@ -125,7 +127,7 @@ function destroy() {
                                     class="hover:bg-gray-50 dark:hover:bg-gray-800"
                                 >
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        Class {{ cc.class?.class_number ?? '—' }}
+                                        {{ cc.class?.name ?? ('Class ' + (cc.class?.class_number ?? '—')) }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                                         <span v-if="cc.employee">{{ cc.employee.first_name }} {{ cc.employee.last_name }}</span>
