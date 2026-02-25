@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\ClassModel;
+use App\Models\CohortCourse;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeRole;
@@ -254,5 +256,76 @@ class EmployeeTest extends TestCase
 
         $response->assertRedirect(route('admin.employees.trashed'));
         $this->assertDatabaseMissing('employees', ['id' => $employee->id]);
+    }
+
+    // ── Secondary Role ────────────────────────────────────────────────────────
+
+    public function test_store_accepts_optional_secondary_role_id(): void
+    {
+        $secondaryRole = EmployeeRole::factory()->create();
+        $payload = $this->validPayload(['secondary_role_id' => $secondaryRole->id]);
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.employees.store'), $payload)
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('employees', [
+            'email' => $payload['email'],
+            'secondary_role_id' => $secondaryRole->id,
+        ]);
+    }
+
+    public function test_store_allows_null_secondary_role_id(): void
+    {
+        $payload = $this->validPayload();
+        unset($payload['secondary_role_id']);
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.employees.store'), $payload)
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('employees', [
+            'email' => $payload['email'],
+            'secondary_role_id' => null,
+        ]);
+    }
+
+    public function test_store_validates_secondary_role_id_exists(): void
+    {
+        $payload = $this->validPayload(['secondary_role_id' => 99999]);
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.employees.store'), $payload)
+            ->assertSessionHasErrors(['secondary_role_id']);
+    }
+
+    public function test_update_secondary_role_does_not_unassign_cohort_courses(): void
+    {
+        $employee = Employee::factory()->create();
+
+        $class  = ClassModel::factory()->create();
+        $cohort = $class->cohorts()->first();
+        CohortCourse::factory()->create([
+            'cohort_id'   => $cohort->id,
+            'employee_id' => $employee->id,
+        ]);
+
+        $secondaryRole = EmployeeRole::factory()->create();
+        $payload = $this->validPayload([
+            'email'             => $employee->email,
+            'department_id'     => $employee->department_id,
+            'role_id'           => $employee->role_id,
+            'secondary_role_id' => $secondaryRole->id,
+        ]);
+
+        $this->actingAs($this->admin())
+            ->patch(route('admin.employees.update', $employee), $payload)
+            ->assertRedirect();
+
+        // Cohort course assignment must still point to this employee
+        $this->assertDatabaseHas('cohort_courses', [
+            'cohort_id'   => $cohort->id,
+            'employee_id' => $employee->id,
+        ]);
     }
 }

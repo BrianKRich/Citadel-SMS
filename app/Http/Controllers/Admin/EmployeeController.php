@@ -57,9 +57,11 @@ class EmployeeController extends Controller
     public function create()
     {
         $departments = Department::with('roles')->orderBy('name')->get();
+        $allRoles = EmployeeRole::with('department')->orderBy('name')->get();
 
         return Inertia::render('Admin/Employees/Create', [
             'departments' => $departments,
+            'allRoles' => $allRoles,
             'customFields' => CustomField::forEntity('Employee')->active()->orderBy('sort_order')->get(),
         ]);
     }
@@ -72,6 +74,7 @@ class EmployeeController extends Controller
             'email' => ['required', 'email', 'unique:employees,email'],
             'department_id' => ['required', 'exists:departments,id'],
             'role_id' => ['required', 'exists:employee_roles,id'],
+            'secondary_role_id' => ['nullable', 'exists:employee_roles,id'],
             'phone_area_code' => ['nullable', 'string', 'digits:3'],
             'phone' => ['nullable', 'string', 'digits:7'],
             'date_of_birth' => ['nullable', 'date', 'before:today'],
@@ -119,7 +122,7 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
-        $employee->load(['user', 'department', 'role', 'cohortCourses.course', 'cohortCourses.cohort.class', 'phoneNumbers']);
+        $employee->load(['user', 'department', 'role', 'secondaryRole.department', 'cohortCourses.course', 'cohortCourses.cohort.class', 'phoneNumbers']);
 
         $documentsEnabled      = Setting::get('feature_documents_enabled', '0') === '1';
         $trainingEnabled       = Setting::get('feature_staff_training_enabled', '0') === '1';
@@ -149,10 +152,12 @@ class EmployeeController extends Controller
     public function edit(Employee $employee)
     {
         $departments = Department::with('roles')->orderBy('name')->get();
+        $allRoles = EmployeeRole::with('department')->orderBy('name')->get();
 
         return Inertia::render('Admin/Employees/Edit', [
-            'employee' => $employee->load(['user', 'department', 'role', 'phoneNumbers']),
+            'employee' => $employee->load(['user', 'department', 'role', 'secondaryRole', 'phoneNumbers']),
             'departments' => $departments,
+            'allRoles' => $allRoles,
             'customFields' => CustomField::forEntity('Employee')->orderBy('sort_order')->get(),
         ]);
     }
@@ -165,6 +170,7 @@ class EmployeeController extends Controller
             'email' => ['required', 'email', Rule::unique('employees')->ignore($employee->id)],
             'department_id' => ['required', 'exists:departments,id'],
             'role_id' => ['required', 'exists:employee_roles,id'],
+            'secondary_role_id' => ['nullable', 'exists:employee_roles,id'],
             'phone_area_code' => ['nullable', 'string', 'digits:3'],
             'phone' => ['nullable', 'string', 'digits:7'],
             'date_of_birth' => ['nullable', 'date', 'before:today'],

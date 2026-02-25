@@ -217,6 +217,17 @@ function deleteDocument(doc) {
                                 {{ employee.role?.name ?? 'Not assigned' }}
                             </dd>
                         </div>
+
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Secondary Role</dt>
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                <span v-if="employee.secondary_role">
+                                    {{ employee.secondary_role.name }}
+                                    <span class="text-gray-400 dark:text-gray-500">({{ employee.secondary_role.department?.name }})</span>
+                                </span>
+                                <span v-else class="italic text-gray-400 dark:text-gray-500">None</span>
+                            </dd>
+                        </div>
                     </dl>
                 </Card>
 

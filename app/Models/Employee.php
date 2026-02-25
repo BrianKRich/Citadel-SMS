@@ -25,6 +25,7 @@ class Employee extends Model
         'qualifications',
         'photo',
         'status',
+        'secondary_role_id',
     ];
 
     protected $casts = [
@@ -73,6 +74,11 @@ class Employee extends Model
     public function role(): BelongsTo
     {
         return $this->belongsTo(EmployeeRole::class, 'role_id');
+    }
+
+    public function secondaryRole(): BelongsTo
+    {
+        return $this->belongsTo(EmployeeRole::class, 'secondary_role_id');
     }
 
     public function cohortCourses(): HasMany

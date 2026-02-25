@@ -11,6 +11,7 @@ import { computed, watch } from 'vue';
 
 const props = defineProps({
     departments: Array,
+    allRoles: Array,
     customFields: { type: Array, default: () => [] },
 });
 
@@ -20,6 +21,7 @@ const form = useForm({
     email: '',
     department_id: '',
     role_id: '',
+    secondary_role_id: '',
     phone_area_code: '',
     phone: '',
     date_of_birth: '',
@@ -231,6 +233,24 @@ function submit() {
                                     </p>
                                     <p v-if="form.errors.role_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
                                         {{ form.errors.role_id }}
+                                    </p>
+                                </div>
+
+                                <div class="sm:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Secondary Role <span class="text-xs font-normal text-gray-400">(optional)</span>
+                                    </label>
+                                    <select
+                                        v-model="form.secondary_role_id"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                                    >
+                                        <option value="">— None —</option>
+                                        <option v-for="r in allRoles" :key="r.id" :value="r.id">
+                                            {{ r.name }} ({{ r.department?.name }})
+                                        </option>
+                                    </select>
+                                    <p v-if="form.errors.secondary_role_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                        {{ form.errors.secondary_role_id }}
                                     </p>
                                 </div>
 
