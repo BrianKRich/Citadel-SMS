@@ -73,14 +73,19 @@ class CourseController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'course_code' => ['required', 'string', 'max:255', 'unique:courses,course_code'],
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'credits' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
-            'department' => ['nullable', 'string', 'max:255'],
-            'level' => ['nullable', 'string', 'max:255'],
-            'is_active' => ['boolean'],
+            'course_code'  => ['required', 'string', 'max:255', 'unique:courses,course_code'],
+            'name'         => ['required', 'string', 'max:255'],
+            'description'  => ['nullable', 'string'],
+            'grading_type' => ['required', 'in:credit_system,pass_fail'],
+            'credits'      => ['nullable', 'numeric', 'min:0', 'max:999.99'],
+            'department'   => ['nullable', 'string', 'max:255'],
+            'level'        => ['nullable', 'string', 'max:255'],
+            'is_active'    => ['boolean'],
         ]);
+
+        if ($validated['grading_type'] === 'pass_fail') {
+            $validated['credits'] = null;
+        }
 
         $course = Course::create($validated);
 
@@ -120,14 +125,19 @@ class CourseController extends Controller
     public function update(Request $request, Course $course)
     {
         $validated = $request->validate([
-            'course_code' => ['required', 'string', 'max:255', Rule::unique('courses')->ignore($course->id)],
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'credits' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
-            'department' => ['nullable', 'string', 'max:255'],
-            'level' => ['nullable', 'string', 'max:255'],
-            'is_active' => ['boolean'],
+            'course_code'  => ['required', 'string', 'max:255', Rule::unique('courses')->ignore($course->id)],
+            'name'         => ['required', 'string', 'max:255'],
+            'description'  => ['nullable', 'string'],
+            'grading_type' => ['required', 'in:credit_system,pass_fail'],
+            'credits'      => ['nullable', 'numeric', 'min:0', 'max:999.99'],
+            'department'   => ['nullable', 'string', 'max:255'],
+            'level'        => ['nullable', 'string', 'max:255'],
+            'is_active'    => ['boolean'],
         ]);
+
+        if ($validated['grading_type'] === 'pass_fail') {
+            $validated['credits'] = null;
+        }
 
         $course->update($validated);
 

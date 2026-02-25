@@ -15,6 +15,7 @@ class Course extends Model
         'name',
         'description',
         'credits',
+        'grading_type',
         'department',
         'level',
         'is_active',

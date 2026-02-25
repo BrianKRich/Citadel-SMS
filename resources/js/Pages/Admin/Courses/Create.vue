@@ -13,13 +13,14 @@ const props = defineProps({
 });
 
 const form = useForm({
-    course_code: '',
-    name: '',
-    description: '',
-    credits: '',
-    department: '',
-    level: '',
-    is_active: true,
+    course_code:         '',
+    name:                '',
+    description:         '',
+    grading_type:        '',
+    credits:             '',
+    department:          '',
+    level:               '',
+    is_active:           true,
     custom_field_values: {},
 });
 
@@ -102,8 +103,26 @@ function submit() {
                             <p v-if="form.errors.description" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.description }}</p>
                         </div>
 
-                        <!-- Credits -->
+                        <!-- Grading System -->
                         <div>
+                            <label for="grading_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Grading System <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="grading_type"
+                                v-model="form.grading_type"
+                                required
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                            >
+                                <option value="" disabled>Select grading system...</option>
+                                <option value="credit_system">Credit System</option>
+                                <option value="pass_fail">Pass / Fail</option>
+                            </select>
+                            <p v-if="form.errors.grading_type" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.grading_type }}</p>
+                        </div>
+
+                        <!-- Credits (Credit System only) -->
+                        <div v-if="form.grading_type === 'credit_system'">
                             <label for="credits" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Credits
                             </label>
