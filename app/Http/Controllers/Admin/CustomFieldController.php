@@ -4,14 +4,22 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CustomField;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class CustomFieldController extends Controller
 {
+    private function requireEnabled(): void
+    {
+        abort_if(Setting::get('feature_custom_fields_enabled', '0') !== '1', 403);
+    }
+
     public function index()
     {
+        $this->requireEnabled();
+
         $fields = CustomField::orderBy('entity_type')->orderBy('sort_order')->orderBy('label')->get();
 
         return Inertia::render('Admin/CustomFields/Index', [
@@ -21,11 +29,14 @@ class CustomFieldController extends Controller
 
     public function create()
     {
+        $this->requireEnabled();
+
         return Inertia::render('Admin/CustomFields/Create');
     }
 
     public function store(Request $request)
     {
+        $this->requireEnabled();
         $validated = $request->validate([
             'entity_type' => ['required', 'string', 'in:Student,Employee,Course,Class,Enrollment'],
             'label' => ['required', 'string', 'max:255'],
@@ -58,6 +69,8 @@ class CustomFieldController extends Controller
 
     public function edit(CustomField $customField)
     {
+        $this->requireEnabled();
+
         return Inertia::render('Admin/CustomFields/Edit', [
             'field' => $customField,
         ]);
@@ -65,6 +78,8 @@ class CustomFieldController extends Controller
 
     public function update(Request $request, CustomField $customField)
     {
+        $this->requireEnabled();
+
         $validated = $request->validate([
             'entity_type' => ['required', 'string', 'in:Student,Employee,Course,Class,Enrollment'],
             'label' => ['required', 'string', 'max:255'],
@@ -100,6 +115,8 @@ class CustomFieldController extends Controller
 
     public function destroy(CustomField $customField)
     {
+        $this->requireEnabled();
+
         $label = $customField->label;
         $valueCount = $customField->values()->count();
         $customField->delete();
@@ -110,6 +127,8 @@ class CustomFieldController extends Controller
 
     public function toggle(CustomField $customField)
     {
+        $this->requireEnabled();
+
         $customField->update(['is_active' => !$customField->is_active]);
 
         return back();

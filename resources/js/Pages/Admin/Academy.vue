@@ -61,9 +61,9 @@ const quickActions = [
         disabled: false,
     },
     {
-        title: 'Enrollment Tracks',
-        description: 'Configure student enrollment tracks and pathways.',
-        icon: '🗺️',
+        title: 'Permissions',
+        description: 'Configure data access controls and permissions for roles in each department.',
+        icon: '🔐',
         href: '#',
         color: 'accent',
         disabled: true,

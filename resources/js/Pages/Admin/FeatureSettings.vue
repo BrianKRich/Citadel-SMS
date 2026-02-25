@@ -38,6 +38,10 @@ const academySetupForm = useForm({
     academy_setup_enabled: page.props.features?.academy_setup_enabled ?? false,
 });
 
+const customFieldsForm = useForm({
+    custom_fields_enabled: page.props.features?.custom_fields_enabled ?? false,
+});
+
 function toggleAttendance() {
     attendanceForm.attendance_enabled = !attendanceForm.attendance_enabled;
     attendanceForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
@@ -76,6 +80,11 @@ function toggleStaffTraining() {
 function toggleAcademySetup() {
     academySetupForm.academy_setup_enabled = !academySetupForm.academy_setup_enabled;
     academySetupForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
+}
+
+function toggleCustomFields() {
+    customFieldsForm.custom_fields_enabled = !customFieldsForm.custom_fields_enabled;
+    customFieldsForm.post(route('admin.feature-settings.update'), { preserveScroll: true });
 }
 
 const features = [
@@ -143,6 +152,14 @@ const features = [
         processing: () => academySetupForm.processing,
         toggle: toggleAcademySetup,
     },
+    {
+        key: 'custom_fields',
+        label: 'Custom Fields',
+        description: 'Define additional fields for students, employees, courses, classes, and enrollments.',
+        enabled: () => page.props.features?.custom_fields_enabled,
+        processing: () => customFieldsForm.processing,
+        toggle: toggleCustomFields,
+    },
 ];
 </script>
 
@@ -157,7 +174,7 @@ const features = [
         </template>
 
         <div class="py-12">
-            <div class="mx-auto max-w-3xl sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
                 <!-- Flash -->
                 <div v-if="$page.props.flash?.success" class="mb-6">
                     <Alert type="success" :message="$page.props.flash.success" />
@@ -168,52 +185,50 @@ const features = [
                     description="Enable or disable application features. Changes take effect immediately for all users."
                 />
 
-                <div class="mt-6 overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
-                    <ul class="divide-y divide-gray-200 dark:divide-gray-700">
-                        <li
-                            v-for="feature in features"
-                            :key="feature.key"
-                            class="flex items-center justify-between px-6 py-5"
-                        >
-                            <div class="flex-1 pr-8">
-                                <div class="flex items-center gap-3">
-                                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ feature.label }}
-                                    </p>
-                                    <span
-                                        :class="[
-                                            feature.enabled()
-                                                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                                                : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
-                                            'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium'
-                                        ]"
-                                    >
-                                        {{ feature.enabled() ? 'Enabled' : 'Disabled' }}
-                                    </span>
-                                </div>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ feature.description }}
+                <div class="mt-6 grid gap-4 sm:grid-cols-2">
+                    <div
+                        v-for="feature in features"
+                        :key="feature.key"
+                        class="flex items-start justify-between rounded-lg bg-white p-5 shadow dark:bg-gray-800"
+                    >
+                        <div class="flex-1 pr-6">
+                            <div class="flex items-center gap-2">
+                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {{ feature.label }}
                                 </p>
-                            </div>
-                            <button
-                                @click="feature.toggle()"
-                                :disabled="feature.processing()"
-                                :class="[
-                                    feature.enabled()
-                                        ? 'bg-primary-600 hover:bg-primary-700'
-                                        : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600',
-                                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50'
-                                ]"
-                            >
                                 <span
                                     :class="[
-                                        feature.enabled() ? 'translate-x-5' : 'translate-x-0',
-                                        'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
+                                        feature.enabled()
+                                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                            : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+                                        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium'
                                     ]"
-                                />
-                            </button>
-                        </li>
-                    </ul>
+                                >
+                                    {{ feature.enabled() ? 'Enabled' : 'Disabled' }}
+                                </span>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                {{ feature.description }}
+                            </p>
+                        </div>
+                        <button
+                            @click="feature.toggle()"
+                            :disabled="feature.processing()"
+                            :class="[
+                                feature.enabled()
+                                    ? 'bg-primary-600 hover:bg-primary-700'
+                                    : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600',
+                                'relative mt-0.5 inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50'
+                            ]"
+                        >
+                            <span
+                                :class="[
+                                    feature.enabled() ? 'translate-x-5' : 'translate-x-0',
+                                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
+                                ]"
+                            />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

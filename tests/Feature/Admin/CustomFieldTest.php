@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\CustomField;
 use App\Models\CustomFieldValue;
+use App\Models\Setting;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,6 +18,11 @@ class CustomFieldTest extends TestCase
     private function admin(): User
     {
         return User::factory()->create(['role' => 'admin']);
+    }
+
+    private function enableCustomFields(): void
+    {
+        Setting::set('feature_custom_fields_enabled', '1', 'boolean');
     }
 
     // -----------------------------------------------------------------------
@@ -51,6 +57,7 @@ class CustomFieldTest extends TestCase
 
     public function test_index_renders_with_no_fields(): void
     {
+        $this->enableCustomFields();
         $this->actingAs($this->admin())
             ->get(route('admin.custom-fields.index'))
             ->assertInertia(fn (Assert $page) => $page
@@ -61,6 +68,7 @@ class CustomFieldTest extends TestCase
 
     public function test_index_lists_all_fields(): void
     {
+        $this->enableCustomFields();
         CustomField::factory()->count(3)->create(['entity_type' => 'Student']);
         CustomField::factory()->count(2)->create(['entity_type' => 'Employee']);
 
@@ -74,6 +82,7 @@ class CustomFieldTest extends TestCase
 
     public function test_create_field(): void
     {
+        $this->enableCustomFields();
         $this->actingAs($this->admin())
             ->post(route('admin.custom-fields.store'), [
                 'entity_type' => 'Student',
@@ -95,6 +104,7 @@ class CustomFieldTest extends TestCase
 
     public function test_create_select_field_with_options(): void
     {
+        $this->enableCustomFields();
         $this->actingAs($this->admin())
             ->post(route('admin.custom-fields.store'), [
                 'entity_type' => 'Student',
@@ -111,6 +121,7 @@ class CustomFieldTest extends TestCase
 
     public function test_update_field(): void
     {
+        $this->enableCustomFields();
         $field = CustomField::factory()->create([
             'entity_type' => 'Student',
             'label' => 'Old Label',
@@ -136,6 +147,7 @@ class CustomFieldTest extends TestCase
 
     public function test_destroy_field_and_cascades_values(): void
     {
+        $this->enableCustomFields();
         $field = CustomField::factory()->create(['entity_type' => 'Student']);
         CustomFieldValue::create([
             'custom_field_id' => $field->id,
@@ -160,6 +172,7 @@ class CustomFieldTest extends TestCase
 
     public function test_toggle_deactivates_active_field(): void
     {
+        $this->enableCustomFields();
         $field = CustomField::factory()->create(['is_active' => true]);
 
         $this->actingAs($this->admin())
@@ -171,6 +184,7 @@ class CustomFieldTest extends TestCase
 
     public function test_toggle_activates_inactive_field(): void
     {
+        $this->enableCustomFields();
         $field = CustomField::factory()->create(['is_active' => false]);
 
         $this->actingAs($this->admin())
@@ -186,6 +200,7 @@ class CustomFieldTest extends TestCase
 
     public function test_store_requires_entity_type(): void
     {
+        $this->enableCustomFields();
         $this->actingAs($this->admin())
             ->post(route('admin.custom-fields.store'), [
                 'label' => 'Test',
@@ -196,6 +211,7 @@ class CustomFieldTest extends TestCase
 
     public function test_store_requires_label(): void
     {
+        $this->enableCustomFields();
         $this->actingAs($this->admin())
             ->post(route('admin.custom-fields.store'), [
                 'entity_type' => 'Student',
@@ -206,6 +222,7 @@ class CustomFieldTest extends TestCase
 
     public function test_store_requires_options_for_select_type(): void
     {
+        $this->enableCustomFields();
         $this->actingAs($this->admin())
             ->post(route('admin.custom-fields.store'), [
                 'entity_type' => 'Student',
@@ -218,6 +235,7 @@ class CustomFieldTest extends TestCase
 
     public function test_store_rejects_invalid_entity_type(): void
     {
+        $this->enableCustomFields();
         $this->actingAs($this->admin())
             ->post(route('admin.custom-fields.store'), [
                 'entity_type' => 'InvalidModel',
@@ -233,6 +251,7 @@ class CustomFieldTest extends TestCase
 
     public function test_name_generated_from_label(): void
     {
+        $this->enableCustomFields();
         $this->actingAs($this->admin())
             ->post(route('admin.custom-fields.store'), [
                 'entity_type' => 'Student',
@@ -245,6 +264,7 @@ class CustomFieldTest extends TestCase
 
     public function test_name_collision_appends_suffix(): void
     {
+        $this->enableCustomFields();
         // Create first field with name 'has_iep'
         CustomField::factory()->create([
             'entity_type' => 'Student',
@@ -266,6 +286,7 @@ class CustomFieldTest extends TestCase
 
     public function test_name_unique_per_entity_type_not_globally(): void
     {
+        $this->enableCustomFields();
         // 'notes' field for Student
         CustomField::factory()->create([
             'entity_type' => 'Student',

@@ -18,7 +18,7 @@ class CourseFactory extends Factory
         $num = fake()->numberBetween(100, 499);
 
         return [
-            'course_code' => fake()->unique()->regexify("{$dept}-{$num}"),
+            'course_code' => $dept . '-' . $num . '-' . strtoupper(substr(uniqid(), -4)),
             'name' => fake()->words(3, true),
             'description' => fake()->sentence(),
             'credits' => fake()->randomElement([1.00, 2.00, 3.00, 4.00]),

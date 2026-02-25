@@ -203,6 +203,7 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
+                            v-if="$page.props.features?.custom_fields_enabled"
                             title="Custom Fields"
                             description="Define additional fields for students, courses, and more"
                             icon="🏷️"

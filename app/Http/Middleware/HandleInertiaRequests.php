@@ -44,6 +44,7 @@ class HandleInertiaRequests extends Middleware
                 'documents_enabled'       => Setting::get('feature_documents_enabled', '0') === '1',
                 'staff_training_enabled'  => Setting::get('feature_staff_training_enabled', '0') === '1',
                 'academy_setup_enabled'   => Setting::get('feature_academy_setup_enabled', '0') === '1',
+                'custom_fields_enabled'   => Setting::get('feature_custom_fields_enabled', '0') === '1',
             ],
         ];
     }
