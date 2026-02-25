@@ -2133,6 +2133,47 @@ No new tests added. All 368 pre-existing tests continue to pass.
 
 ---
 
+## Session: UX Hardening & Course Grading Type
+
+**Date:** February 25, 2026
+**Commits:** `e341382` (Pass/Fail grading), prior commits in session (role visibility, zebra striping, hire date, AY status, class index default)
+
+### What Was Built
+
+#### Academic Year Status Enum
+- Replaced `is_current` boolean on `academic_years` with `status` varchar: `forming` | `current` | `completed`
+- Migration: `2026_02_25_220000_add_status_to_academic_years.php` — data migrated (`is_current=true` → `'current'`, else `'forming'`), `is_current` column dropped
+- `AcademicYear::scopeCurrent()` updated to `where('status', 'current')`
+- `AcademicYear::setCurrent()` sets all to `'forming'`, then this record to `'current'`
+- Colour-coded status badge on Index and Show pages (green = current, yellow = forming, gray = completed)
+- Create form: `<select>` dropdown with `<option disabled>Select Status</option>` default
+- Edit form: `<select>` pre-populated from `academicYear.status`
+- Classes Index academic year filter defaults to current year
+
+#### Pass/Fail Grading System on Courses
+- Added `grading_type` varchar column (default `'credit_system'`) to `courses` table via migration `2026_02_25_213911_add_grading_type_to_courses_table.php`
+- `CourseController::store()` and `update()` validate `grading_type: required|in:credit_system,pass_fail`; clear `credits` to null when `pass_fail`
+- **Create.vue** and **Edit.vue**: Grading System `<select>` (Credit System / Pass / Fail) placed before Credits; Credits field wrapped in `v-if="form.grading_type === 'credit_system'"`
+- **Index.vue**: Credits column shows **P/F** for pass_fail courses; mobile card line uses same logic
+
+#### Role-Based Dashboard Card Visibility
+- `user` role: User Management, Employee Management, and Academy Setup quick-action cards hidden via `v-if` on `$page.props.auth.user.role`
+- `site_admin` only: Department Management card in Academy Setup filtered via `usePage()` + computed `visibleActions`
+- ClassController, DocumentController, TrainingRecordController: removed `abort_unless(isAdmin())` from index/show so `user` role can view without 403
+
+#### Zebra-Striped Index Tables
+- Users, Employees, Students index `<tr>` elements: `odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800/900 dark:even:bg-gray-700/800 hover:bg-gray-100`
+
+#### Hire Date — Optional for Self-Registered Users
+- `UserManagementController::update()`: `hire_date` changed from `required` to `nullable`; Employee `hire_date` only updated if a value is provided
+- `UserForm.vue`: `hire_date` input not required on edit; label shows hint text
+
+### Tests
+
+No new tests added. All 368 pre-existing tests continue to pass.
+
+---
+
 ## Future Ideas & Enhancements
 
 The following ideas are captured for long-term consideration. They are not yet assigned to a phase or issue.

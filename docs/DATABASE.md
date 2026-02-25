@@ -1,7 +1,7 @@
 # Student Management System - Database Architecture
 
-**Version:** 3.2 (Phase 0-3F + 4 + Student Notes)
-**Last Updated:** February 23, 2026
+**Version:** 3.3 (Phase 0-3F + 4 + Student Notes + Academic Year Status + Course Grading Type)
+**Last Updated:** February 25, 2026
 **Database:** PostgreSQL 14+
 
 ---
@@ -189,20 +189,21 @@ Academic year definitions (e.g., 2025-2026).
 | name | VARCHAR(255) | NOT NULL | Year name (e.g., "2025-2026") |
 | start_date | DATE | NOT NULL | Academic year start date |
 | end_date | DATE | NOT NULL | Academic year end date |
-| is_current | BOOLEAN | DEFAULT false | Current year flag |
+| status | VARCHAR(255) | DEFAULT 'forming' | forming, current, completed |
 | created_at | TIMESTAMP | | Creation timestamp |
 | updated_at | TIMESTAMP | | Last update timestamp |
 
 **Relationships:**
-- Has many Terms
+- Has many Classes
 
 **Indexes:**
 - PRIMARY KEY (id)
-- INDEX (is_current)
+- INDEX (status)
 
 **Business Rules:**
-- Only one academic year can have is_current = true at a time
-- Managed by seeder and controller
+- Only one academic year can have status = 'current' at a time
+- `AcademicYear::setCurrent()` sets all years to 'forming', then this one to 'current'
+- `scopeCurrent()` filters by `status = 'current'`
 
 ---
 
@@ -243,7 +244,8 @@ Course catalog (course definitions, not class instances).
 | course_code | VARCHAR(255) | UNIQUE, NOT NULL | Unique code (e.g., MATH-101) |
 | name | VARCHAR(255) | NOT NULL | Course name |
 | description | TEXT | NULLABLE | Course description |
-| credits | DECIMAL(5,2) | NULLABLE | Credit hours |
+| credits | DECIMAL(5,2) | NULLABLE | Credit hours (null for pass_fail courses) |
+| grading_type | VARCHAR(255) | DEFAULT 'credit_system' | credit_system, pass_fail |
 | department | VARCHAR(255) | NULLABLE | Department (e.g., Mathematics) |
 | level | VARCHAR(255) | NULLABLE | Level (Beginner, Intermediate, Advanced) |
 | is_active | BOOLEAN | DEFAULT true | Active status |
@@ -886,6 +888,10 @@ documents (polymorphic)
 **Session (February 23, 2026): Student Notes & Operations Dept**
 - **2026_02_23_240000_create_student_notes_table.php** — Student notes with department scoping
 - **2026_02_23_250000_seed_operations_department.php** — Operations department + 5 roles
+
+**Session (February 25, 2026): Academic Year Status & Course Grading Type**
+- **2026_02_25_213911_add_grading_type_to_courses_table.php** — Adds `grading_type` varchar ('credit_system' | 'pass_fail') to courses; defaults to 'credit_system'
+- **2026_02_25_220000_add_status_to_academic_years.php** — Replaces `is_current` boolean with `status` varchar ('forming' | 'current' | 'completed'); migrates existing data
 
 ### Pending Migrations (Future Phases)
 

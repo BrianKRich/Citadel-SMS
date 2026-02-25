@@ -102,7 +102,7 @@ const props = defineProps({
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ course.credits || 'N/A' }}
+                                            {{ course.grading_type === 'pass_fail' ? 'P/F' : (course.credits || 'N/A') }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
@@ -145,7 +145,7 @@ const props = defineProps({
                                         {{ course.course_code }}
                                     </p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        {{ course.department || 'N/A' }} • {{ course.credits || 'N/A' }} credits • {{ course.level || 'N/A' }}
+                                        {{ course.department || 'N/A' }} • {{ course.grading_type === 'pass_fail' ? 'P/F' : ((course.credits || 'N/A') + ' credits') }} • {{ course.level || 'N/A' }}
                                     </p>
                                 </div>
                             </div>

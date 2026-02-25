@@ -31,7 +31,7 @@ A full-stack web application for managing student information, academic records,
 - **Students:** full profile with auto-ID (`STU-YYYY-###`), demographics, status tracking, photo upload, soft deletes (7-year retention), restore UI
 - **Guardians:** linked to students with `is_primary` flag
 - **Employees:** full profile with auto-ID (`EMP-YYYY-###`), department/role assignment, soft deletes, restore UI
-- **Courses:** unique course codes, department/level organization, credit tracking
+- **Courses:** unique course codes, department/level organization, credit tracking; grading type per course: **Credit System** (with credits field) or **Pass/Fail** (displays P/F)
 - **Departments & Employee Roles:** configurable reference data
 - Polymorphic phone numbers shared by Students and Employees
 
@@ -128,6 +128,11 @@ A full-stack web application for managing student information, academic records,
 - **Class Layout hub**: dashboard navigation hub grouping Academic Years, Class Management, and Course Catalog under a single card
 - **Course Catalog delete**: delete button added to the Courses index (desktop table + mobile card)
 - **Enrollment date format**: all enrollment date displays standardised to `MM-DD-YYYY` (Students index, Students show, Enrollment index, CohortCourse show)
+- **Academic Year status**: replaced `is_current` boolean with `status` enum (`forming` / `current` / `completed`); colour-coded badge on index and show pages; dropdown on create/edit
+- **Pass/Fail grading**: courses carry a `grading_type` (`credit_system` | `pass_fail`); Credits field hidden when Pass/Fail is selected; index displays **P/F** in the Credits column
+- **Role-based card visibility**: `user` role sees only profile — User Management, Employee Management, and Academy Setup cards hidden on dashboard; Department Management visible to `site_admin` only
+- **Zebra-striped tables**: alternating row shading on Users, Employees, and Students index pages
+- **Hire date optional**: self-registered users get a `joined` date from `created_at`; Employee `hire_date` remains null until manually set
 
 ### Cross-Cutting
 - **Breadcrumb navigation** on all admin child pages
@@ -346,6 +351,6 @@ The frontend build runs on GitHub's runner (7GB RAM) to avoid memory limits on t
 
 ---
 
-**Version:** 2.2.0
-**Last Updated:** February 24, 2026
+**Version:** 2.3.0
+**Last Updated:** February 25, 2026
 **Status:** Active Development
