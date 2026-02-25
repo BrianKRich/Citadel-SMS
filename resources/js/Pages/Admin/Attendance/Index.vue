@@ -7,7 +7,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
-    cohortCourses: Object,
+    classCourses: Object,
     filters: Object,
 });
 
@@ -53,7 +53,7 @@ function getStatusBadgeClass(status) {
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                         <PageHeader
                             title="Attendance"
-                            :description="`Select a cohort course to take or view attendance. ${cohortCourses.total} cohort course(s) total.`"
+                            :description="`Select a course assignment to take or view attendance. ${classCourses.total} course assignment(s) total.`"
                         />
                     </div>
 
@@ -62,7 +62,7 @@ function getStatusBadgeClass(status) {
                         <input
                             v-model="search"
                             type="text"
-                            placeholder="Search cohort courses..."
+                            placeholder="Search course assignments..."
                             @keyup.enter="applySearch"
                             class="block w-full max-w-xs rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
                         />
@@ -80,14 +80,14 @@ function getStatusBadgeClass(status) {
                             <thead class="bg-gray-50 dark:bg-gray-800">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Course</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Class / Cohort</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Class</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Instructor</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Enrolled</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                <tr v-for="cc in cohortCourses.data" :key="cc.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <tr v-for="cc in classCourses.data" :key="cc.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                     <td class="px-6 py-4">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                             {{ cc.course?.name || 'N/A' }}
@@ -97,7 +97,7 @@ function getStatusBadgeClass(status) {
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        Class {{ cc.cohort?.class?.class_number }} / {{ cc.cohort?.name }}
+                                        Class {{ cc.class?.class_number ?? '—' }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                         {{ cc.employee ? `${cc.employee.first_name} ${cc.employee.last_name}` : 'N/A' }}
@@ -120,9 +120,9 @@ function getStatusBadgeClass(status) {
                                         </Link>
                                     </td>
                                 </tr>
-                                <tr v-if="cohortCourses.data.length === 0">
+                                <tr v-if="classCourses.data.length === 0">
                                     <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-                                        No cohort courses found.
+                                        No course assignments found.
                                     </td>
                                 </tr>
                             </tbody>
@@ -132,7 +132,7 @@ function getStatusBadgeClass(status) {
                     <!-- Mobile Card View -->
                     <div class="md:hidden space-y-4">
                         <div
-                            v-for="cc in cohortCourses.data"
+                            v-for="cc in classCourses.data"
                             :key="cc.id"
                             class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm"
                         >
@@ -142,7 +142,7 @@ function getStatusBadgeClass(status) {
                                         {{ cc.course?.name || 'N/A' }}
                                     </h3>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                                        Class {{ cc.cohort?.class?.class_number }} / {{ cc.cohort?.name }}
+                                        Class {{ cc.class?.class_number ?? '—' }}
                                     </p>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">
                                         {{ cc.employee ? `${cc.employee.first_name} ${cc.employee.last_name}` : 'N/A' }}
@@ -167,24 +167,24 @@ function getStatusBadgeClass(status) {
                                 </Link>
                             </div>
                         </div>
-                        <div v-if="cohortCourses.data.length === 0" class="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
-                            No cohort courses found.
+                        <div v-if="classCourses.data.length === 0" class="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+                            No course assignments found.
                         </div>
                     </div>
 
                     <!-- Pagination -->
-                    <div v-if="cohortCourses.links && cohortCourses.links.length > 3" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 sm:px-6">
+                    <div v-if="classCourses.links && classCourses.links.length > 3" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 sm:px-6">
                         <div class="flex flex-1 justify-between sm:hidden">
                             <Link
-                                v-if="cohortCourses.prev_page_url"
-                                :href="cohortCourses.prev_page_url"
+                                v-if="classCourses.prev_page_url"
+                                :href="classCourses.prev_page_url"
                                 class="relative inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                             >
                                 Previous
                             </Link>
                             <Link
-                                v-if="cohortCourses.next_page_url"
-                                :href="cohortCourses.next_page_url"
+                                v-if="classCourses.next_page_url"
+                                :href="classCourses.next_page_url"
                                 class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                             >
                                 Next
@@ -193,16 +193,16 @@ function getStatusBadgeClass(status) {
                         <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                             <p class="text-sm text-gray-700 dark:text-gray-300">
                                 Showing
-                                <span class="font-medium">{{ cohortCourses.from }}</span>
+                                <span class="font-medium">{{ classCourses.from }}</span>
                                 to
-                                <span class="font-medium">{{ cohortCourses.to }}</span>
+                                <span class="font-medium">{{ classCourses.to }}</span>
                                 of
-                                <span class="font-medium">{{ cohortCourses.total }}</span>
-                                cohort courses
+                                <span class="font-medium">{{ classCourses.total }}</span>
+                                course assignments
                             </p>
                             <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
                                 <Link
-                                    v-for="link in cohortCourses.links"
+                                    v-for="link in classCourses.links"
                                     :key="link.label"
                                     :href="link.url"
                                     :class="[

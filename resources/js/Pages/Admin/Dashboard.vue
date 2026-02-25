@@ -131,7 +131,7 @@ const props = defineProps({
                         <AdminActionCard
                             v-if="$page.props.features?.report_cards_enabled"
                             title="Report Cards"
-                            description="View and download per-cohort report cards for students"
+                            description="View and download per-class report cards for students"
                             icon="📄"
                             :href="route('admin.report-cards.index')"
                             color="primary"

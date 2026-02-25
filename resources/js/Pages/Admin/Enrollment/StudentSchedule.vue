@@ -93,24 +93,23 @@
                                     class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
                                 >
                                     <td class="px-4 py-3 text-sm font-mono font-medium text-gray-900 dark:text-gray-100">
-                                        {{ enrollment.cohortCourse?.course?.course_code }}
+                                        {{ enrollment.classCourse?.course?.course_code }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ enrollment.cohortCourse?.course?.name }}
+                                        {{ enrollment.classCourse?.course?.name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        Class {{ enrollment.cohortCourse?.cohort?.class?.class_number }}
-                                        / {{ enrollment.cohortCourse?.cohort?.name }}
+                                        Class {{ enrollment.classCourse?.class?.class_number ?? '—' }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        {{ enrollment.cohortCourse?.employee?.first_name }} {{ enrollment.cohortCourse?.employee?.last_name }}
+                                        {{ enrollment.classCourse?.employee?.first_name }} {{ enrollment.classCourse?.employee?.last_name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        {{ enrollment.cohortCourse?.room || '—' }}
+                                        {{ enrollment.classCourse?.room || '—' }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        <template v-if="enrollment.cohortCourse?.schedule?.length">
-                                            <div v-for="(slot, i) in enrollment.cohortCourse.schedule" :key="i" class="whitespace-nowrap">
+                                        <template v-if="enrollment.classCourse?.schedule?.length">
+                                            <div v-for="(slot, i) in enrollment.classCourse.schedule" :key="i" class="whitespace-nowrap">
                                                 {{ formatScheduleSlot(slot) }}
                                             </div>
                                         </template>
@@ -133,27 +132,27 @@
                         >
                             <div class="flex items-start justify-between gap-2">
                                 <p class="text-sm font-mono font-medium text-gray-900 dark:text-gray-100">
-                                    {{ enrollment.cohortCourse?.course?.course_code }}
+                                    {{ enrollment.classCourse?.course?.course_code }}
                                 </p>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">
-                                    Class {{ enrollment.cohortCourse?.cohort?.class?.class_number }}
+                                    Class {{ enrollment.classCourse?.class?.class_number }}
                                 </span>
                             </div>
                             <p class="text-sm text-gray-900 dark:text-gray-100">
-                                {{ enrollment.cohortCourse?.course?.name }}
+                                {{ enrollment.classCourse?.course?.name }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Cohort: {{ enrollment.cohortCourse?.cohort?.name }}
-                                <template v-if="enrollment.cohortCourse?.room">
-                                    &bull; Room: {{ enrollment.cohortCourse.room }}
+                                Class {{ enrollment.classCourse?.class?.class_number ?? '—' }}
+                                <template v-if="enrollment.classCourse?.room">
+                                    &bull; Room: {{ enrollment.classCourse.room }}
                                 </template>
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Instructor: {{ enrollment.cohortCourse?.employee?.first_name }} {{ enrollment.cohortCourse?.employee?.last_name }}
+                                Instructor: {{ enrollment.classCourse?.employee?.first_name }} {{ enrollment.classCourse?.employee?.last_name }}
                             </p>
                             <div class="text-xs text-gray-500 dark:text-gray-400">
-                                <template v-if="enrollment.cohortCourse?.schedule?.length">
-                                    <div v-for="(slot, i) in enrollment.cohortCourse.schedule" :key="i">
+                                <template v-if="enrollment.classCourse?.schedule?.length">
+                                    <div v-for="(slot, i) in enrollment.classCourse.schedule" :key="i">
                                         {{ formatScheduleSlot(slot) }}
                                     </div>
                                 </template>

@@ -1,11 +1,9 @@
 # Open Issues — Decisions Needed
 
 ## Issue #1: Course Assignments Navigation
-**Status:** Resolved — February 24, 2026
+**Status:** Updated — February 25, 2026
 
-Course Assignments (`/admin/cohort-courses`) remains accessible from the Class Show page. The new **Class Layout** hub (`/admin/class-layout`) consolidates Academic Years, Class Management, and Course Catalog under one navigation card on the Dashboard. Course Assignments are reachable via Class Layout → Class Management → Class Show → cohort course rows.
-
-If a direct top-level Course Assignments card is needed in the future, it can be added to the Class Layout hub page.
+The Class Show page no longer displays cohort cards or course assignment rows. Course Assignments (`/admin/cohort-courses`) are accessible directly via the Class Layout hub or the Course Catalog. The cohort Alpha/Bravo distinction has been removed from all class management UI; classes now carry a `name` field, `start_date`, and `end_date` directly.
 
 ---
 

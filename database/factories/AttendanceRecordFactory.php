@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\AttendanceRecord;
-use App\Models\CohortCourse;
+use App\Models\ClassCourse;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -19,7 +19,7 @@ class AttendanceRecordFactory extends Factory
     {
         return [
             'student_id'       => Student::factory(),
-            'cohort_course_id' => CohortCourse::factory(),
+            'class_course_id'  => ClassCourse::factory(),
             'date'             => fake()->dateTimeBetween('-30 days', 'now')->format('Y-m-d'),
             'status'           => fake()->randomElement(['present', 'absent', 'late', 'excused']),
             'notes'            => null,

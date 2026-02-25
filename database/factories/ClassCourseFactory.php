@@ -2,28 +2,23 @@
 
 namespace Database\Factories;
 
+use App\Models\ClassCourse;
 use App\Models\ClassModel;
-use App\Models\CohortCourse;
 use App\Models\Course;
 use App\Models\Employee;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\CohortCourse>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ClassCourse>
  */
-class CohortCourseFactory extends Factory
+class ClassCourseFactory extends Factory
 {
-    protected $model = CohortCourse::class;
+    protected $model = ClassCourse::class;
 
     public function definition(): array
     {
-        // ClassModel::factory()->create() triggers boot() which auto-creates alpha+bravo cohorts.
-        // We use the auto-created alpha cohort to avoid the unique(class_id, name) constraint.
-        $class  = ClassModel::factory()->create();
-        $cohort = $class->cohorts()->where('name', 'alpha')->first();
-
         return [
-            'cohort_id'       => $cohort->id,
+            'class_id'        => ClassModel::factory(),
             'course_id'       => Course::factory(),
             'instructor_type' => 'staff',
             'employee_id'     => Employee::factory(),

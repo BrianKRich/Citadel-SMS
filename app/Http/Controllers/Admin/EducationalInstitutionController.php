@@ -75,7 +75,7 @@ class EducationalInstitutionController extends Controller
 
     public function destroy(EducationalInstitution $institution)
     {
-        if ($institution->cohortCourses()->count() > 0) {
+        if ($institution->classCourses()->count() > 0) {
             return back()->withErrors([
                 'error' => 'Cannot delete an institution that is assigned to course sections.',
             ]);

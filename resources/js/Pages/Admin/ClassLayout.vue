@@ -31,7 +31,7 @@ import { Head } from '@inertiajs/vue3';
                 <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <AdminActionCard
                         title="Academic Years"
-                        description="Manage academic years, classes, and cohorts"
+                        description="Manage academic years and classes"
                         icon="📅"
                         :href="route('admin.academic-years.index')"
                         color="primary"

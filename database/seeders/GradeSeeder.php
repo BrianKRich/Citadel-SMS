@@ -17,7 +17,7 @@ class GradeSeeder extends Seeder
         $publishedAssessments = Assessment::published()->get();
 
         foreach ($publishedAssessments as $assessment) {
-            $enrollments = Enrollment::where('cohort_course_id', $assessment->cohort_course_id)
+            $enrollments = Enrollment::where('class_course_id', $assessment->class_course_id)
                 ->enrolled()
                 ->get();
 

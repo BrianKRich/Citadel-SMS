@@ -112,10 +112,14 @@ A full-stack web application for managing student information, academic records,
 - 34 new/updated tests; 368 total passing
 
 ### Phase 9 UI Improvements
-- **Create Class form:** cohort section dropdown (Alpha/Bravo) with start/end date fields per cohort
-- **Class Show page:** cohort view selector dropdown (Both / Alpha / Bravo / unselected); Remove Course button per row with enrollment guard
 - **CohortCourse Show page:** "+ Enroll Student" button pre-populates the enrollment form with the course pre-selected
 - **Enrollment Create form:** supports `?cohort_course_id=` query param for pre-selection
+
+### Class Form Reorganization (2026-02-25)
+- **Create/Edit Class form:** removed Alpha/Bravo cohort date section; added **Class Name** field (e.g., "Cohort Alpha / Bravo") and **Start Date / End Date** fields directly on the class
+- **Class Setup index:** replaced "Cohort Alpha Dates" and "Cohort Bravo Dates" columns with **Start Date** and **End Date** columns from the class record
+- **Class Show page:** removed cohort view selector dropdown and cohort cards; now displays clean class detail card (Name, NGB Number, Academic Year, Status, Start Date, End Date)
+- `classes` table gains three new columns: `name` (varchar, nullable), `start_date` (date, nullable), `end_date` (date, nullable)
 
 ### Post-Phase 9 UI & UX Improvements
 - **Academy Setup** (feature-flagged): configure academy name, address, phone, director, year founded; read-only display with Edit button once data is saved; quick-action cards for Departments CRUD and Employee Roles CRUD; 4 "Coming Soon" placeholder cards

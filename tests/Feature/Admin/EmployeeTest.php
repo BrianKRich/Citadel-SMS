@@ -3,7 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\ClassModel;
-use App\Models\CohortCourse;
+use App\Models\ClassCourse;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeRole;
@@ -302,14 +302,13 @@ class EmployeeTest extends TestCase
             ->assertSessionHasErrors(['secondary_role_id']);
     }
 
-    public function test_update_secondary_role_does_not_unassign_cohort_courses(): void
+    public function test_update_secondary_role_does_not_unassign_class_courses(): void
     {
         $employee = Employee::factory()->create();
 
-        $class  = ClassModel::factory()->create();
-        $cohort = $class->cohorts()->first();
-        CohortCourse::factory()->create([
-            'cohort_id'   => $cohort->id,
+        $class = ClassModel::factory()->create();
+        ClassCourse::factory()->create([
+            'class_id'    => $class->id,
             'employee_id' => $employee->id,
         ]);
 
@@ -325,9 +324,9 @@ class EmployeeTest extends TestCase
             ->patch(route('admin.employees.update', $employee), $payload)
             ->assertRedirect();
 
-        // Cohort course assignment must still point to this employee
-        $this->assertDatabaseHas('cohort_courses', [
-            'cohort_id'   => $cohort->id,
+        // Class course assignment must still point to this employee
+        $this->assertDatabaseHas('class_courses', [
+            'class_id'    => $class->id,
             'employee_id' => $employee->id,
         ]);
     }

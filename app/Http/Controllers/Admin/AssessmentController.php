@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
 use App\Models\AssessmentCategory;
-use App\Models\CohortCourse;
+use App\Models\ClassCourse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,14 +13,14 @@ class AssessmentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Assessment::with(['cohortCourse.course', 'category']);
+        $query = Assessment::with(['classCourse.course', 'category']);
 
         if ($request->filled('search')) {
             $query->search($request->search);
         }
 
-        if ($request->filled('cohort_course_id')) {
-            $query->cohortCourse($request->cohort_course_id);
+        if ($request->filled('class_course_id')) {
+            $query->classCourse($request->class_course_id);
         }
 
         if ($request->filled('category_id')) {
@@ -36,25 +36,25 @@ class AssessmentController extends Controller
             ->withQueryString();
 
         return Inertia::render('Admin/Assessments/Index', [
-            'assessments'   => $assessments,
-            'filters'       => $request->only(['search', 'cohort_course_id', 'category_id', 'status']),
-            'cohortCourses' => CohortCourse::with('course')->orderBy('id')->get(),
-            'categories'    => AssessmentCategory::orderBy('name')->get(['id', 'name']),
+            'assessments'  => $assessments,
+            'filters'      => $request->only(['search', 'class_course_id', 'category_id', 'status']),
+            'classCourses' => ClassCourse::with('course')->orderBy('id')->get(),
+            'categories'   => AssessmentCategory::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
     public function create()
     {
         return Inertia::render('Admin/Assessments/Create', [
-            'cohortCourses' => CohortCourse::with('course')->orderBy('id')->get(),
-            'categories'    => AssessmentCategory::orderBy('name')->get(['id', 'name', 'weight']),
+            'classCourses' => ClassCourse::with('course')->orderBy('id')->get(),
+            'categories'   => AssessmentCategory::orderBy('name')->get(['id', 'name', 'weight']),
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'cohort_course_id'       => ['required', 'exists:cohort_courses,id'],
+            'class_course_id'        => ['required', 'exists:class_courses,id'],
             'assessment_category_id' => ['required', 'exists:assessment_categories,id'],
             'name'                   => ['required', 'string', 'max:255'],
             'max_score'              => ['required', 'numeric', 'min:0.01'],
@@ -72,7 +72,7 @@ class AssessmentController extends Controller
 
     public function show(Assessment $assessment)
     {
-        $assessment->load(['cohortCourse.course', 'category', 'grades.enrollment.student']);
+        $assessment->load(['classCourse.course', 'category', 'grades.enrollment.student']);
 
         $gradeStats = null;
         if ($assessment->grades->isNotEmpty()) {
@@ -94,16 +94,16 @@ class AssessmentController extends Controller
     public function edit(Assessment $assessment)
     {
         return Inertia::render('Admin/Assessments/Edit', [
-            'assessment'    => $assessment->load(['cohortCourse', 'category']),
-            'cohortCourses' => CohortCourse::with('course')->orderBy('id')->get(),
-            'categories'    => AssessmentCategory::orderBy('name')->get(['id', 'name', 'weight']),
+            'assessment'   => $assessment->load(['classCourse', 'category']),
+            'classCourses' => ClassCourse::with('course')->orderBy('id')->get(),
+            'categories'   => AssessmentCategory::orderBy('name')->get(['id', 'name', 'weight']),
         ]);
     }
 
     public function update(Request $request, Assessment $assessment)
     {
         $validated = $request->validate([
-            'cohort_course_id'       => ['required', 'exists:cohort_courses,id'],
+            'class_course_id'        => ['required', 'exists:class_courses,id'],
             'assessment_category_id' => ['required', 'exists:assessment_categories,id'],
             'name'                   => ['required', 'string', 'max:255'],
             'max_score'              => ['required', 'numeric', 'min:0.01'],

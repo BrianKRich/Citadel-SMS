@@ -25,9 +25,9 @@ class Course extends Model
         'credits' => 'decimal:2',
     ];
 
-    public function cohortCourses(): HasMany
+    public function classCourses(): HasMany
     {
-        return $this->hasMany(CohortCourse::class);
+        return $this->hasMany(ClassCourse::class);
     }
 
     public function assessmentCategories(): HasMany

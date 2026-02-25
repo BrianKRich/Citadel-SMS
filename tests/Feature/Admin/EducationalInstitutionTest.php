@@ -3,7 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\ClassModel;
-use App\Models\CohortCourse;
+use App\Models\ClassCourse;
 use App\Models\EducationalInstitution;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -230,13 +230,12 @@ class EducationalInstitutionTest extends TestCase
         $this->assertDatabaseMissing('educational_institutions', ['id' => $institution->id]);
     }
 
-    public function test_destroy_blocked_when_cohort_courses_reference_it(): void
+    public function test_destroy_blocked_when_class_courses_reference_it(): void
     {
         $institution = EducationalInstitution::factory()->create(['type' => 'technical_college']);
         $class       = ClassModel::factory()->create();
-        $cohort      = $class->cohorts()->first();
-        CohortCourse::factory()->create([
-            'cohort_id'       => $cohort->id,
+        ClassCourse::factory()->create([
+            'class_id'        => $class->id,
             'instructor_type' => 'technical_college',
             'institution_id'  => $institution->id,
             'employee_id'     => null,
@@ -253,9 +252,8 @@ class EducationalInstitutionTest extends TestCase
     {
         $institution = EducationalInstitution::factory()->create(['type' => 'university']);
         $class       = ClassModel::factory()->create();
-        $cohort      = $class->cohorts()->first();
-        CohortCourse::factory()->create([
-            'cohort_id'       => $cohort->id,
+        ClassCourse::factory()->create([
+            'class_id'        => $class->id,
             'instructor_type' => 'university',
             'institution_id'  => $institution->id,
             'employee_id'     => null,

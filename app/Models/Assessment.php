@@ -12,7 +12,7 @@ class Assessment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'cohort_course_id',
+        'class_course_id',
         'assessment_category_id',
         'name',
         'max_score',
@@ -29,9 +29,9 @@ class Assessment extends Model
         'is_extra_credit' => 'boolean',
     ];
 
-    public function cohortCourse(): BelongsTo
+    public function classCourse(): BelongsTo
     {
-        return $this->belongsTo(CohortCourse::class, 'cohort_course_id');
+        return $this->belongsTo(ClassCourse::class, 'class_course_id');
     }
 
     public function category(): BelongsTo
@@ -49,9 +49,9 @@ class Assessment extends Model
         return (float) ($this->weight ?? $this->category->weight);
     }
 
-    public function scopeCohortCourse($query, $cohortCourseId)
+    public function scopeClassCourse($query, $classCourseId)
     {
-        return $query->where('cohort_course_id', $cohortCourseId);
+        return $query->where('class_course_id', $classCourseId);
     }
 
     public function scopeCategory($query, $categoryId)

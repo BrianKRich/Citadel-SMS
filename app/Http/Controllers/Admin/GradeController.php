@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Assessment;
-use App\Models\CohortCourse;
+use App\Models\ClassCourse;
 use App\Models\Grade;
 use App\Models\Student;
 use App\Services\GradeCalculationService;
@@ -19,23 +19,23 @@ class GradeController extends Controller
 
     public function index(Request $request)
     {
-        $cohortCourses = CohortCourse::with(['course', 'cohort.class', 'employee'])
+        $classCourses = ClassCourse::with(['course', 'class', 'employee'])
             ->withCount(['enrollments', 'assessments'])
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('Admin/Grades/Index', [
-            'cohortCourses' => $cohortCourses,
-            'filters'       => $request->only(['search']),
+            'classCourses' => $classCourses,
+            'filters'      => $request->only(['search']),
         ]);
     }
 
-    public function classGrades(CohortCourse $cohortCourse)
+    public function classGrades(ClassCourse $classCourse)
     {
-        $cohortCourse->load([
+        $classCourse->load([
             'course',
-            'cohort.class',
+            'class',
             'assessments' => fn ($q) => $q->published()->with('category'),
             'enrollments' => fn ($q) => $q->enrolled()->with([
                 'student',
@@ -44,15 +44,15 @@ class GradeController extends Controller
         ]);
 
         return Inertia::render('Admin/Grades/ClassGrades', [
-            'cohortCourse' => $cohortCourse,
+            'classCourse' => $classCourse,
         ]);
     }
 
     public function enter(Assessment $assessment)
     {
-        $assessment->load(['cohortCourse.course', 'category']);
+        $assessment->load(['classCourse.course', 'category']);
 
-        $enrollments = $assessment->cohortCourse->enrollments()
+        $enrollments = $assessment->classCourse->enrollments()
             ->enrolled()
             ->with(['student', 'grades' => fn ($q) => $q->where('assessment_id', $assessment->id)])
             ->get();
@@ -111,8 +111,8 @@ class GradeController extends Controller
     {
         $student->load([
             'enrollments' => fn ($q) => $q->with([
-                'cohortCourse.course',
-                'cohortCourse.cohort.class',
+                'classCourse.course',
+                'classCourse.class',
                 'grades.assessment.category',
             ]),
         ]);

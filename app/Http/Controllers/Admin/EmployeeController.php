@@ -117,7 +117,7 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
-        $employee->load(['user', 'department', 'role', 'secondaryRole.department', 'cohortCourses.course', 'cohortCourses.cohort.class', 'phoneNumbers']);
+        $employee->load(['user', 'department', 'role', 'secondaryRole.department', 'classCourses.course', 'classCourses.class', 'phoneNumbers']);
 
         $documentsEnabled      = Setting::get('feature_documents_enabled', '0') === '1';
         $trainingEnabled       = Setting::get('feature_staff_training_enabled', '0') === '1';
@@ -192,7 +192,7 @@ class EmployeeController extends Controller
         $employee->update($validated);
 
         if ($roleChanged || $departmentChanged) {
-            $employee->cohortCourses()->update(['employee_id' => null]);
+            $employee->classCourses()->update(['employee_id' => null]);
         }
 
         $employee->phoneNumbers()->delete();

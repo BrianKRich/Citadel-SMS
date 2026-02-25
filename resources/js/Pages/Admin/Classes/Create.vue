@@ -5,7 +5,6 @@ import PageHeader from '@/Components/UI/PageHeader.vue';
 import Alert from '@/Components/UI/Alert.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import Breadcrumb from '@/Components/UI/Breadcrumb.vue';
-import { ref } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -14,17 +13,14 @@ const props = defineProps({
 
 const inputClass = 'mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm';
 
-const selectedCohort = ref('alpha');
-
 const form = useForm({
     academic_year_id: '',
+    name:             '',
     class_number:     '',
     ngb_number:       '',
     status:           'forming',
-    alpha_start_date: '',
-    alpha_end_date:   '',
-    bravo_start_date: '',
-    bravo_end_date:   '',
+    start_date:       '',
+    end_date:         '',
 });
 
 function submit() {
@@ -57,7 +53,7 @@ function submit() {
                 </div>
 
                 <Card>
-                    <PageHeader title="New Class" description="Create a new class cohort." />
+                    <PageHeader title="New Class" description="Create a new class." />
 
                     <form @submit.prevent="submit" class="mt-6 space-y-6">
                         <!-- Academic Year -->
@@ -72,6 +68,21 @@ function submit() {
                                 </option>
                             </select>
                             <p v-if="form.errors.academic_year_id" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.academic_year_id }}</p>
+                        </div>
+
+                        <!-- Class Name -->
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Class Name
+                            </label>
+                            <input
+                                id="name"
+                                v-model="form.name"
+                                type="text"
+                                placeholder="e.g. Cohort Alpha / Bravo"
+                                :class="inputClass"
+                            />
+                            <p v-if="form.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.name }}</p>
                         </div>
 
                         <!-- Class Number -->
@@ -119,63 +130,17 @@ function submit() {
                             <p v-if="form.errors.status" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.status }}</p>
                         </div>
 
-                        <!-- Cohort Dates -->
-                        <div class="rounded-md border border-gray-200 dark:border-gray-700 p-4 space-y-4">
-                            <!-- Cohort Selector -->
+                        <!-- Start / End Dates -->
+                        <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label for="cohort_select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Section</label>
-                                <select id="cohort_select" v-model="selectedCohort" :class="inputClass">
-                                    <option value="alpha">Cohort Alpha</option>
-                                    <option value="bravo">Cohort Bravo</option>
-                                </select>
+                                <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</label>
+                                <input id="start_date" v-model="form.start_date" type="date" :class="inputClass" />
+                                <p v-if="form.errors.start_date" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.start_date }}</p>
                             </div>
-
-                            <!-- Alpha Date Fields -->
-                            <div v-if="selectedCohort === 'alpha'" class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label for="alpha_start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</label>
-                                    <input
-                                        id="alpha_start_date"
-                                        v-model="form.alpha_start_date"
-                                        type="date"
-                                        :class="inputClass"
-                                    />
-                                    <p v-if="form.errors.alpha_start_date" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.alpha_start_date }}</p>
-                                </div>
-                                <div>
-                                    <label for="alpha_end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">End Date</label>
-                                    <input
-                                        id="alpha_end_date"
-                                        v-model="form.alpha_end_date"
-                                        type="date"
-                                        :class="inputClass"
-                                    />
-                                    <p v-if="form.errors.alpha_end_date" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.alpha_end_date }}</p>
-                                </div>
-                            </div>
-
-                            <!-- Bravo Date Fields -->
-                            <div v-if="selectedCohort === 'bravo'" class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label for="bravo_start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</label>
-                                    <input
-                                        id="bravo_start_date"
-                                        v-model="form.bravo_start_date"
-                                        type="date"
-                                        :class="inputClass"
-                                    />
-                                    <p v-if="form.errors.bravo_start_date" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.bravo_start_date }}</p>
-                                </div>
-                                <div>
-                                    <label for="bravo_end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">End Date</label>
-                                    <input
-                                        id="bravo_end_date"
-                                        v-model="form.bravo_end_date"
-                                        type="date"
-                                        :class="inputClass"
-                                    />
-                                    <p v-if="form.errors.bravo_end_date" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.bravo_end_date }}</p>
-                                </div>
+                            <div>
+                                <label for="end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">End Date</label>
+                                <input id="end_date" v-model="form.end_date" type="date" :class="inputClass" />
+                                <p v-if="form.errors.end_date" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.end_date }}</p>
                             </div>
                         </div>
 

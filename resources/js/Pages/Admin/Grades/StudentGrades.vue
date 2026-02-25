@@ -11,7 +11,7 @@ const props = defineProps({
     cumulativeGpa: Number,
 });
 
-// student has: enrollments (with cohort_course.course, cohort_course.cohort.class, grades, weighted_average, final_letter_grade, gpa_points)
+// student has: enrollments (with class_course.course, class_course.class, grades, weighted_average, final_letter_grade, gpa_points)
 const enrollments = computed(() => props.student.enrollments || []);
 
 function getLetterGradeBadgeClass(letter) {
@@ -103,16 +103,15 @@ function getStatusBadgeClass(status) {
                     <div class="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-3">
                         <div>
                             <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
-                                {{ enrollment.cohort_course?.course?.name || 'N/A' }}
+                                {{ enrollment.class_course?.course?.name || 'N/A' }}
                             </h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                                Class {{ enrollment.cohort_course?.cohort?.class?.class_number ?? '?' }}
-                                – Cohort {{ enrollment.cohort_course?.cohort?.name ? enrollment.cohort_course.cohort.name.charAt(0).toUpperCase() + enrollment.cohort_course.cohort.name.slice(1) : '' }}
-                                <span v-if="enrollment.cohort_course?.employee">
-                                    · {{ enrollment.cohort_course.employee.first_name }} {{ enrollment.cohort_course.employee.last_name }}
+                                Class {{ enrollment.class_course?.class?.class_number ?? '?' }}
+                                <span v-if="enrollment.class_course?.employee">
+                                    · {{ enrollment.class_course.employee.first_name }} {{ enrollment.class_course.employee.last_name }}
                                 </span>
-                                <span v-else-if="enrollment.cohort_course?.institution">
-                                    · {{ enrollment.cohort_course.institution.name }}
+                                <span v-else-if="enrollment.class_course?.institution">
+                                    · {{ enrollment.class_course.institution.name }}
                                 </span>
                             </p>
                         </div>

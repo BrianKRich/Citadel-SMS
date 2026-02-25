@@ -13,7 +13,7 @@ class Enrollment extends Model
 
     protected $fillable = [
         'student_id',
-        'cohort_course_id',
+        'class_course_id',
         'enrollment_date',
         'status',
         'weighted_average',
@@ -32,9 +32,9 @@ class Enrollment extends Model
         return $this->belongsTo(Student::class);
     }
 
-    public function cohortCourse(): BelongsTo
+    public function classCourse(): BelongsTo
     {
-        return $this->belongsTo(CohortCourse::class, 'cohort_course_id');
+        return $this->belongsTo(ClassCourse::class, 'class_course_id');
     }
 
     public function grades(): HasMany
@@ -52,9 +52,9 @@ class Enrollment extends Model
         return $query->where('student_id', $studentId);
     }
 
-    public function scopeCohortCourse($query, $cohortCourseId)
+    public function scopeClassCourse($query, $classCourseId)
     {
-        return $query->where('cohort_course_id', $cohortCourseId);
+        return $query->where('class_course_id', $classCourseId);
     }
 
     public function scopeStatus($query, $status)

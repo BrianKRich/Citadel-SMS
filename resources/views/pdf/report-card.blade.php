@@ -112,10 +112,10 @@
                 <td>{{ $student->student_id }}</td>
             </tr>
             <tr>
-                <td class="label">Cohort:</td>
-                <td>{{ ucfirst($cohort->name) }}</td>
                 <td class="label">Class:</td>
-                <td>{{ $cohort->class->class_number ?? '—' }}</td>
+                <td>{{ $class->class_number ?? '—' }}</td>
+                <td class="label">Name:</td>
+                <td>{{ $class->name ?? '' }}</td>
             </tr>
             @if($student->date_of_birth)
             <tr>
@@ -143,17 +143,17 @@
         <tbody>
             @forelse($enrollments as $enrollment)
                 <tr>
-                    <td>{{ $enrollment->cohortCourse->course->course_code ?? '—' }}</td>
-                    <td>{{ $enrollment->cohortCourse->course->name ?? '—' }}</td>
-                    <td>{{ $enrollment->cohortCourse->employee?->full_name ?? '—' }}</td>
+                    <td>{{ $enrollment->classCourse->course->course_code ?? '—' }}</td>
+                    <td>{{ $enrollment->classCourse->course->name ?? '—' }}</td>
+                    <td>{{ $enrollment->classCourse->employee?->full_name ?? '—' }}</td>
                     <td class="numeric">{{ $enrollment->weighted_average !== null ? number_format($enrollment->weighted_average, 1) : '—' }}</td>
                     <td>{{ $enrollment->final_letter_grade ?? '—' }}</td>
                     <td class="numeric">{{ $enrollment->grade_points !== null ? number_format($enrollment->grade_points, 2) : '—' }}</td>
-                    <td class="numeric">{{ number_format($enrollment->cohortCourse->course->credits ?? 1, 1) }}</td>
+                    <td class="numeric">{{ number_format($enrollment->classCourse->course->credits ?? 1, 1) }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 12px;">No enrollments for this cohort.</td>
+                    <td colspan="7" style="text-align: center; padding: 12px;">No enrollments for this class.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -162,8 +162,8 @@
     <div class="summary">
         <table>
             <tr>
-                <td class="label">Cohort GPA:</td>
-                <td class="value">{{ number_format($cohortGpa, 2) }}</td>
+                <td class="label">Class GPA:</td>
+                <td class="value">{{ number_format($classGpa, 2) }}</td>
             </tr>
             <tr>
                 <td class="label">Cumulative GPA:</td>

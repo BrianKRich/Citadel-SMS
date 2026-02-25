@@ -7,7 +7,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
-    cohortCourse: Object,
+    classCourse: Object,
     summaries: Array,
     filters: Object,
 });
@@ -17,7 +17,7 @@ const dateTo   = ref(props.filters?.date_to || '');
 
 function applyFilter() {
     router.get(
-        route('admin.attendance.summary', props.cohortCourse.id),
+        route('admin.attendance.summary', props.classCourse.id),
         {
             date_from: dateFrom.value || undefined,
             date_to:   dateTo.value || undefined,
@@ -29,7 +29,7 @@ function applyFilter() {
 function clearFilter() {
     dateFrom.value = '';
     dateTo.value   = '';
-    router.get(route('admin.attendance.summary', props.cohortCourse.id));
+    router.get(route('admin.attendance.summary', props.classCourse.id));
 }
 
 function getRateClass(rate) {
@@ -41,7 +41,7 @@ function getRateClass(rate) {
 </script>
 
 <template>
-    <Head :title="`Attendance Summary — ${cohortCourse.course?.name}`" />
+    <Head :title="`Attendance Summary — ${classCourse.course?.name}`" />
 
     <AuthenticatedLayout>
         <template #header>
@@ -55,15 +55,15 @@ function getRateClass(rate) {
                 <Breadcrumb :items="[
                     { label: 'Dashboard', href: route('admin.dashboard') },
                     { label: 'Attendance', href: route('admin.attendance.index') },
-                    { label: 'Cohort Course Summary' },
+                    { label: 'Course Assignment Summary' },
                 ]" />
 
-                <!-- Cohort Course Info + Date Filter -->
+                <!-- Class Course Info + Date Filter -->
                 <Card class="mb-6">
                     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <PageHeader
-                            :title="cohortCourse.course?.name || 'N/A'"
-                            :description="`Class ${cohortCourse.cohort?.class?.class_number} / ${cohortCourse.cohort?.name}`"
+                            :title="classCourse.course?.name || 'N/A'"
+                            :description="`Class ${classCourse.class?.class_number ?? '—'}`"
                         />
                         <div class="flex-shrink-0 space-y-2">
                             <div class="flex items-center gap-2">
@@ -168,7 +168,7 @@ function getRateClass(rate) {
                                 </tr>
                                 <tr v-if="summaries.length === 0">
                                     <td colspan="8" class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-                                        No students enrolled in this cohort course.
+                                        No students enrolled in this course assignment.
                                     </td>
                                 </tr>
                             </tbody>
@@ -219,14 +219,14 @@ function getRateClass(rate) {
                             </Link>
                         </div>
                         <div v-if="summaries.length === 0" class="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
-                            No students enrolled in this cohort course.
+                            No students enrolled in this course assignment.
                         </div>
                     </div>
                 </Card>
 
                 <div class="mt-6 px-4 sm:px-0 flex gap-4">
                     <Link
-                        :href="route('admin.attendance.take', cohortCourse.id)"
+                        :href="route('admin.attendance.take', classCourse.id)"
                         class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
                     >
                         Take Attendance

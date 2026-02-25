@@ -7,14 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class CohortCourse extends Model
+class ClassCourse extends Model
 {
     use HasFactory;
 
-    protected $table = 'cohort_courses';
+    protected $table = 'class_courses';
 
     protected $fillable = [
-        'cohort_id',
+        'class_id',
         'course_id',
         'instructor_type',
         'employee_id',
@@ -30,9 +30,9 @@ class CohortCourse extends Model
         'max_students' => 'integer',
     ];
 
-    public function cohort(): BelongsTo
+    public function class(): BelongsTo
     {
-        return $this->belongsTo(Cohort::class);
+        return $this->belongsTo(ClassModel::class, 'class_id');
     }
 
     public function course(): BelongsTo
@@ -52,17 +52,17 @@ class CohortCourse extends Model
 
     public function enrollments(): HasMany
     {
-        return $this->hasMany(Enrollment::class, 'cohort_course_id');
+        return $this->hasMany(Enrollment::class, 'class_course_id');
     }
 
     public function assessments(): HasMany
     {
-        return $this->hasMany(Assessment::class, 'cohort_course_id');
+        return $this->hasMany(Assessment::class, 'class_course_id');
     }
 
     public function attendanceRecords(): HasMany
     {
-        return $this->hasMany(AttendanceRecord::class, 'cohort_course_id');
+        return $this->hasMany(AttendanceRecord::class, 'class_course_id');
     }
 
     public function getEnrolledCountAttribute(): int
@@ -96,9 +96,9 @@ class CohortCourse extends Model
         return $query->where('status', $status);
     }
 
-    public function scopeCohort($query, $cohortId)
+    public function scopeForClass($query, $classId)
     {
-        return $query->where('cohort_id', $cohortId);
+        return $query->where('class_id', $classId);
     }
 
     public function scopeCourse($query, $courseId)
@@ -114,6 +114,6 @@ class CohortCourse extends Model
     public function scopeAvailable($query)
     {
         return $query->where('status', 'open')
-            ->whereRaw("(SELECT COUNT(*) FROM enrollments WHERE cohort_course_id = cohort_courses.id AND status = 'enrolled') < max_students");
+            ->whereRaw("(SELECT COUNT(*) FROM enrollments WHERE class_course_id = class_courses.id AND status = 'enrolled') < max_students");
     }
 }

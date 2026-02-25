@@ -7,12 +7,9 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
-    cohortCourses: Object,
-    filters: Object,
+    classCourses: Object,
+    filters:      Object,
 });
-
-const showSuccess = ref(!!props.cohortCourses.flash?.success);
-const showError = ref(!!props.cohortCourses.flash?.error);
 
 const search = ref(props.filters?.search || '');
 
@@ -24,18 +21,17 @@ function applySearch() {
 
 function getStatusBadgeClass(status) {
     const classes = {
-        open: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-        closed: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+        open:        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+        closed:      'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
         in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-        completed: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+        completed:   'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
     };
     return classes[status] || classes.open;
 }
 
-function cohortLabel(cc) {
-    const cohortName = cc.cohort?.name ? cc.cohort.name.charAt(0).toUpperCase() + cc.cohort.name.slice(1) : '';
-    const classNum = cc.cohort?.class?.class_number ?? '';
-    return classNum ? `Class ${classNum} – Cohort ${cohortName}` : cohortName;
+function classLabel(cc) {
+    const classNum = cc.class?.class_number ?? '';
+    return classNum ? `Class ${classNum}` : '—';
 }
 
 function instructorLabel(cc) {
@@ -63,25 +59,17 @@ function instructorLabel(cc) {
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <!-- Alerts -->
                 <div v-if="$page.props.flash?.success" class="mb-4">
-                    <Alert
-                        type="success"
-                        :message="$page.props.flash.success"
-                        @dismiss="showSuccess = false"
-                    />
+                    <Alert type="success" :message="$page.props.flash.success" />
                 </div>
                 <div v-if="$page.props.flash?.error" class="mb-4">
-                    <Alert
-                        type="error"
-                        :message="$page.props.flash.error"
-                        @dismiss="showError = false"
-                    />
+                    <Alert type="error" :message="$page.props.flash.error" />
                 </div>
 
                 <Card>
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                         <PageHeader
                             title="Grade Book"
-                            :description="`Select a cohort course to view or enter grades. ${cohortCourses.total} courses total.`"
+                            :description="`Select a course assignment to view or enter grades. ${classCourses.total} courses total.`"
                         />
                     </div>
 
@@ -108,7 +96,7 @@ function instructorLabel(cc) {
                             <thead class="bg-gray-50 dark:bg-gray-800">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Course</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Class / Cohort</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Class</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Instructor</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Enrolled</th>
@@ -117,7 +105,7 @@ function instructorLabel(cc) {
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                <tr v-for="cc in cohortCourses.data" :key="cc.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <tr v-for="cc in classCourses.data" :key="cc.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                     <td class="px-6 py-4">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                             {{ cc.course?.name || 'N/A' }}
@@ -128,7 +116,7 @@ function instructorLabel(cc) {
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
                                         <div class="text-sm text-gray-900 dark:text-gray-100">
-                                            {{ cohortLabel(cc) }}
+                                            {{ classLabel(cc) }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
@@ -163,9 +151,9 @@ function instructorLabel(cc) {
                                         </Link>
                                     </td>
                                 </tr>
-                                <tr v-if="cohortCourses.data.length === 0">
+                                <tr v-if="classCourses.data.length === 0">
                                     <td colspan="7" class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-                                        No cohort courses found.
+                                        No course assignments found.
                                     </td>
                                 </tr>
                             </tbody>
@@ -175,14 +163,14 @@ function instructorLabel(cc) {
                     <!-- Mobile Card View -->
                     <div class="md:hidden space-y-4">
                         <div
-                            v-for="cc in cohortCourses.data"
+                            v-for="cc in classCourses.data"
                             :key="cc.id"
                             class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm"
                         >
                             <div class="flex items-start justify-between mb-2">
                                 <div class="flex-1 min-w-0">
                                     <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
-                                        {{ cc.course?.name || 'N/A' }} — {{ cohortLabel(cc) }}
+                                        {{ cc.course?.name || 'N/A' }} — {{ classLabel(cc) }}
                                     </h3>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">
                                         {{ instructorLabel(cc) }}
@@ -207,24 +195,24 @@ function instructorLabel(cc) {
                                 </Link>
                             </div>
                         </div>
-                        <div v-if="cohortCourses.data.length === 0" class="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
-                            No cohort courses found.
+                        <div v-if="classCourses.data.length === 0" class="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+                            No course assignments found.
                         </div>
                     </div>
 
                     <!-- Pagination -->
-                    <div v-if="cohortCourses.links && cohortCourses.links.length > 3" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 sm:px-6">
+                    <div v-if="classCourses.links && classCourses.links.length > 3" class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 sm:px-6">
                         <div class="flex flex-1 justify-between sm:hidden">
                             <Link
-                                v-if="cohortCourses.prev_page_url"
-                                :href="cohortCourses.prev_page_url"
+                                v-if="classCourses.prev_page_url"
+                                :href="classCourses.prev_page_url"
                                 class="relative inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                             >
                                 Previous
                             </Link>
                             <Link
-                                v-if="cohortCourses.next_page_url"
-                                :href="cohortCourses.next_page_url"
+                                v-if="classCourses.next_page_url"
+                                :href="classCourses.next_page_url"
                                 class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                             >
                                 Next
@@ -233,16 +221,16 @@ function instructorLabel(cc) {
                         <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                             <p class="text-sm text-gray-700 dark:text-gray-300">
                                 Showing
-                                <span class="font-medium">{{ cohortCourses.from }}</span>
+                                <span class="font-medium">{{ classCourses.from }}</span>
                                 to
-                                <span class="font-medium">{{ cohortCourses.to }}</span>
+                                <span class="font-medium">{{ classCourses.to }}</span>
                                 of
-                                <span class="font-medium">{{ cohortCourses.total }}</span>
-                                cohort courses
+                                <span class="font-medium">{{ classCourses.total }}</span>
+                                course assignments
                             </p>
                             <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
                                 <Link
-                                    v-for="link in cohortCourses.links"
+                                    v-for="link in classCourses.links"
                                     :key="link.label"
                                     :href="link.url"
                                     :class="[

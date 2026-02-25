@@ -45,15 +45,7 @@ const getStatusBadgeClass = (s) => {
     return map[s] || map.forming;
 };
 
-const getCohort = (cls, name) => (cls.cohorts ?? []).find(c => c.name === name);
-
-const formatDateRange = (cohort) => {
-    if (!cohort) return '—';
-    const start = cohort.start_date ? cohort.start_date.substring(0, 10) : null;
-    const end   = cohort.end_date   ? cohort.end_date.substring(0, 10)   : null;
-    if (!start && !end) return '—';
-    return [start, end].filter(Boolean).join(' – ');
-};
+const formatDate = (d) => d ? d.substring(0, 10) : '—';
 </script>
 
 <template>
@@ -135,8 +127,8 @@ const formatDateRange = (cohort) => {
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">NGB Number</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Academic Year</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Cohort Alpha Dates</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Cohort Bravo Dates</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Start Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">End Date</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Actions</th>
                                 </tr>
                             </thead>
@@ -167,10 +159,10 @@ const formatDateRange = (cohort) => {
                                         >{{ cls.status }}</span>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ formatDateRange(getCohort(cls, 'alpha')) }}
+                                        {{ formatDate(cls.start_date) }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ formatDateRange(getCohort(cls, 'bravo')) }}
+                                        {{ formatDate(cls.end_date) }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium space-x-4">
                                         <Link
@@ -210,8 +202,8 @@ const formatDateRange = (cohort) => {
                                 </span>
                             </div>
                             <div class="text-xs text-gray-500 dark:text-gray-400 mb-3 space-y-1">
-                                <div>Alpha: {{ formatDateRange(getCohort(cls, 'alpha')) }}</div>
-                                <div>Bravo: {{ formatDateRange(getCohort(cls, 'bravo')) }}</div>
+                                <div>Start: {{ formatDate(cls.start_date) }}</div>
+                                <div>End: {{ formatDate(cls.end_date) }}</div>
                             </div>
                             <div class="flex gap-2">
                                 <Link

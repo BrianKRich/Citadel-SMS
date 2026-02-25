@@ -436,38 +436,22 @@ Georgia county reference data.
 ### Phase 2 Tables ✅ Implemented
 
 #### **classes**
-Class instances (course offerings in a specific term).
+Class records (redesigned in Phase 9; further updated 2026-02-25).
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGINT | PK, AUTO_INCREMENT | Primary key |
-| course_id | BIGINT | FK, NOT NULL | Course reference |
-| employee_id | BIGINT | FK, NOT NULL | Instructor (employee) reference |
 | academic_year_id | BIGINT | FK, NOT NULL | Academic year reference |
-| term_id | BIGINT | FK, NOT NULL | Term reference |
-| section_name | VARCHAR(255) | NOT NULL | Section (e.g., "A", "Morning") |
-| room | VARCHAR(255) | NULLABLE | Room number |
-| schedule | JSON | NULLABLE | Weekly schedule |
-| max_students | INTEGER | DEFAULT 30 | Maximum enrollment |
-| status | ENUM | DEFAULT 'open' | open, closed, in_progress, completed |
+| name | VARCHAR(255) | NULLABLE | Human-readable class name (e.g., "Cohort Alpha / Bravo") |
+| class_number | VARCHAR(255) | NOT NULL | Class number (e.g., "42") |
+| ngb_number | VARCHAR(255) | UNIQUE, NOT NULL | NGB identifier (e.g., "NGB-2025-042") |
+| status | ENUM | DEFAULT 'forming' | forming, active, completed |
+| start_date | DATE | NULLABLE | Class start date |
+| end_date | DATE | NULLABLE | Class end date |
 | created_at | TIMESTAMP | | Creation timestamp |
 | updated_at | TIMESTAMP | | Last update timestamp |
 
-**Schedule JSON Format:**
-```json
-[
-  {
-    "day": "Monday",
-    "start_time": "09:00",
-    "end_time": "10:00"
-  },
-  {
-    "day": "Wednesday",
-    "start_time": "09:00",
-    "end_time": "10:00"
-  }
-]
-```
+> **Note:** Alpha/Bravo cohort designation is captured via the `name` field. The `cohorts` table still exists as an intermediary for `cohort_courses`, but cohort-specific dates and UI distinction have been removed from the class management screens.
 
 ---
 

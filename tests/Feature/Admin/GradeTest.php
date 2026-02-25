@@ -5,7 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\Assessment;
 use App\Models\AssessmentCategory;
 use App\Models\ClassModel;
-use App\Models\CohortCourse;
+use App\Models\ClassCourse;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\GradingScale;
@@ -24,17 +24,12 @@ class GradeTest extends TestCase
         return User::factory()->create(['role' => 'admin']);
     }
 
-    /**
-     * Create a CohortCourse using an auto-created cohort from ClassModel::boot()
-     * to avoid unique constraint violations on (class_id, name).
-     */
-    private function makeCohortCourse(array $overrides = []): CohortCourse
+    private function makeClassCourse(array $overrides = []): ClassCourse
     {
-        $class  = ClassModel::factory()->create();
-        $cohort = $class->cohorts()->first();
+        $class = ClassModel::factory()->create();
 
-        return CohortCourse::factory()->create(array_merge(
-            ['cohort_id' => $cohort->id],
+        return ClassCourse::factory()->create(array_merge(
+            ['class_id' => $class->id],
             $overrides
         ));
     }
@@ -58,34 +53,34 @@ class GradeTest extends TestCase
         ]);
     }
 
-    public function test_index_renders_cohort_course_list(): void
+    public function test_index_renders_class_course_list(): void
     {
         $user = $this->adminUser();
-        $this->makeCohortCourse();
-        $this->makeCohortCourse();
+        $this->makeClassCourse();
+        $this->makeClassCourse();
 
         $response = $this->actingAs($user)->get(route('admin.grades.index'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Grades/Index')
-            ->has('cohortCourses')
+            ->has('classCourses')
         );
     }
 
     public function test_class_grades_displays_matrix(): void
     {
         $user         = $this->adminUser();
-        $cohortCourse = $this->makeCohortCourse();
+        $classCourse = $this->makeClassCourse();
         $student      = Student::factory()->create();
         $enrollment   = Enrollment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'student_id'       => $student->id,
             'status'           => 'enrolled',
         ]);
 
         $category   = AssessmentCategory::factory()->create(['weight' => 1.0]);
         $assessment = Assessment::factory()->create([
-            'cohort_course_id'       => $cohortCourse->id,
+            'class_course_id'       => $classCourse->id,
             'assessment_category_id' => $category->id,
             'status'                 => 'published',
         ]);
@@ -99,28 +94,28 @@ class GradeTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get(
-            route('admin.grades.class', $cohortCourse)
+            route('admin.grades.class', $classCourse)
         );
 
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Grades/ClassGrades')
-            ->has('cohortCourse')
+            ->has('classCourse')
         );
     }
 
     public function test_enter_displays_bulk_form(): void
     {
         $user         = $this->adminUser();
-        $cohortCourse = $this->makeCohortCourse();
+        $classCourse = $this->makeClassCourse();
         $category     = AssessmentCategory::factory()->create();
         $assessment   = Assessment::factory()->create([
-            'cohort_course_id'       => $cohortCourse->id,
+            'class_course_id'       => $classCourse->id,
             'assessment_category_id' => $category->id,
             'status'                 => 'published',
         ]);
 
         Enrollment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'status'           => 'enrolled',
         ]);
 
@@ -140,10 +135,10 @@ class GradeTest extends TestCase
         $this->createDefaultScale();
 
         $user         = $this->adminUser();
-        $cohortCourse = $this->makeCohortCourse();
+        $classCourse = $this->makeClassCourse();
         $category     = AssessmentCategory::factory()->create(['weight' => 1.0]);
         $assessment   = Assessment::factory()->create([
-            'cohort_course_id'       => $cohortCourse->id,
+            'class_course_id'       => $classCourse->id,
             'assessment_category_id' => $category->id,
             'max_score'              => 100,
             'is_extra_credit'        => false,
@@ -152,7 +147,7 @@ class GradeTest extends TestCase
 
         $student    = Student::factory()->create();
         $enrollment = Enrollment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'student_id'       => $student->id,
             'status'           => 'enrolled',
         ]);
@@ -183,14 +178,14 @@ class GradeTest extends TestCase
     public function test_store_validates_score(): void
     {
         $user         = $this->adminUser();
-        $cohortCourse = $this->makeCohortCourse();
+        $classCourse = $this->makeClassCourse();
         $category     = AssessmentCategory::factory()->create();
         $assessment   = Assessment::factory()->create([
-            'cohort_course_id'       => $cohortCourse->id,
+            'class_course_id'       => $classCourse->id,
             'assessment_category_id' => $category->id,
         ]);
         $enrollment = Enrollment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'status'           => 'enrolled',
         ]);
 
@@ -228,10 +223,10 @@ class GradeTest extends TestCase
         $this->createDefaultScale();
 
         $user         = $this->adminUser();
-        $cohortCourse = $this->makeCohortCourse();
+        $classCourse = $this->makeClassCourse();
         $category     = AssessmentCategory::factory()->create(['weight' => 1.0]);
         $assessment   = Assessment::factory()->create([
-            'cohort_course_id'       => $cohortCourse->id,
+            'class_course_id'       => $classCourse->id,
             'assessment_category_id' => $category->id,
             'max_score'              => 100,
             'is_extra_credit'        => false,
@@ -240,7 +235,7 @@ class GradeTest extends TestCase
 
         $student    = Student::factory()->create();
         $enrollment = Enrollment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'student_id'       => $student->id,
             'status'           => 'enrolled',
         ]);

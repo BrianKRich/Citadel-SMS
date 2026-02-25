@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Assessment;
 use App\Models\AssessmentCategory;
-use App\Models\CohortCourse;
+use App\Models\ClassCourse;
 use Illuminate\Database\Seeder;
 
 class AssessmentSeeder extends Seeder
@@ -17,12 +17,12 @@ class AssessmentSeeder extends Seeder
         $final    = AssessmentCategory::where('name', 'Final Exam')->first();
         $projects = AssessmentCategory::where('name', 'Projects')->first();
 
-        // Create assessments for each in_progress cohort-course (Alpha cohort)
-        $activeCohortCourses = CohortCourse::where('status', 'in_progress')->get();
+        // Create assessments for each in_progress class course
+        $activeClassCourses = ClassCourse::where('status', 'in_progress')->get();
 
-        foreach ($activeCohortCourses as $cohortCourse) {
+        foreach ($activeClassCourses as $classCourse) {
             Assessment::create([
-                'cohort_course_id'       => $cohortCourse->id,
+                'class_course_id'        => $classCourse->id,
                 'assessment_category_id' => $homework->id,
                 'name'                   => 'Homework 1',
                 'max_score'              => 100,
@@ -31,7 +31,7 @@ class AssessmentSeeder extends Seeder
             ]);
 
             Assessment::create([
-                'cohort_course_id'       => $cohortCourse->id,
+                'class_course_id'        => $classCourse->id,
                 'assessment_category_id' => $homework->id,
                 'name'                   => 'Homework 2',
                 'max_score'              => 100,
@@ -40,7 +40,7 @@ class AssessmentSeeder extends Seeder
             ]);
 
             Assessment::create([
-                'cohort_course_id'       => $cohortCourse->id,
+                'class_course_id'        => $classCourse->id,
                 'assessment_category_id' => $quizzes->id,
                 'name'                   => 'Quiz 1',
                 'max_score'              => 50,
@@ -49,7 +49,7 @@ class AssessmentSeeder extends Seeder
             ]);
 
             Assessment::create([
-                'cohort_course_id'       => $cohortCourse->id,
+                'class_course_id'        => $classCourse->id,
                 'assessment_category_id' => $midterm->id,
                 'name'                   => 'Midterm Exam',
                 'max_score'              => 100,
@@ -58,7 +58,7 @@ class AssessmentSeeder extends Seeder
             ]);
 
             Assessment::create([
-                'cohort_course_id'       => $cohortCourse->id,
+                'class_course_id'        => $classCourse->id,
                 'assessment_category_id' => $projects->id,
                 'name'                   => 'Research Project',
                 'max_score'              => 100,
@@ -67,7 +67,7 @@ class AssessmentSeeder extends Seeder
             ]);
 
             Assessment::create([
-                'cohort_course_id'       => $cohortCourse->id,
+                'class_course_id'        => $classCourse->id,
                 'assessment_category_id' => $final->id,
                 'name'                   => 'Final Exam',
                 'max_score'              => 100,

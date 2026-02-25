@@ -2095,6 +2095,44 @@ No new tests added in this session. All 368 pre-existing tests continue to pass 
 
 ---
 
+## Class Form Reorganization
+
+**Date:** February 25, 2026
+
+### What Changed
+
+Removed Alpha/Bravo cohort designation from all Class management UI. The cohort concept was creating unnecessary friction — classes now carry their name and dates directly.
+
+**Database (2 migrations):**
+- `add_name_to_classes_table` — adds `name VARCHAR(255) NULLABLE` after `academic_year_id`
+- `add_dates_to_classes_table` — adds `start_date DATE NULLABLE` and `end_date DATE NULLABLE` after `status`
+
+**Model (`ClassModel`):**
+- Added `name`, `start_date`, `end_date` to `$fillable`
+
+**Controller (`ClassController`):**
+- `create()` / `store()`: removed cohort date fields; added `name` (nullable), `start_date`, `end_date` validation; `end_date` validated `after_or_equal:start_date`
+- `update()`: same additions
+- `index()`: removed `cohorts` eager-load (no longer needed)
+- `show()`: simplified to `load('academicYear')` only; removed cohort/cohortCourse eager-loads and enrollment count loops
+- Removed unused `use App\Models\Cohort` import
+
+**Vue pages:**
+- `Create.vue`: removed `ref`, `selectedCohort`, four cohort date form fields, and entire cohort date bordered section; added Class Name input (placeholder "e.g. Cohort Alpha / Bravo") and Start/End date grid
+- `Edit.vue`: same additions; cohort dates were already absent
+- `Index.vue`: replaced "Cohort Alpha Dates" / "Cohort Bravo Dates" columns and helpers (`getCohort`, `formatDateRange`) with "Start Date" / "End Date" columns using a simple `formatDate()` helper; updated mobile cards
+- `Show.vue`: removed cohort view selector dropdown, all cohort card blocks, cohort date inline forms, and related JS (`getCohort`, `cohortDateForms`, `getCohortDateForm`, `saveCohortDates`, `cohortTitle`, `cohortView`); now displays a clean detail card with Name, NGB Number, Academic Year, Status, Start Date, End Date
+
+### Key Decision
+
+The `cohorts` table and `cohort_courses` relationship remain in the database as structural intermediaries for course/enrollment linkage. Only the UI-facing Alpha/Bravo distinction was removed. The `name` field on `classes` serves as the human-readable cohort label when needed.
+
+### Tests
+
+No new tests added. All 368 pre-existing tests continue to pass.
+
+---
+
 ## Future Ideas & Enhancements
 
 The following ideas are captured for long-term consideration. They are not yet assigned to a phase or issue.

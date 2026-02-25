@@ -44,7 +44,7 @@ class TranscriptController extends Controller
         return Inertia::render('Admin/Transcripts/Show', [
             'student'       => $student,
             'official'      => $official,
-            'cohortGroups'  => $data['cohortGroups'],
+            'classGroups'   => $data['classGroups'],
             'totalCredits'  => $data['totalCredits'],
             'cumulativeGpa' => $data['cumulativeGpa'],
         ]);

@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\ClassCourse;
 use App\Models\ClassModel;
-use App\Models\CohortCourse;
 use App\Models\Course;
 use App\Models\EducationalInstitution;
 use App\Models\Employee;
@@ -14,7 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
-class CohortCourseTest extends TestCase
+class ClassCourseTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -23,30 +23,19 @@ class CohortCourseTest extends TestCase
         return User::factory()->create(['role' => 'admin']);
     }
 
-    /**
-     * Create a CohortCourse using an auto-created cohort from ClassModel::boot()
-     * to avoid unique constraint violations on (class_id, name).
-     */
-    private function makeCohortCourse(array $overrides = []): CohortCourse
+    private function makeClassCourse(array $overrides = []): ClassCourse
     {
-        $class  = ClassModel::factory()->create();
-        $cohort = $class->cohorts()->first();
-
-        return CohortCourse::factory()->create(array_merge(
-            ['cohort_id' => $cohort->id],
-            $overrides
-        ));
+        return ClassCourse::factory()->create($overrides);
     }
 
     private function validStaffPayload(array $overrides = []): array
     {
         $class    = ClassModel::factory()->create();
-        $cohort   = $class->cohorts()->first();
         $course   = Course::factory()->create();
         $employee = Employee::factory()->create();
 
         return array_merge([
-            'cohort_id'       => $cohort->id,
+            'class_id'        => $class->id,
             'course_id'       => $course->id,
             'instructor_type' => 'staff',
             'employee_id'     => $employee->id,
@@ -61,49 +50,48 @@ class CohortCourseTest extends TestCase
 
     public function test_index_requires_auth(): void
     {
-        $this->get(route('admin.cohort-courses.index'))->assertRedirect(route('login'));
+        $this->get(route('admin.class-courses.index'))->assertRedirect(route('login'));
     }
 
     // ── Index ─────────────────────────────────────────────────────────────────
 
-    public function test_index_renders_cohort_course_list(): void
+    public function test_index_renders_class_course_list(): void
     {
-        $this->makeCohortCourse();
-        $this->makeCohortCourse();
+        $this->makeClassCourse();
+        $this->makeClassCourse();
 
         $this->actingAs($this->admin())
-            ->get(route('admin.cohort-courses.index'))
+            ->get(route('admin.class-courses.index'))
             ->assertInertia(fn (Assert $p) => $p
-                ->component('Admin/CohortCourses/Index')
-                ->has('cohortCourses')
+                ->component('Admin/ClassCourses/Index')
+                ->has('classCourses')
                 ->has('filters')
             );
     }
 
     public function test_index_paginates_results(): void
     {
-        // Create 15 cohort courses each with their own class+cohorts
         for ($i = 0; $i < 15; $i++) {
-            $this->makeCohortCourse();
+            $this->makeClassCourse();
         }
 
         $this->actingAs($this->admin())
-            ->get(route('admin.cohort-courses.index'))
+            ->get(route('admin.class-courses.index'))
             ->assertInertia(fn (Assert $p) => $p
-                ->where('cohortCourses.per_page', 10)
-                ->where('cohortCourses.total', 15)
+                ->where('classCourses.per_page', 10)
+                ->where('classCourses.total', 15)
             );
     }
 
     public function test_index_filters_by_status(): void
     {
-        $this->makeCohortCourse(['status' => 'open']);
-        $this->makeCohortCourse(['status' => 'closed']);
+        $this->makeClassCourse(['status' => 'open']);
+        $this->makeClassCourse(['status' => 'closed']);
 
         $this->actingAs($this->admin())
-            ->get(route('admin.cohort-courses.index', ['status' => 'open']))
+            ->get(route('admin.class-courses.index', ['status' => 'open']))
             ->assertInertia(fn (Assert $p) => $p
-                ->where('cohortCourses.total', 1)
+                ->where('classCourses.total', 1)
             );
     }
 
@@ -112,9 +100,9 @@ class CohortCourseTest extends TestCase
     public function test_create_renders_form_with_options(): void
     {
         $this->actingAs($this->admin())
-            ->get(route('admin.cohort-courses.create'))
+            ->get(route('admin.class-courses.create'))
             ->assertInertia(fn (Assert $p) => $p
-                ->component('Admin/CohortCourses/Create')
+                ->component('Admin/ClassCourses/Create')
                 ->has('classes')
                 ->has('courses')
                 ->has('employees')
@@ -124,33 +112,32 @@ class CohortCourseTest extends TestCase
 
     // ── Store ─────────────────────────────────────────────────────────────────
 
-    public function test_store_creates_cohort_course_with_staff_instructor(): void
+    public function test_store_creates_class_course_with_staff_instructor(): void
     {
         $payload = $this->validStaffPayload();
 
         $response = $this->actingAs($this->admin())
-            ->post(route('admin.cohort-courses.store'), $payload);
+            ->post(route('admin.class-courses.store'), $payload);
 
-        $cc = CohortCourse::latest()->first();
-        $response->assertRedirect(route('admin.cohort-courses.show', $cc));
-        $this->assertDatabaseHas('cohort_courses', [
-            'cohort_id'       => $payload['cohort_id'],
+        $cc = ClassCourse::latest()->first();
+        $response->assertRedirect(route('admin.class-courses.show', $cc));
+        $this->assertDatabaseHas('class_courses', [
+            'class_id'        => $payload['class_id'],
             'course_id'       => $payload['course_id'],
             'instructor_type' => 'staff',
             'employee_id'     => $payload['employee_id'],
         ]);
     }
 
-    public function test_store_creates_cohort_course_with_institution_instructor(): void
+    public function test_store_creates_class_course_with_institution_instructor(): void
     {
         $class       = ClassModel::factory()->create();
-        $cohort      = $class->cohorts()->first();
         $course      = Course::factory()->create();
         $institution = EducationalInstitution::factory()->create(['type' => 'technical_college']);
 
         $response = $this->actingAs($this->admin())
-            ->post(route('admin.cohort-courses.store'), [
-                'cohort_id'       => $cohort->id,
+            ->post(route('admin.class-courses.store'), [
+                'class_id'        => $class->id,
                 'course_id'       => $course->id,
                 'instructor_type' => 'technical_college',
                 'employee_id'     => null,
@@ -160,7 +147,7 @@ class CohortCourseTest extends TestCase
             ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('cohort_courses', [
+        $this->assertDatabaseHas('class_courses', [
             'instructor_type' => 'technical_college',
             'institution_id'  => $institution->id,
         ]);
@@ -169,16 +156,16 @@ class CohortCourseTest extends TestCase
     public function test_store_validates_required_fields(): void
     {
         $this->actingAs($this->admin())
-            ->post(route('admin.cohort-courses.store'), [])
+            ->post(route('admin.class-courses.store'), [])
             ->assertSessionHasErrors([
-                'cohort_id', 'course_id', 'instructor_type', 'max_students', 'status',
+                'class_id', 'course_id', 'instructor_type', 'max_students', 'status',
             ]);
     }
 
     public function test_store_validates_instructor_type_enum(): void
     {
         $this->actingAs($this->admin())
-            ->post(route('admin.cohort-courses.store'), $this->validStaffPayload([
+            ->post(route('admin.class-courses.store'), $this->validStaffPayload([
                 'instructor_type' => 'invalid_type',
             ]))
             ->assertSessionHasErrors(['instructor_type']);
@@ -192,19 +179,18 @@ class CohortCourseTest extends TestCase
         ]);
 
         $this->actingAs($this->admin())
-            ->post(route('admin.cohort-courses.store'), $payload)
+            ->post(route('admin.class-courses.store'), $payload)
             ->assertStatus(422);
     }
 
     public function test_store_validates_technical_college_requires_institution_id(): void
     {
         $class  = ClassModel::factory()->create();
-        $cohort = $class->cohorts()->first();
         $course = Course::factory()->create();
 
         $this->actingAs($this->admin())
-            ->post(route('admin.cohort-courses.store'), [
-                'cohort_id'       => $cohort->id,
+            ->post(route('admin.class-courses.store'), [
+                'class_id'        => $class->id,
                 'course_id'       => $course->id,
                 'instructor_type' => 'technical_college',
                 'employee_id'     => null,
@@ -218,12 +204,11 @@ class CohortCourseTest extends TestCase
     public function test_store_validates_university_requires_institution_id(): void
     {
         $class  = ClassModel::factory()->create();
-        $cohort = $class->cohorts()->first();
         $course = Course::factory()->create();
 
         $this->actingAs($this->admin())
-            ->post(route('admin.cohort-courses.store'), [
-                'cohort_id'       => $cohort->id,
+            ->post(route('admin.class-courses.store'), [
+                'class_id'        => $class->id,
                 'course_id'       => $course->id,
                 'instructor_type' => 'university',
                 'employee_id'     => null,
@@ -234,26 +219,26 @@ class CohortCourseTest extends TestCase
             ->assertStatus(422);
     }
 
-    public function test_store_validates_cohort_exists(): void
+    public function test_store_validates_class_exists(): void
     {
         $this->actingAs($this->admin())
-            ->post(route('admin.cohort-courses.store'), $this->validStaffPayload([
-                'cohort_id' => 99999,
+            ->post(route('admin.class-courses.store'), $this->validStaffPayload([
+                'class_id' => 99999,
             ]))
-            ->assertSessionHasErrors(['cohort_id']);
+            ->assertSessionHasErrors(['class_id']);
     }
 
     // ── Show ──────────────────────────────────────────────────────────────────
 
-    public function test_show_renders_cohort_course_detail(): void
+    public function test_show_renders_class_course_detail(): void
     {
-        $cc = $this->makeCohortCourse();
+        $cc = $this->makeClassCourse();
 
         $this->actingAs($this->admin())
-            ->get(route('admin.cohort-courses.show', $cc))
+            ->get(route('admin.class-courses.show', $cc))
             ->assertInertia(fn (Assert $p) => $p
-                ->component('Admin/CohortCourses/Show')
-                ->has('cohortCourse')
+                ->component('Admin/ClassCourses/Show')
+                ->has('classCourse')
             );
     }
 
@@ -261,13 +246,13 @@ class CohortCourseTest extends TestCase
 
     public function test_edit_renders_form(): void
     {
-        $cc = $this->makeCohortCourse();
+        $cc = $this->makeClassCourse();
 
         $this->actingAs($this->admin())
-            ->get(route('admin.cohort-courses.edit', $cc))
+            ->get(route('admin.class-courses.edit', $cc))
             ->assertInertia(fn (Assert $p) => $p
-                ->component('Admin/CohortCourses/Edit')
-                ->has('cohortCourse')
+                ->component('Admin/ClassCourses/Edit')
+                ->has('classCourse')
                 ->has('classes')
                 ->has('courses')
                 ->has('employees')
@@ -277,16 +262,15 @@ class CohortCourseTest extends TestCase
 
     // ── Update ────────────────────────────────────────────────────────────────
 
-    public function test_update_modifies_cohort_course(): void
+    public function test_update_modifies_class_course(): void
     {
-        $cc       = $this->makeCohortCourse(['status' => 'open', 'max_students' => 20]);
+        $cc       = $this->makeClassCourse(['status' => 'open', 'max_students' => 20]);
         $course   = Course::factory()->create();
-        $cohort   = $cc->cohort;
         $employee = Employee::factory()->create();
 
         $response = $this->actingAs($this->admin())
-            ->put(route('admin.cohort-courses.update', $cc), [
-                'cohort_id'       => $cohort->id,
+            ->put(route('admin.class-courses.update', $cc), [
+                'class_id'        => $cc->class_id,
                 'course_id'       => $course->id,
                 'instructor_type' => 'staff',
                 'employee_id'     => $employee->id,
@@ -295,8 +279,8 @@ class CohortCourseTest extends TestCase
                 'status'          => 'closed',
             ]);
 
-        $response->assertRedirect(route('admin.cohort-courses.show', $cc));
-        $this->assertDatabaseHas('cohort_courses', [
+        $response->assertRedirect(route('admin.class-courses.show', $cc));
+        $this->assertDatabaseHas('class_courses', [
             'id'           => $cc->id,
             'max_students' => 35,
             'status'       => 'closed',
@@ -305,41 +289,41 @@ class CohortCourseTest extends TestCase
 
     public function test_update_validates_required_fields(): void
     {
-        $cc = $this->makeCohortCourse();
+        $cc = $this->makeClassCourse();
 
         $this->actingAs($this->admin())
-            ->put(route('admin.cohort-courses.update', $cc), [])
+            ->put(route('admin.class-courses.update', $cc), [])
             ->assertSessionHasErrors([
-                'cohort_id', 'course_id', 'instructor_type', 'max_students', 'status',
+                'class_id', 'course_id', 'instructor_type', 'max_students', 'status',
             ]);
     }
 
     // ── Destroy ───────────────────────────────────────────────────────────────
 
-    public function test_destroy_deletes_empty_cohort_course(): void
+    public function test_destroy_deletes_empty_class_course(): void
     {
-        $cc = $this->makeCohortCourse();
+        $cc = $this->makeClassCourse();
 
         $response = $this->actingAs($this->admin())
-            ->delete(route('admin.cohort-courses.destroy', $cc));
+            ->delete(route('admin.class-courses.destroy', $cc));
 
-        $response->assertRedirect(route('admin.cohort-courses.index'));
-        $this->assertDatabaseMissing('cohort_courses', ['id' => $cc->id]);
+        $response->assertRedirect(route('admin.class-courses.index'));
+        $this->assertDatabaseMissing('class_courses', ['id' => $cc->id]);
     }
 
     public function test_destroy_blocked_when_enrollments_exist(): void
     {
-        $cc      = $this->makeCohortCourse();
+        $cc      = $this->makeClassCourse();
         $student = Student::factory()->create();
         Enrollment::factory()->create([
-            'cohort_course_id' => $cc->id,
-            'student_id'       => $student->id,
+            'class_course_id' => $cc->id,
+            'student_id'      => $student->id,
         ]);
 
         $this->actingAs($this->admin())
-            ->delete(route('admin.cohort-courses.destroy', $cc))
+            ->delete(route('admin.class-courses.destroy', $cc))
             ->assertSessionHasErrors(['error']);
 
-        $this->assertDatabaseHas('cohort_courses', ['id' => $cc->id]);
+        $this->assertDatabaseHas('class_courses', ['id' => $cc->id]);
     }
 }

@@ -5,7 +5,7 @@ namespace Tests\Unit\Services;
 use App\Models\Assessment;
 use App\Models\AssessmentCategory;
 use App\Models\ClassModel;
-use App\Models\CohortCourse;
+use App\Models\ClassCourse;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\GradingScale;
@@ -43,30 +43,23 @@ class GradeCalculationServiceTest extends TestCase
         ]);
     }
 
-    /**
-     * Build a CohortCourse using an auto-created cohort.
-     */
-    private function makeCohortCourse(array $attrs = []): CohortCourse
+    private function makeClassCourse(array $attrs = []): ClassCourse
     {
-        $class  = ClassModel::factory()->create();
-        $cohort = $class->cohorts()->where('name', 'alpha')->first();
+        $class = ClassModel::factory()->create();
 
-        return CohortCourse::factory()->create(array_merge(
-            ['cohort_id' => $cohort->id],
+        return ClassCourse::factory()->create(array_merge(
+            ['class_id' => $class->id],
             $attrs,
         ));
     }
 
-    /**
-     * Build a complete enrollment chain: CohortCourse → Enrollment (for a student).
-     */
-    private function makeEnrollment(CohortCourse $cohortCourse = null, Student $student = null): Enrollment
+    private function makeEnrollment(ClassCourse $classCourse = null, Student $student = null): Enrollment
     {
-        $cohortCourse ??= $this->makeCohortCourse();
+        $classCourse ??= $this->makeClassCourse();
         $student ??= Student::factory()->create();
 
         return Enrollment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'student_id' => $student->id,
             'status' => 'enrolled',
         ]);
@@ -90,14 +83,14 @@ class GradeCalculationServiceTest extends TestCase
 
     public function test_calculate_weighted_average_single_category(): void
     {
-        $cohortCourse = $this->makeCohortCourse();
-        $enrollment = $this->makeEnrollment($cohortCourse);
+        $classCourse = $this->makeClassCourse();
+        $enrollment = $this->makeEnrollment($classCourse);
 
         $category = AssessmentCategory::factory()->create(['weight' => 1.0]);
 
         // Homework out of 100, student scores 85
         $assessment = Assessment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'assessment_category_id' => $category->id,
             'max_score' => 100,
             'is_extra_credit' => false,
@@ -113,13 +106,13 @@ class GradeCalculationServiceTest extends TestCase
 
     public function test_calculate_weighted_average_multiple_categories(): void
     {
-        $cohortCourse = $this->makeCohortCourse();
-        $enrollment = $this->makeEnrollment($cohortCourse);
+        $classCourse = $this->makeClassCourse();
+        $enrollment = $this->makeEnrollment($classCourse);
 
         // Homework: weight 0.4 — student earns 80/100 (80%)
         $hwCategory = AssessmentCategory::factory()->create(['weight' => 0.4]);
         $hwAssessment = Assessment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'assessment_category_id' => $hwCategory->id,
             'max_score' => 100,
             'is_extra_credit' => false,
@@ -130,7 +123,7 @@ class GradeCalculationServiceTest extends TestCase
         // Quiz: weight 0.6 — student earns 90/100 (90%)
         $quizCategory = AssessmentCategory::factory()->create(['weight' => 0.6]);
         $quizAssessment = Assessment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'assessment_category_id' => $quizCategory->id,
             'max_score' => 100,
             'is_extra_credit' => false,
@@ -146,13 +139,13 @@ class GradeCalculationServiceTest extends TestCase
 
     public function test_calculate_weighted_average_with_extra_credit(): void
     {
-        $cohortCourse = $this->makeCohortCourse();
-        $enrollment = $this->makeEnrollment($cohortCourse);
+        $classCourse = $this->makeClassCourse();
+        $enrollment = $this->makeEnrollment($classCourse);
 
         // Regular homework: weight 1.0 — student earns 80/100 (80%)
         $category = AssessmentCategory::factory()->create(['weight' => 1.0]);
         $assessment = Assessment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'assessment_category_id' => $category->id,
             'max_score' => 100,
             'is_extra_credit' => false,
@@ -167,7 +160,7 @@ class GradeCalculationServiceTest extends TestCase
         // extra credit assessment with weight 0.05, student earns 5/10
         // extraCreditSum += (5/10) * 0.05 * 100 = 2.5
         $ecAssessment = Assessment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'assessment_category_id' => $category->id,
             'max_score' => 10,
             'is_extra_credit' => true,
@@ -184,12 +177,12 @@ class GradeCalculationServiceTest extends TestCase
 
     public function test_calculate_weighted_average_with_late_penalty(): void
     {
-        $cohortCourse = $this->makeCohortCourse();
-        $enrollment = $this->makeEnrollment($cohortCourse);
+        $classCourse = $this->makeClassCourse();
+        $enrollment = $this->makeEnrollment($classCourse);
 
         $category = AssessmentCategory::factory()->create(['weight' => 1.0]);
         $assessment = Assessment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'assessment_category_id' => $category->id,
             'max_score' => 100,
             'is_extra_credit' => false,
@@ -206,12 +199,12 @@ class GradeCalculationServiceTest extends TestCase
 
     public function test_update_enrollment_grade_sets_letter_and_gpa(): void
     {
-        $cohortCourse = $this->makeCohortCourse();
-        $enrollment = $this->makeEnrollment($cohortCourse);
+        $classCourse = $this->makeClassCourse();
+        $enrollment = $this->makeEnrollment($classCourse);
 
         $category = AssessmentCategory::factory()->create(['weight' => 1.0]);
         $assessment = Assessment::factory()->create([
-            'cohort_course_id' => $cohortCourse->id,
+            'class_course_id' => $classCourse->id,
             'assessment_category_id' => $category->id,
             'max_score' => 100,
             'is_extra_credit' => false,
@@ -228,31 +221,30 @@ class GradeCalculationServiceTest extends TestCase
         $this->assertEquals(4.0, (float) $enrollment->grade_points);
     }
 
-    public function test_calculate_cohort_gpa(): void
+    public function test_calculate_class_gpa(): void
     {
         $course1 = Course::factory()->create(['credits' => 3.00]);
         $course2 = Course::factory()->create(['credits' => 3.00]);
 
-        // Both cohort courses share the same cohort
-        $class  = ClassModel::factory()->create();
-        $cohort = $class->cohorts()->where('name', 'alpha')->first();
+        // Both class courses share the same class
+        $class = ClassModel::factory()->create();
 
-        $cc1 = CohortCourse::factory()->create(['cohort_id' => $cohort->id, 'course_id' => $course1->id]);
-        $cc2 = CohortCourse::factory()->create(['cohort_id' => $cohort->id, 'course_id' => $course2->id]);
+        $cc1 = ClassCourse::factory()->create(['class_id' => $class->id, 'course_id' => $course1->id]);
+        $cc2 = ClassCourse::factory()->create(['class_id' => $class->id, 'course_id' => $course2->id]);
 
         $student = Student::factory()->create();
 
         Enrollment::factory()->withGrade('A', 4.0)->create([
-            'student_id' => $student->id,
-            'cohort_course_id' => $cc1->id,
+            'student_id'      => $student->id,
+            'class_course_id' => $cc1->id,
         ]);
 
         Enrollment::factory()->withGrade('B', 3.0)->create([
-            'student_id' => $student->id,
-            'cohort_course_id' => $cc2->id,
+            'student_id'      => $student->id,
+            'class_course_id' => $cc2->id,
         ]);
 
-        $gpa = $this->service->calculateCohortGpa($student->fresh(), $cohort->id);
+        $gpa = $this->service->calculateClassGpa($student->fresh(), $class->id);
 
         // Both courses 3 credits; GPA = (4.0*3 + 3.0*3) / (3+3) = 3.5
         $this->assertEquals(3.5, $gpa);
@@ -263,19 +255,19 @@ class GradeCalculationServiceTest extends TestCase
         $course1 = Course::factory()->create(['credits' => 3.00]);
         $course2 = Course::factory()->create(['credits' => 3.00]);
 
-        $cc1 = $this->makeCohortCourse(['course_id' => $course1->id]);
-        $cc2 = $this->makeCohortCourse(['course_id' => $course2->id]);
+        $cc1 = $this->makeClassCourse(['course_id' => $course1->id]);
+        $cc2 = $this->makeClassCourse(['course_id' => $course2->id]);
 
         $student = Student::factory()->create();
 
         Enrollment::factory()->withGrade('A', 4.0)->create([
             'student_id' => $student->id,
-            'cohort_course_id' => $cc1->id,
+            'class_course_id' => $cc1->id,
         ]);
 
         Enrollment::factory()->withGrade('C', 2.0)->create([
             'student_id' => $student->id,
-            'cohort_course_id' => $cc2->id,
+            'class_course_id' => $cc2->id,
         ]);
 
         $gpa = $this->service->calculateCumulativeGpa($student->fresh());

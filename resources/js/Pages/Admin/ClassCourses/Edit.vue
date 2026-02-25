@@ -9,7 +9,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
-    cohortCourse:  { type: Object, required: true },
+    classCourse:   { type: Object, required: true },
     classes:       { type: Array, default: () => [] },
     courses:       { type: Array, default: () => [] },
     employees:     { type: Array, default: () => [] },
@@ -18,45 +18,24 @@ const props = defineProps({
 
 const inputClass = 'mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm';
 
-// Resolve initial class from the cohort
-const initialClassId = (() => {
-    for (const cls of props.classes) {
-        if ((cls.cohorts ?? []).some(c => c.id === props.cohortCourse.cohort_id)) return cls.id;
-    }
-    return '';
-})();
-
-const selectedClassId = ref(initialClassId);
-
 const form = useForm({
-    cohort_id:       props.cohortCourse.cohort_id ?? '',
-    course_id:       props.cohortCourse.course_id ?? '',
-    instructor_type: props.cohortCourse.instructor_type ?? 'staff',
-    employee_id:     props.cohortCourse.employee_id ?? '',
-    institution_id:  props.cohortCourse.institution_id ?? '',
-    room:            props.cohortCourse.room ?? '',
-    schedule:        Array.isArray(props.cohortCourse.schedule) ? [...props.cohortCourse.schedule] : [],
-    max_students:    props.cohortCourse.max_students ?? 30,
-    status:          props.cohortCourse.status ?? 'open',
+    class_id:        props.classCourse.class_id ?? '',
+    course_id:       props.classCourse.course_id ?? '',
+    instructor_type: props.classCourse.instructor_type ?? 'staff',
+    employee_id:     props.classCourse.employee_id ?? '',
+    institution_id:  props.classCourse.institution_id ?? '',
+    room:            props.classCourse.room ?? '',
+    schedule:        Array.isArray(props.classCourse.schedule) ? [...props.classCourse.schedule] : [],
+    max_students:    props.classCourse.max_students ?? 30,
+    status:          props.classCourse.status ?? 'open',
 });
 
 // Selected employee display
 const selectedEmployeeName = ref(
-    props.cohortCourse.employee
-        ? `${props.cohortCourse.employee.first_name} ${props.cohortCourse.employee.last_name}`
+    props.classCourse.employee
+        ? `${props.classCourse.employee.first_name} ${props.classCourse.employee.last_name}`
         : ''
 );
-
-const availableCohorts = computed(() => {
-    const cls = props.classes.find(c => c.id === Number(selectedClassId.value));
-    return cls?.cohorts ?? [];
-});
-
-watch(selectedClassId, () => {
-    form.cohort_id = '';
-    const cohorts = availableCohorts.value;
-    if (cohorts.length === 1) form.cohort_id = cohorts[0].id;
-});
 
 const filteredInstitutions = computed(() => {
     if (form.instructor_type === 'technical_college') {
@@ -77,8 +56,8 @@ watch(() => form.instructor_type, () => {
 });
 
 // Employee live search
-const employeeSearch       = ref('');
-const employeeResults      = ref([]);
+const employeeSearch  = ref('');
+const employeeResults = ref([]);
 let searchDebounce = null;
 
 async function onEmployeeSearch() {
@@ -113,10 +92,10 @@ function removeScheduleSlot(index) {
     form.schedule.splice(index, 1);
 }
 
-const courseName = computed(() => props.cohortCourse.course?.name ?? 'Course Assignment');
+const courseName = computed(() => props.classCourse.course?.name ?? 'Course Assignment');
 
 function submit() {
-    form.patch(route('admin.cohort-courses.update', props.cohortCourse.id));
+    form.patch(route('admin.class-courses.update', props.classCourse.id));
 }
 </script>
 
@@ -132,8 +111,8 @@ function submit() {
             <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
                 <Breadcrumb :items="[
                     { label: 'Dashboard', href: route('admin.dashboard') },
-                    { label: 'Course Assignments', href: route('admin.cohort-courses.index') },
-                    { label: courseName, href: route('admin.cohort-courses.show', cohortCourse.id) },
+                    { label: 'Course Assignments', href: route('admin.class-courses.index') },
+                    { label: courseName, href: route('admin.class-courses.show', classCourse.id) },
                     { label: 'Edit' },
                 ]" />
 
@@ -153,26 +132,13 @@ function submit() {
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Class <span class="text-red-500">*</span>
                             </label>
-                            <select v-model="selectedClassId" required :class="inputClass">
+                            <select v-model="form.class_id" required :class="inputClass">
                                 <option value="">Select a class...</option>
                                 <option v-for="cls in classes" :key="cls.id" :value="cls.id">
-                                    Class {{ cls.class_number }} {{ cls.academic_year ? `(${cls.academic_year.name})` : '' }}
+                                    Class {{ cls.class_number }}{{ cls.name ? ` — ${cls.name}` : '' }}
                                 </option>
                             </select>
-                        </div>
-
-                        <!-- Cohort -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Cohort <span class="text-red-500">*</span>
-                            </label>
-                            <select v-model="form.cohort_id" required :class="inputClass" :disabled="!selectedClassId">
-                                <option value="">Select a cohort...</option>
-                                <option v-for="cohort in availableCohorts" :key="cohort.id" :value="cohort.id">
-                                    {{ cohort.name === 'alpha' ? 'Cohort Alpha' : 'Cohort Bravo' }}
-                                </option>
-                            </select>
-                            <p v-if="form.errors.cohort_id" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.cohort_id }}</p>
+                            <p v-if="form.errors.class_id" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.class_id }}</p>
                         </div>
 
                         <!-- Course -->
@@ -306,7 +272,7 @@ function submit() {
                                 {{ form.processing ? 'Saving...' : 'Save' }}
                             </PrimaryButton>
                             <Link
-                                :href="route('admin.cohort-courses.show', cohortCourse.id)"
+                                :href="route('admin.class-courses.show', classCourse.id)"
                                 class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                             >Cancel</Link>
                         </div>

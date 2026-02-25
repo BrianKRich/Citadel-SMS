@@ -28,12 +28,16 @@ class DatabaseSeeder extends Seeder
             'role' => 'site_admin',
         ]);
 
-        $keithRich = User::factory()->create([
-            'name' => 'Keith Rich',
-            'email' => 'krmoble@gmail.com',
-            'password' => 'password',
-            'role' => 'site_admin',
-        ]);
+        $keithRich = User::firstOrCreate(
+            ['email' => 'krmoble@gmail.com'],
+            [
+                'name' => 'Keith Rich',
+                'email_verified_at' => now(),
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'remember_token' => \Illuminate\Support\Str::random(10),
+                'role' => 'site_admin',
+            ]
+        );
 
         $this->call([
             DepartmentSeeder::class,
@@ -43,8 +47,7 @@ class DatabaseSeeder extends Seeder
         $adminDept = Department::where('name', 'Operations')->first();
         $adminRole = EmployeeRole::where('department_id', $adminDept->id)->where('name', 'Site Administrator')->first();
 
-        Employee::create([
-            'user_id'       => $siteAdmin->id,
+        Employee::firstOrCreate(['user_id' => $siteAdmin->id], [
             'first_name'    => 'Site',
             'last_name'     => 'Admin',
             'email'         => 'admin@admin.com',
@@ -54,8 +57,7 @@ class DatabaseSeeder extends Seeder
             'status'        => 'active',
         ]);
 
-        Employee::create([
-            'user_id'       => $keithRich->id,
+        Employee::firstOrCreate(['user_id' => $keithRich->id], [
             'first_name'    => 'Keith',
             'last_name'     => 'Rich',
             'email'         => 'krmoble@gmail.com',

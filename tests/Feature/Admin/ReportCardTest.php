@@ -3,7 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\ClassModel;
-use App\Models\CohortCourse;
+use App\Models\ClassCourse;
 use App\Models\Enrollment;
 use App\Models\GradingScale;
 use App\Models\Student;
@@ -21,7 +21,7 @@ class ReportCardTest extends TestCase
         return User::factory()->create(['role' => 'admin']);
     }
 
-    private function makeCohortWithEnrollment(): array
+    private function makeClassWithEnrollment(): array
     {
         GradingScale::factory()->create([
             'is_default' => true,
@@ -34,20 +34,16 @@ class ReportCardTest extends TestCase
             ],
         ]);
 
-        $class  = ClassModel::factory()->create();
-        // Use the auto-created alpha cohort from boot()
-        $cohort = $class->cohorts()->where('name', 'alpha')->first();
-        $cohort->update(['start_date' => '2025-01-01', 'end_date' => '2025-06-30']);
-
-        $cohortCourse = CohortCourse::factory()->create(['cohort_id' => $cohort->id]);
-        $student      = Student::factory()->create(['status' => 'active']);
+        $class       = ClassModel::factory()->create(['start_date' => '2025-01-01', 'end_date' => '2025-06-30']);
+        $classCourse = ClassCourse::factory()->create(['class_id' => $class->id]);
+        $student     = Student::factory()->create(['status' => 'active']);
 
         $enrollment = Enrollment::factory()->withGrade('B', 3.0)->create([
-            'student_id'       => $student->id,
-            'cohort_course_id' => $cohortCourse->id,
+            'student_id'      => $student->id,
+            'class_course_id' => $classCourse->id,
         ]);
 
-        return compact('class', 'cohort', 'cohortCourse', 'student', 'enrollment');
+        return compact('class', 'classCourse', 'student', 'enrollment');
     }
 
     public function test_index_requires_auth(): void
@@ -59,21 +55,21 @@ class ReportCardTest extends TestCase
     public function test_index_renders_page(): void
     {
         $user = $this->adminUser();
-        $this->makeCohortWithEnrollment();
+        $this->makeClassWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.index'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/ReportCards/Index')
             ->has('students')
-            ->has('cohorts')
+            ->has('classes')
         );
     }
 
     public function test_index_search_filters_students(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeCohortWithEnrollment();
+        $data = $this->makeClassWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.index', [
             'search' => $data['student']->last_name,
@@ -85,30 +81,30 @@ class ReportCardTest extends TestCase
         );
     }
 
-    public function test_show_renders_page_for_student_and_cohort(): void
+    public function test_show_renders_page_for_student_and_class(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeCohortWithEnrollment();
+        $data = $this->makeClassWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.show', [
-            'student'   => $data['student']->id,
-            'cohort_id' => $data['cohort']->id,
+            'student'  => $data['student']->id,
+            'class_id' => $data['class']->id,
         ]));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/ReportCards/Show')
             ->has('student')
-            ->has('cohort')
+            ->has('currentClass')
             ->has('enrollments')
-            ->has('cohortGpa')
+            ->has('classGpa')
             ->has('cumulativeGpa')
         );
     }
 
-    public function test_show_uses_first_cohort_when_no_cohort_id_provided(): void
+    public function test_show_uses_first_class_when_no_class_id_provided(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeCohortWithEnrollment();
+        $data = $this->makeClassWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.show', $data['student']->id));
 
@@ -127,11 +123,11 @@ class ReportCardTest extends TestCase
     public function test_pdf_returns_pdf_download(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeCohortWithEnrollment();
+        $data = $this->makeClassWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.pdf', [
-            'student'   => $data['student']->id,
-            'cohort_id' => $data['cohort']->id,
+            'student'  => $data['student']->id,
+            'class_id' => $data['class']->id,
         ]));
 
         $response->assertOk();
@@ -148,29 +144,28 @@ class ReportCardTest extends TestCase
     public function test_pdf_filename_contains_report_card(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeCohortWithEnrollment();
+        $data = $this->makeClassWithEnrollment();
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.pdf', [
-            'student'   => $data['student']->id,
-            'cohort_id' => $data['cohort']->id,
+            'student'  => $data['student']->id,
+            'class_id' => $data['class']->id,
         ]));
 
         $disposition = $response->headers->get('Content-Disposition');
         $this->assertStringContainsString('report-card', $disposition);
     }
 
-    public function test_show_passes_enrollments_for_selected_cohort_only(): void
+    public function test_show_passes_enrollments_for_selected_class_only(): void
     {
         $user = $this->adminUser();
-        $data = $this->makeCohortWithEnrollment();
+        $data = $this->makeClassWithEnrollment();
 
-        // Use the bravo cohort (auto-created by boot), which has no enrollment for this student
-        $otherCohort = $data['class']->cohorts()->where('name', 'bravo')->first();
-        $otherCohort->update(['start_date' => '2025-07-01', 'end_date' => '2025-12-31']);
+        // Use a different class that has no enrollment for this student
+        $otherClass = ClassModel::factory()->create(['start_date' => '2025-07-01', 'end_date' => '2025-12-31']);
 
         $response = $this->actingAs($user)->get(route('admin.report-cards.show', [
-            'student'   => $data['student']->id,
-            'cohort_id' => $otherCohort->id,
+            'student'  => $data['student']->id,
+            'class_id' => $otherClass->id,
         ]));
 
         $response->assertInertia(fn (Assert $page) => $page

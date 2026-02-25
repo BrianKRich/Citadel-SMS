@@ -64,7 +64,7 @@ function submit() {
                     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <PageHeader
                             :title="assessment.name"
-                            :description="`${assessment.cohort_course?.course?.name || 'N/A'}`"
+                            :description="`${assessment.class_course?.course?.name || 'N/A'}`"
                         />
                         <div class="flex-shrink-0 text-sm text-gray-500 dark:text-gray-400 space-y-1">
                             <div>Max Score: <span class="font-medium text-gray-900 dark:text-gray-100">{{ assessment.max_score }}</span></div>

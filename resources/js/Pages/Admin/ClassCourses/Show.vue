@@ -8,10 +8,10 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const props = defineProps({
-    cohortCourse: { type: Object, required: true },
+    classCourse: { type: Object, required: true },
 });
 
-const cc = computed(() => props.cohortCourse);
+const cc = computed(() => props.classCourse);
 const courseName = computed(() => cc.value.course?.name ?? 'Course Assignment');
 
 function fmtDate(dateStr) {
@@ -47,13 +47,6 @@ const instructorLabel = computed(() => {
     return cc.value.institution?.name ?? '—';
 });
 
-const cohortLabel = computed(() => {
-    const name = cc.value.cohort?.name;
-    if (name === 'alpha') return 'Cohort Alpha';
-    if (name === 'bravo') return 'Cohort Bravo';
-    return name ?? '—';
-});
-
 const scheduleDisplay = computed(() => {
     const schedule = cc.value.schedule;
     if (!schedule || !Array.isArray(schedule) || schedule.length === 0) return '—';
@@ -62,7 +55,7 @@ const scheduleDisplay = computed(() => {
 
 function destroy() {
     if (confirm('Delete this course assignment? This cannot be undone.')) {
-        router.delete(route('admin.cohort-courses.destroy', cc.value.id));
+        router.delete(route('admin.class-courses.destroy', cc.value.id));
     }
 }
 </script>
@@ -81,7 +74,7 @@ function destroy() {
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
                 <Breadcrumb :items="[
                     { label: 'Dashboard', href: route('admin.dashboard') },
-                    { label: 'Course Assignments', href: route('admin.cohort-courses.index') },
+                    { label: 'Course Assignments', href: route('admin.class-courses.index') },
                     { label: courseName },
                 ]" />
 
@@ -102,16 +95,12 @@ function destroy() {
                                     <dt class="font-medium text-gray-500 dark:text-gray-400">Class</dt>
                                     <dd class="text-gray-900 dark:text-gray-100">
                                         <Link
-                                            v-if="cc.cohort?.class_id"
-                                            :href="route('admin.classes.show', cc.cohort.class_id)"
+                                            v-if="cc.class_id"
+                                            :href="route('admin.classes.show', cc.class_id)"
                                             class="text-primary-600 dark:text-primary-400 hover:underline"
-                                        >Class {{ cc.cohort?.class?.class_number ?? '—' }}</Link>
+                                        >Class {{ cc.class?.class_number ?? '—' }}</Link>
                                         <span v-else>—</span>
                                     </dd>
-                                </div>
-                                <div>
-                                    <dt class="font-medium text-gray-500 dark:text-gray-400">Cohort</dt>
-                                    <dd class="text-gray-900 dark:text-gray-100">{{ cohortLabel }}</dd>
                                 </div>
                                 <div>
                                     <dt class="font-medium text-gray-500 dark:text-gray-400">Instructor Type</dt>
@@ -147,7 +136,7 @@ function destroy() {
                         </div>
                         <div class="flex gap-2">
                             <Link
-                                :href="route('admin.cohort-courses.edit', cc.id)"
+                                :href="route('admin.class-courses.edit', cc.id)"
                                 class="inline-flex items-center rounded-md bg-secondary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-secondary-700"
                             >Edit</Link>
                             <button
@@ -164,7 +153,7 @@ function destroy() {
                     <div class="flex items-center justify-between mb-2">
                         <PageHeader title="Enrolled Students" :description="`${(cc.enrollments ?? []).length} student${(cc.enrollments ?? []).length === 1 ? '' : 's'}`" />
                         <Link
-                            :href="route('admin.enrollment.create') + '?cohort_course_id=' + cc.id"
+                            :href="route('admin.enrollment.create') + '?class_course_id=' + cc.id"
                             class="inline-flex items-center rounded-md bg-primary-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700"
                         >+ Enroll Student</Link>
                     </div>

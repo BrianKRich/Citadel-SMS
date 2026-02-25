@@ -18,9 +18,9 @@ class EducationalInstitution extends Model
         'contact_person',
     ];
 
-    public function cohortCourses(): HasMany
+    public function classCourses(): HasMany
     {
-        return $this->hasMany(CohortCourse::class, 'institution_id');
+        return $this->hasMany(ClassCourse::class, 'institution_id');
     }
 
     public function scopeType($query, $type)

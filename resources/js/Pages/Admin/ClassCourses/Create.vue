@@ -9,29 +9,17 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
-    classes:             { type: Array, default: () => [] },
-    courses:             { type: Array, default: () => [] },
-    employees:           { type: Array, default: () => [] },
-    institutions:        { type: Array, default: () => [] },
-    preselectedCohortId: { type: [String, Number], default: null },
+    classes:            { type: Array, default: () => [] },
+    courses:            { type: Array, default: () => [] },
+    employees:          { type: Array, default: () => [] },
+    institutions:       { type: Array, default: () => [] },
+    preselectedClassId: { type: [String, Number], default: null },
 });
 
 const inputClass = 'mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm';
 
-// Determine initial cohort/class from preselected
-const initialCohortId = props.preselectedCohortId ? Number(props.preselectedCohortId) : null;
-const initialClassId = (() => {
-    if (!initialCohortId) return '';
-    for (const cls of props.classes) {
-        if ((cls.cohorts ?? []).some(c => c.id === initialCohortId)) return cls.id;
-    }
-    return '';
-})();
-
-const selectedClassId = ref(initialClassId);
-
 const form = useForm({
-    cohort_id:       initialCohortId ?? '',
+    class_id:        props.preselectedClassId ? Number(props.preselectedClassId) : '',
     course_id:       '',
     instructor_type: 'staff',
     employee_id:     '',
@@ -40,20 +28,6 @@ const form = useForm({
     schedule:        [],
     max_students:    30,
     status:          'open',
-});
-
-// Cohorts for the selected class
-const availableCohorts = computed(() => {
-    const cls = props.classes.find(c => c.id === Number(selectedClassId.value));
-    return cls?.cohorts ?? [];
-});
-
-// Reset cohort when class changes
-watch(selectedClassId, () => {
-    form.cohort_id = '';
-    // If only one cohort available, pre-select it
-    const cohorts = availableCohorts.value;
-    if (cohorts.length === 1) form.cohort_id = cohorts[0].id;
 });
 
 // Institutions filtered by instructor type
@@ -118,7 +92,7 @@ function removeScheduleSlot(index) {
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 function submit() {
-    form.post(route('admin.cohort-courses.store'));
+    form.post(route('admin.class-courses.store'));
 }
 </script>
 
@@ -134,7 +108,7 @@ function submit() {
             <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
                 <Breadcrumb :items="[
                     { label: 'Dashboard', href: route('admin.dashboard') },
-                    { label: 'Course Assignments', href: route('admin.cohort-courses.index') },
+                    { label: 'Course Assignments', href: route('admin.class-courses.index') },
                     { label: 'Add Assignment' },
                 ]" />
 
@@ -146,7 +120,7 @@ function submit() {
                 </div>
 
                 <Card>
-                    <PageHeader title="New Course Assignment" description="Assign a course to a cohort." />
+                    <PageHeader title="New Course Assignment" description="Assign a course to a class." />
 
                     <form @submit.prevent="submit" class="mt-6 space-y-6">
                         <!-- Class -->
@@ -154,26 +128,13 @@ function submit() {
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Class <span class="text-red-500">*</span>
                             </label>
-                            <select v-model="selectedClassId" required :class="inputClass">
+                            <select v-model="form.class_id" required :class="inputClass">
                                 <option value="">Select a class...</option>
                                 <option v-for="cls in classes" :key="cls.id" :value="cls.id">
-                                    Class {{ cls.class_number }} {{ cls.academic_year ? `(${cls.academic_year.name})` : '' }}
+                                    Class {{ cls.class_number }}{{ cls.name ? ` — ${cls.name}` : '' }}
                                 </option>
                             </select>
-                        </div>
-
-                        <!-- Cohort -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Cohort <span class="text-red-500">*</span>
-                            </label>
-                            <select v-model="form.cohort_id" required :class="inputClass" :disabled="!selectedClassId">
-                                <option value="">Select a cohort...</option>
-                                <option v-for="cohort in availableCohorts" :key="cohort.id" :value="cohort.id">
-                                    {{ cohort.name === 'alpha' ? 'Cohort Alpha' : 'Cohort Bravo' }}
-                                </option>
-                            </select>
-                            <p v-if="form.errors.cohort_id" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.cohort_id }}</p>
+                            <p v-if="form.errors.class_id" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.class_id }}</p>
                         </div>
 
                         <!-- Course -->
@@ -331,7 +292,7 @@ function submit() {
                                 {{ form.processing ? 'Saving...' : 'Save' }}
                             </PrimaryButton>
                             <Link
-                                :href="route('admin.cohort-courses.index')"
+                                :href="route('admin.class-courses.index')"
                                 class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                             >Cancel</Link>
                         </div>

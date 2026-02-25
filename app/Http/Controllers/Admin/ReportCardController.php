@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cohort;
+use App\Models\ClassModel;
 use App\Models\Student;
 use App\Services\ReportCardService;
 use Illuminate\Http\Request;
@@ -20,7 +20,7 @@ class ReportCardController extends Controller
      */
     public function index(Request $request)
     {
-        $cohorts = Cohort::with('class.academicYear')->orderByDesc('start_date')->get();
+        $classes = ClassModel::with('academicYear')->orderByDesc('start_date')->get();
 
         $students = Student::active()
             ->when($request->input('search'), fn ($q, $s) => $q->search($s))
@@ -31,53 +31,52 @@ class ReportCardController extends Controller
 
         return Inertia::render('Admin/ReportCards/Index', [
             'students' => $students,
-            'cohorts'  => $cohorts,
-            'filters'  => $request->only(['search', 'cohort_id']),
+            'classes'  => $classes,
+            'filters'  => $request->only(['search', 'class_id']),
         ]);
     }
 
     /**
-     * Show report card preview for a student and cohort.
+     * Show report card preview for a student and class.
      */
     public function show(Request $request, Student $student)
     {
-        $cohorts = Cohort::with('class.academicYear')->orderByDesc('start_date')->get();
-        $cohortId = $request->integer('cohort_id') ?: $cohorts->first()?->id;
-        $cohort = $cohortId ? Cohort::with('class.academicYear')->findOrFail($cohortId) : null;
+        $classes = ClassModel::with('academicYear')->orderByDesc('start_date')->get();
+        $classId = $request->integer('class_id') ?: $classes->first()?->id;
+        $class = $classId ? ClassModel::with('academicYear')->findOrFail($classId) : null;
 
-        if (! $cohort) {
+        if (! $class) {
             return redirect()->route('admin.report-cards.index')
-                ->with('error', 'No cohort found. Please select a cohort.');
+                ->with('error', 'No class found. Please select a class.');
         }
 
-        $data = $this->reportCardService->getData($student, $cohort);
+        $data = $this->reportCardService->getData($student, $class);
 
         return Inertia::render('Admin/ReportCards/Show', [
-            'student'        => $student,
-            'cohort'         => $data['cohort'],
-            'enrollments'    => $data['enrollments'],
-            'cohortGpa'      => $data['cohortGpa'],
-            'cumulativeGpa'  => $data['cumulativeGpa'],
-            'cohorts'        => $cohorts,
-            'selectedCohortId' => $cohort->id,
+            'student'         => $student,
+            'currentClass'    => $data['class'],
+            'enrollments'     => $data['enrollments'],
+            'classGpa'        => $data['classGpa'],
+            'cumulativeGpa'   => $data['cumulativeGpa'],
+            'classes'         => $classes,
+            'selectedClassId' => $class->id,
         ]);
     }
 
     /**
-     * Download PDF report card for a student and cohort.
+     * Download PDF report card for a student and class.
      */
     public function pdf(Request $request, Student $student)
     {
-        $cohortId = $request->integer('cohort_id');
-        $cohort   = Cohort::findOrFail($cohortId);
+        $classId = $request->integer('class_id');
+        $class   = ClassModel::findOrFail($classId);
 
-        $pdf = $this->reportCardService->generatePdf($student, $cohort);
+        $pdf = $this->reportCardService->generatePdf($student, $class);
 
         $filename = sprintf(
-            'report-card-%s-%s-%s.pdf',
+            'report-card-%s-%s.pdf',
             str($student->student_id)->slug(),
-            str($cohort->class->class_number ?? '')->slug(),
-            $cohort->name
+            str($class->class_number ?? '')->slug()
         );
 
         return $pdf->download($filename);

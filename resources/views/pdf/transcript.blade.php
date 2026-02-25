@@ -59,11 +59,11 @@
             font-weight: bold;
             width: 140px;
         }
-        .cohort-block {
+        .class-block {
             page-break-inside: avoid;
             margin-bottom: 16px;
         }
-        .cohort-header {
+        .class-header {
             background-color: #edf2f7;
             padding: 6px 8px;
             font-weight: bold;
@@ -71,12 +71,12 @@
             border: 1px solid #cbd5e0;
             border-bottom: none;
         }
-        .cohort-table {
+        .class-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 0;
         }
-        .cohort-table th {
+        .class-table th {
             background-color: #2d3748;
             color: #fff;
             padding: 5px 8px;
@@ -84,27 +84,27 @@
             font-size: 10px;
             text-transform: uppercase;
         }
-        .cohort-table th.numeric {
+        .class-table th.numeric {
             text-align: right;
         }
-        .cohort-table td {
+        .class-table td {
             padding: 4px 8px;
             border-bottom: 1px solid #e2e8f0;
         }
-        .cohort-table td.numeric {
+        .class-table td.numeric {
             text-align: right;
         }
-        .cohort-table tr:nth-child(even) {
+        .class-table tr:nth-child(even) {
             background-color: #f7fafc;
         }
-        .cohort-footer {
+        .class-footer {
             background-color: #edf2f7;
             padding: 6px 8px;
             border: 1px solid #cbd5e0;
             border-top: none;
             font-size: 10px;
         }
-        .cohort-footer span {
+        .class-footer span {
             margin-right: 24px;
             font-weight: bold;
         }
@@ -169,18 +169,18 @@
         </table>
     </div>
 
-    @foreach($cohortGroups as $group)
-        <div class="cohort-block">
-            <div class="cohort-header">
-                Cohort {{ ucfirst($group['cohort']->name) }}
-                @if($group['cohort']->class)
-                    — Class {{ $group['cohort']->class->class_number }}
-                    @if($group['cohort']->class->academicYear)
-                        ({{ $group['cohort']->class->academicYear->name }})
-                    @endif
+    @foreach($classGroups as $group)
+        <div class="class-block">
+            <div class="class-header">
+                Class {{ $group['class']->class_number ?? '—' }}
+                @if($group['class']->name)
+                    — {{ $group['class']->name }}
+                @endif
+                @if($group['class']->academicYear)
+                    ({{ $group['class']->academicYear->name }})
                 @endif
             </div>
-            <table class="cohort-table">
+            <table class="class-table">
                 <thead>
                     <tr>
                         <th>Course Code</th>
@@ -193,18 +193,18 @@
                 <tbody>
                     @foreach($group['enrollments'] as $enrollment)
                         <tr>
-                            <td>{{ $enrollment->cohortCourse->course->course_code ?? '—' }}</td>
-                            <td>{{ $enrollment->cohortCourse->course->name ?? '—' }}</td>
+                            <td>{{ $enrollment->classCourse->course->course_code ?? '—' }}</td>
+                            <td>{{ $enrollment->classCourse->course->name ?? '—' }}</td>
                             <td>{{ $enrollment->final_letter_grade ?? '—' }}</td>
                             <td class="numeric">{{ $enrollment->grade_points !== null ? number_format($enrollment->grade_points, 2) : '—' }}</td>
-                            <td class="numeric">{{ number_format($enrollment->cohortCourse->course->credits ?? 1, 1) }}</td>
+                            <td class="numeric">{{ number_format($enrollment->classCourse->course->credits ?? 1, 1) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
-            <div class="cohort-footer">
-                <span>Cohort GPA: {{ number_format($group['cohortGpa'], 2) }}</span>
-                <span>Cohort Credits: {{ number_format($group['cohortCredits'], 1) }}</span>
+            <div class="class-footer">
+                <span>Class GPA: {{ number_format($group['classGpa'], 2) }}</span>
+                <span>Class Credits: {{ number_format($group['classCredits'], 1) }}</span>
             </div>
         </div>
     @endforeach

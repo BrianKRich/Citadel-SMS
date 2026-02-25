@@ -19,9 +19,12 @@ const inputClass = 'mt-1 block w-full rounded-md border-gray-300 dark:border-gra
 
 const form = useForm({
     academic_year_id: cls.value?.academic_year_id ?? '',
+    name:             cls.value?.name ?? '',
     class_number:     cls.value?.class_number ?? '',
     ngb_number:       cls.value?.ngb_number ?? '',
     status:           cls.value?.status ?? 'forming',
+    start_date:       cls.value?.start_date ?? '',
+    end_date:         cls.value?.end_date ?? '',
 });
 
 function submit() {
@@ -74,6 +77,21 @@ function submit() {
                             <p v-if="form.errors.academic_year_id" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.academic_year_id }}</p>
                         </div>
 
+                        <!-- Class Name -->
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Class Name
+                            </label>
+                            <input
+                                id="name"
+                                v-model="form.name"
+                                type="text"
+                                placeholder="e.g. Cohort Alpha / Bravo"
+                                :class="inputClass"
+                            />
+                            <p v-if="form.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.name }}</p>
+                        </div>
+
                         <!-- Class Number -->
                         <div>
                             <label for="class_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -115,6 +133,20 @@ function submit() {
                                 <option value="completed">Completed</option>
                             </select>
                             <p v-if="form.errors.status" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.status }}</p>
+                        </div>
+
+                        <!-- Start / End Dates -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</label>
+                                <input id="start_date" v-model="form.start_date" type="date" :class="inputClass" />
+                                <p v-if="form.errors.start_date" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.start_date }}</p>
+                            </div>
+                            <div>
+                                <label for="end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">End Date</label>
+                                <input id="end_date" v-model="form.end_date" type="date" :class="inputClass" />
+                                <p v-if="form.errors.end_date" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.end_date }}</p>
+                            </div>
                         </div>
 
                         <!-- Buttons -->

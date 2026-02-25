@@ -242,9 +242,9 @@ function deleteDocument(doc) {
                     </p>
                 </Card>
 
-                <!-- Card 3: Teaching Schedule (only shown when cohort courses are assigned) -->
-                <Card v-if="employee.cohort_courses && employee.cohort_courses.length > 0" class="mb-6">
-                    <PageHeader title="Teaching Schedule" description="Cohort courses currently assigned to this employee." />
+                <!-- Card 3: Teaching Schedule (only shown when class courses are assigned) -->
+                <Card v-if="employee.class_courses && employee.class_courses.length > 0" class="mb-6">
+                    <PageHeader title="Teaching Schedule" description="Course assignments currently assigned to this employee." />
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -257,7 +257,7 @@ function deleteDocument(doc) {
                                         Course Name
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                                        Class / Cohort
+                                        Class
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         Enrolled / Capacity
@@ -269,7 +269,7 @@ function deleteDocument(doc) {
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                 <tr
-                                    v-for="cc in employee.cohort_courses"
+                                    v-for="cc in employee.class_courses"
                                     :key="cc.id"
                                     class="hover:bg-gray-50 dark:hover:bg-gray-800"
                                 >
@@ -280,8 +280,7 @@ function deleteDocument(doc) {
                                         {{ cc.course?.name ?? '—' }}
                                     </td>
                                     <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                        Class {{ cc.cohort?.class?.class_number ?? '?' }}
-                                        – Cohort {{ cc.cohort?.name ? cc.cohort.name.charAt(0).toUpperCase() + cc.cohort.name.slice(1) : '' }}
+                                        Class {{ cc.class?.class_number ?? '—' }}
                                     </td>
                                     <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                         {{ cc.enrollments_count ?? '—' }} / {{ cc.max_students }}

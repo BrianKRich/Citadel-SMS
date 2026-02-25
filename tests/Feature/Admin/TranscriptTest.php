@@ -3,7 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\ClassModel;
-use App\Models\CohortCourse;
+use App\Models\ClassCourse;
 use App\Models\Enrollment;
 use App\Models\GradingScale;
 use App\Models\Student;
@@ -34,17 +34,13 @@ class TranscriptTest extends TestCase
             ],
         ]);
 
-        $class  = ClassModel::factory()->create();
-        // Use the auto-created alpha cohort from boot()
-        $cohort = $class->cohorts()->where('name', 'alpha')->first();
-        $cohort->update(['start_date' => '2025-08-01', 'end_date' => '2025-12-15']);
-
-        $cohortCourse = CohortCourse::factory()->create(['cohort_id' => $cohort->id]);
-        $student      = Student::factory()->create(['status' => 'active']);
+        $class       = ClassModel::factory()->create(['start_date' => '2025-08-01', 'end_date' => '2025-12-15']);
+        $classCourse = ClassCourse::factory()->create(['class_id' => $class->id]);
+        $student     = Student::factory()->create(['status' => 'active']);
 
         Enrollment::factory()->withGrade('A', 4.0)->create([
-            'student_id'       => $student->id,
-            'cohort_course_id' => $cohortCourse->id,
+            'student_id'      => $student->id,
+            'class_course_id' => $classCourse->id,
         ]);
 
         return $student;
@@ -94,7 +90,7 @@ class TranscriptTest extends TestCase
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Transcripts/Show')
             ->has('student')
-            ->has('cohortGroups')
+            ->has('classGroups')
             ->has('totalCredits')
             ->has('cumulativeGpa')
             ->where('official', false)
@@ -124,7 +120,7 @@ class TranscriptTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    public function test_show_groups_enrollments_by_cohort(): void
+    public function test_show_groups_enrollments_by_class(): void
     {
         $user    = $this->adminUser();
         $student = $this->makeStudentWithHistory();
@@ -133,7 +129,7 @@ class TranscriptTest extends TestCase
 
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Transcripts/Show')
-            ->where('cohortGroups', fn ($groups) => count($groups) === 1)
+            ->where('classGroups', fn ($groups) => count($groups) === 1)
         );
     }
 

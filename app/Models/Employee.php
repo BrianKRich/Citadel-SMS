@@ -81,9 +81,9 @@ class Employee extends Model
         return $this->belongsTo(EmployeeRole::class, 'secondary_role_id');
     }
 
-    public function cohortCourses(): HasMany
+    public function classCourses(): HasMany
     {
-        return $this->hasMany(CohortCourse::class);
+        return $this->hasMany(ClassCourse::class);
     }
 
     public function phoneNumbers(): MorphMany

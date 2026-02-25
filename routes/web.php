@@ -14,7 +14,7 @@ use App\Http\Controllers\Admin\AssessmentController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\ClassController;
-use App\Http\Controllers\Admin\CohortCourseController;
+use App\Http\Controllers\Admin\ClassCourseController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\CustomFieldController;
 use App\Http\Controllers\Admin\EducationalInstitutionController;
@@ -153,10 +153,6 @@ Route::middleware('auth')->group(function () {
         ->name('admin.academic-years.set-current');
 
     // Phase 2: Class & Enrollment Management
-    // Cohort update (must be BEFORE resource to avoid wildcard conflicts)
-    Route::patch('admin/classes/{class}/cohorts/{cohort}', [ClassController::class, 'updateCohort'])
-        ->name('admin.classes.cohorts.update');
-
     Route::resource('admin/classes', ClassController::class)->names([
         'index'   => 'admin.classes.index',
         'create'  => 'admin.classes.create',
@@ -167,8 +163,8 @@ Route::middleware('auth')->group(function () {
         'destroy' => 'admin.classes.destroy',
     ]);
 
-    // Cohort Courses
-    Route::resource('admin/cohort-courses', CohortCourseController::class)->names('admin.cohort-courses');
+    // Class Courses
+    Route::resource('admin/class-courses', ClassCourseController::class)->names('admin.class-courses');
 
     // Educational Institutions
     Route::resource('admin/institutions', EducationalInstitutionController::class)->names('admin.institutions');
@@ -191,7 +187,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin/grades')->group(function () {
         Route::get('/', [GradeController::class, 'index'])->name('admin.grades.index');
-        Route::get('/cohort-course/{cohortCourse}', [GradeController::class, 'classGrades'])->name('admin.grades.class');
+        Route::get('/class-course/{classCourse}', [GradeController::class, 'classGrades'])->name('admin.grades.class');
         Route::get('/enter/{assessment}', [GradeController::class, 'enter'])->name('admin.grades.enter');
         Route::post('/store', [GradeController::class, 'store'])->name('admin.grades.store');
         Route::get('/student/{student}', [GradeController::class, 'studentGrades'])->name('admin.grades.student');
@@ -272,15 +268,15 @@ Route::middleware('auth')->group(function () {
         'destroy' => 'admin.training-records.destroy',
     ]);
 
-    // Phase 4: Attendance (student route BEFORE cohortCourse wildcard)
+    // Phase 4: Attendance (student route BEFORE classCourse wildcard)
     Route::get('admin/attendance/student/{student}', [AttendanceController::class, 'studentHistory'])
         ->name('admin.attendance.student');
 
     Route::prefix('admin/attendance')->group(function () {
         Route::get('/', [AttendanceController::class, 'index'])->name('admin.attendance.index');
-        Route::get('/{cohortCourse}/take', [AttendanceController::class, 'take'])->name('admin.attendance.take');
+        Route::get('/{classCourse}/take', [AttendanceController::class, 'take'])->name('admin.attendance.take');
         Route::post('/store', [AttendanceController::class, 'store'])->name('admin.attendance.store');
-        Route::get('/{cohortCourse}/summary', [AttendanceController::class, 'classSummary'])->name('admin.attendance.summary');
+        Route::get('/{classCourse}/summary', [AttendanceController::class, 'classSummary'])->name('admin.attendance.summary');
     });
 });
 

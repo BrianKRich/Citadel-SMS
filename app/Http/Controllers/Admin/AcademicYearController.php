@@ -51,7 +51,7 @@ class AcademicYearController extends Controller
 
     public function show(AcademicYear $academicYear)
     {
-        $academicYear->load(['classes.cohorts']);
+        $academicYear->load(['classes' => fn ($q) => $q->withCount('classCourses')]);
 
         return Inertia::render('Admin/AcademicYears/Show', [
             'academicYear' => $academicYear,

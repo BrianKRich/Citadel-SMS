@@ -68,43 +68,25 @@
                             >
                                 <option value="">All Classes</option>
                                 <option v-for="cls in classes" :key="cls.id" :value="cls.id">
-                                    Class {{ cls.class_number }} ({{ cls.academic_year?.name }})
+                                    Class {{ cls.class_number }}{{ cls.name ? ` — ${cls.name}` : '' }}
                                 </option>
                             </select>
                         </div>
 
-                        <!-- Filter by Cohort (not part of form submission) -->
-                        <div v-if="cohortsForSelectedClass.length > 0">
-                            <label for="cohort_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Filter by Cohort
-                            </label>
-                            <select
-                                id="cohort_filter"
-                                v-model="cohortFilter"
-                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
-                            >
-                                <option value="">All Cohorts</option>
-                                <option v-for="cohort in cohortsForSelectedClass" :key="cohort.id" :value="cohort.id">
-                                    {{ cohort.name }}
-                                </option>
-                            </select>
-                        </div>
-
-                        <!-- Select Cohort Course (CohortCourse = course assignment within a cohort) -->
+                        <!-- Select Course Assignment -->
                         <div>
-                            <label for="cohort_course_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Select Course Assignment (Cohort Course) <span class="text-red-500">*</span>
+                            <label for="class_course_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Select Course Assignment <span class="text-red-500">*</span>
                             </label>
                             <select
-                                id="cohort_course_id"
-                                v-model="form.cohort_course_id"
+                                id="class_course_id"
+                                v-model="form.class_course_id"
                                 required
                                 class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
                             >
-                                <option value="">— Select Cohort Course —</option>
-                                <option v-for="cc in filteredCohortCourses" :key="cc.id" :value="cc.id">
-                                    Class {{ cc.cohort?.class?.class_number }}
-                                    / {{ cc.cohort?.name }}
+                                <option value="">— Select Course Assignment —</option>
+                                <option v-for="cc in filteredClassCourses" :key="cc.id" :value="cc.id">
+                                    Class {{ cc.class?.class_number }}
                                     / {{ cc.course?.course_code }} — {{ cc.course?.name }}
                                     <template v-if="cc.employee">
                                         ({{ cc.employee.first_name }} {{ cc.employee.last_name }})
@@ -112,10 +94,10 @@
                                 </option>
                             </select>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Showing available cohort course assignments.
+                                Showing available course assignments.
                             </p>
-                            <p v-if="form.errors.cohort_course_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                {{ form.errors.cohort_course_id }}
+                            <p v-if="form.errors.class_course_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.errors.class_course_id }}
                             </p>
                         </div>
 
@@ -174,56 +156,39 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
-    students: Array,
-    classes: Array,
-    cohortCourses: Array,
-    selectedCohortId: [Number, String, null],
-    selectedCohortCourseId: [Number, String, null],
-    customFields: { type: Array, default: () => [] },
+    students:              Array,
+    classes:               Array,
+    classCourses:          Array,
+    selectedClassId:       [Number, String, null],
+    selectedClassCourseId: [Number, String, null],
+    customFields:          { type: Array, default: () => [] },
 });
 
-// Resolve preselected cohort course to also pre-populate class/cohort filters
-const preselectedCC = props.selectedCohortCourseId
-    ? (props.cohortCourses ?? []).find(cc => cc.id === Number(props.selectedCohortCourseId))
+// Resolve preselected class course to also pre-populate class filter
+const preselectedCC = props.selectedClassCourseId
+    ? (props.classCourses ?? []).find(cc => cc.id === Number(props.selectedClassCourseId))
     : null;
 
 const form = useForm({
-    student_id: '',
-    cohort_course_id: preselectedCC ? preselectedCC.id : '',
-    enrollment_date: new Date().toISOString().substring(0, 10),
+    student_id:          '',
+    class_course_id:     preselectedCC ? preselectedCC.id : '',
+    enrollment_date:     new Date().toISOString().substring(0, 10),
     custom_field_values: {},
 });
 
-const classFilter = ref(preselectedCC?.cohort?.class?.id ?? '');
-const cohortFilter = ref(preselectedCC?.cohort?.id ?? props.selectedCohortId ?? '');
+const classFilter = ref(preselectedCC?.class?.id ?? props.selectedClassId ?? '');
 
-// Cohorts belonging to the selected class
-const cohortsForSelectedClass = computed(() => {
-    if (!classFilter.value) return [];
-    const cls = props.classes?.find(c => c.id == classFilter.value);
-    return cls?.cohorts ?? [];
-});
-
-// Reset cohort filter when class changes
+// Reset course filter when class changes
 watch(classFilter, () => {
-    cohortFilter.value = '';
-    form.cohort_course_id = '';
+    form.class_course_id = '';
 });
 
-watch(cohortFilter, () => {
-    form.cohort_course_id = '';
-});
-
-// Filter cohort courses by selected class and/or cohort
-const filteredCohortCourses = computed(() => {
-    let list = props.cohortCourses ?? [];
+// Filter class courses by selected class
+const filteredClassCourses = computed(() => {
+    let list = props.classCourses ?? [];
 
     if (classFilter.value) {
-        list = list.filter(cc => cc.cohort?.class?.id == classFilter.value);
-    }
-
-    if (cohortFilter.value) {
-        list = list.filter(cc => cc.cohort?.id == cohortFilter.value);
+        list = list.filter(cc => cc.class?.id == classFilter.value);
     }
 
     return list;

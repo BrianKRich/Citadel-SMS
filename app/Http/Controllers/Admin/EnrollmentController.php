@@ -4,9 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\SavesCustomFieldValues;
 use App\Http\Controllers\Controller;
+use App\Models\ClassCourse;
 use App\Models\ClassModel;
-use App\Models\Cohort;
-use App\Models\CohortCourse;
 use App\Models\CustomField;
 use App\Models\Enrollment;
 use App\Models\Student;
@@ -22,15 +21,15 @@ class EnrollmentController extends Controller
         $enrollments = Enrollment::query()
             ->with([
                 'student',
-                'cohortCourse.course',
-                'cohortCourse.employee' => fn($q) => $q->withTrashed(),
-                'cohortCourse.cohort.class',
+                'classCourse.course',
+                'classCourse.employee' => fn($q) => $q->withTrashed(),
+                'classCourse.class',
             ])
             ->when($request->student_id, function ($query, $studentId) {
                 $query->student($studentId);
             })
-            ->when($request->cohort_course_id, function ($query, $ccId) {
-                $query->cohortCourse($ccId);
+            ->when($request->class_course_id, function ($query, $ccId) {
+                $query->classCourse($ccId);
             })
             ->when($request->status, function ($query, $status) {
                 $query->status($status);
@@ -49,62 +48,62 @@ class EnrollmentController extends Controller
             ->withQueryString();
 
         $students = Student::active()->orderBy('first_name')->get();
-        $classes  = ClassModel::with('cohorts')->orderBy('class_number')->get();
+        $classes  = ClassModel::orderBy('class_number')->get();
 
         return Inertia::render('Admin/Enrollment/Index', [
             'enrollments' => $enrollments,
             'students'    => $students,
             'classes'     => $classes,
-            'filters'     => $request->only(['search', 'student_id', 'cohort_course_id', 'status']),
+            'filters'     => $request->only(['search', 'student_id', 'class_course_id', 'status']),
         ]);
     }
 
     public function create(Request $request)
     {
         $students = Student::active()->orderBy('first_name')->get();
-        $classes  = ClassModel::with('cohorts')->orderBy('class_number')->get();
+        $classes  = ClassModel::orderBy('class_number')->get();
 
-        $preselectedCohortCourseId = $request->cohort_course_id ? (int) $request->cohort_course_id : null;
+        $preselectedClassCourseId = $request->class_course_id ? (int) $request->class_course_id : null;
 
-        // Available cohort-courses; always include the preselected one even if not "available"
-        $cohortCourses = CohortCourse::query()
-            ->where(function ($query) use ($preselectedCohortCourseId) {
+        // Available class-courses; always include the preselected one even if not "available"
+        $classCourses = ClassCourse::query()
+            ->where(function ($query) use ($preselectedClassCourseId) {
                 $query->available();
-                if ($preselectedCohortCourseId) {
-                    $query->orWhere('id', $preselectedCohortCourseId);
+                if ($preselectedClassCourseId) {
+                    $query->orWhere('id', $preselectedClassCourseId);
                 }
             })
-            ->with(['course', 'cohort.class', 'employee'])
-            ->when($request->cohort_id, function ($query, $cohortId) {
-                $query->where('cohort_id', $cohortId);
+            ->with(['course', 'class', 'employee'])
+            ->when($request->class_id, function ($query, $classId) {
+                $query->forClass($classId);
             })
             ->orderBy('created_at', 'desc')
             ->get();
 
         return Inertia::render('Admin/Enrollment/Create', [
-            'students'                 => $students,
-            'classes'                  => $classes,
-            'cohortCourses'            => $cohortCourses,
-            'selectedCohortId'         => $request->cohort_id,
-            'selectedCohortCourseId'   => $preselectedCohortCourseId,
-            'customFields'             => CustomField::forEntity('Enrollment')->active()->orderBy('sort_order')->get(),
+            'students'               => $students,
+            'classes'                => $classes,
+            'classCourses'           => $classCourses,
+            'selectedClassId'        => $request->class_id,
+            'selectedClassCourseId'  => $preselectedClassCourseId,
+            'customFields'           => CustomField::forEntity('Enrollment')->active()->orderBy('sort_order')->get(),
         ]);
     }
 
     public function enroll(Request $request)
     {
         $validated = $request->validate([
-            'student_id'       => ['required', 'exists:students,id'],
-            'cohort_course_id' => ['required', 'exists:cohort_courses,id'],
-            'enrollment_date'  => ['nullable', 'date'],
+            'student_id'      => ['required', 'exists:students,id'],
+            'class_course_id' => ['required', 'exists:class_courses,id'],
+            'enrollment_date' => ['nullable', 'date'],
         ]);
 
-        $student      = Student::findOrFail($validated['student_id']);
-        $cohortCourse = CohortCourse::findOrFail($validated['cohort_course_id']);
+        $student     = Student::findOrFail($validated['student_id']);
+        $classCourse = ClassCourse::findOrFail($validated['class_course_id']);
 
         // Check if student is already enrolled
         $existingEnrollment = Enrollment::where('student_id', $student->id)
-            ->where('cohort_course_id', $cohortCourse->id)
+            ->where('class_course_id', $classCourse->id)
             ->first();
 
         if ($existingEnrollment) {
@@ -114,30 +113,30 @@ class EnrollmentController extends Controller
         }
 
         // Check if course is full
-        if ($cohortCourse->isFull()) {
+        if ($classCourse->isFull()) {
             return back()->withErrors([
                 'error' => 'Course is full. Cannot enroll more students.',
             ])->withInput();
         }
 
         // Check if course is open
-        if ($cohortCourse->status !== 'open') {
+        if ($classCourse->status !== 'open') {
             return back()->withErrors([
                 'error' => 'Course is not open for enrollment.',
             ])->withInput();
         }
 
         $enrollment = Enrollment::create([
-            'student_id'       => $student->id,
-            'cohort_course_id' => $cohortCourse->id,
-            'enrollment_date'  => $validated['enrollment_date'] ?? now(),
-            'status'           => 'enrolled',
+            'student_id'      => $student->id,
+            'class_course_id' => $classCourse->id,
+            'enrollment_date' => $validated['enrollment_date'] ?? now(),
+            'status'          => 'enrolled',
         ]);
 
         $this->saveCustomFieldValues($request, 'Enrollment', $enrollment->id);
 
         return redirect()->route('admin.enrollment.index')
-            ->with('success', "Successfully enrolled {$student->full_name} in {$cohortCourse->course->name}.");
+            ->with('success', "Successfully enrolled {$student->full_name} in {$classCourse->course->name}.");
     }
 
     public function drop(Enrollment $enrollment)
@@ -152,9 +151,9 @@ class EnrollmentController extends Controller
     {
         $enrollments = $student->enrollments()
             ->with([
-                'cohortCourse.course',
-                'cohortCourse.employee' => fn($q) => $q->withTrashed(),
-                'cohortCourse.cohort.class',
+                'classCourse.course',
+                'classCourse.employee' => fn($q) => $q->withTrashed(),
+                'classCourse.class',
             ])
             ->enrolled()
             ->get();

@@ -120,13 +120,12 @@ function destroy() {
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                 <tr
-                                    v-for="cc in course.cohort_courses"
+                                    v-for="cc in course.class_courses"
                                     :key="cc.id"
                                     class="hover:bg-gray-50 dark:hover:bg-gray-800"
                                 >
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        Class {{ cc.cohort?.class?.class_number ?? '?' }}
-                                        – Cohort {{ cc.cohort?.name ? cc.cohort.name.charAt(0).toUpperCase() + cc.cohort.name.slice(1) : '' }}
+                                        Class {{ cc.class?.class_number ?? '—' }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                                         <span v-if="cc.employee">{{ cc.employee.first_name }} {{ cc.employee.last_name }}</span>
@@ -141,13 +140,13 @@ function destroy() {
                                     </td>
                                     <td class="px-6 py-4 text-sm">
                                         <Link
-                                            :href="route('admin.cohort-courses.show', cc.id)"
+                                            :href="route('admin.class-courses.show', cc.id)"
                                             class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                                         >View</Link>
                                     </td>
                                 </tr>
-                                <tr v-if="!course.cohort_courses?.length">
-                                    <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No cohort courses scheduled for this course.</td>
+                                <tr v-if="!course.class_courses?.length">
+                                    <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">No course assignments scheduled for this course.</td>
                                 </tr>
                             </tbody>
                         </table>

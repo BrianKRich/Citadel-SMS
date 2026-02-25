@@ -3,68 +3,68 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ClassCourse;
 use App\Models\ClassModel;
-use App\Models\Cohort;
-use App\Models\CohortCourse;
 use App\Models\Course;
 use App\Models\EducationalInstitution;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class CohortCourseController extends Controller
+class ClassCourseController extends Controller
 {
     public function index(Request $request)
     {
-        $cohortCourses = CohortCourse::query()
-            ->with(['cohort.class.academicYear', 'course', 'employee', 'institution'])
-            ->when($request->cohort_id, function ($query, $cohortId) {
-                $query->cohort($cohortId);
+        $classCourses = ClassCourse::query()
+            ->with(['class.academicYear', 'course', 'employee', 'institution'])
+            ->when($request->class_id, function ($query, $classId) {
+                $query->forClass($classId);
             })
             ->when($request->course_id, function ($query, $courseId) {
-                $query->course($courseId);
+                $query->where('course_id', $courseId);
             })
             ->when($request->status, function ($query, $status) {
-                $query->status($status);
+                $query->where('status', $status);
             })
             ->when($request->instructor_type, function ($query, $type) {
                 $query->where('instructor_type', $type);
             })
             ->when($request->search, function ($query, $search) {
-                $query->search($search);
+                $query->whereHas('course', fn ($q) => $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('course_code', 'like', "%{$search}%"));
             })
             ->paginate(10)
             ->withQueryString();
 
         $courses = Course::active()->orderBy('name')->get();
 
-        return Inertia::render('Admin/CohortCourses/Index', [
-            'cohortCourses' => $cohortCourses,
-            'courses'       => $courses,
-            'filters'       => $request->only(['search', 'cohort_id', 'course_id', 'status', 'instructor_type']),
+        return Inertia::render('Admin/ClassCourses/Index', [
+            'classCourses' => $classCourses,
+            'courses'      => $courses,
+            'filters'      => $request->only(['search', 'class_id', 'course_id', 'status', 'instructor_type']),
         ]);
     }
 
     public function create(Request $request)
     {
-        $classes = ClassModel::with('cohorts')->orderBy('class_number')->get();
+        $classes = ClassModel::orderBy('class_number')->get();
         $courses = Course::active()->orderBy('name')->get();
         $employees = Employee::active()->orderBy('first_name')->get();
         $institutions = EducationalInstitution::orderBy('name')->get();
 
-        return Inertia::render('Admin/CohortCourses/Create', [
-            'classes'      => $classes,
-            'courses'      => $courses,
-            'employees'    => $employees,
-            'institutions' => $institutions,
-            'preselectedCohortId' => $request->cohort_id,
+        return Inertia::render('Admin/ClassCourses/Create', [
+            'classes'            => $classes,
+            'courses'            => $courses,
+            'employees'          => $employees,
+            'institutions'       => $institutions,
+            'preselectedClassId' => $request->class_id ? (int) $request->class_id : null,
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'cohort_id'       => ['required', 'exists:cohorts,id'],
+            'class_id'        => ['required', 'exists:classes,id'],
             'course_id'       => ['required', 'exists:courses,id'],
             'instructor_type' => ['required', 'in:staff,technical_college,university'],
             'employee_id'     => ['nullable', 'exists:employees,id'],
@@ -80,38 +80,38 @@ class CohortCourseController extends Controller
 
         $this->validateInstructor($validated);
 
-        $cohortCourse = CohortCourse::create($validated);
+        $classCourse = ClassCourse::create($validated);
 
-        return redirect()->route('admin.cohort-courses.show', $cohortCourse)
+        return redirect()->route('admin.class-courses.show', $classCourse)
             ->with('success', 'Course assignment created successfully.');
     }
 
-    public function show(CohortCourse $cohortCourse)
+    public function show(ClassCourse $classCourse)
     {
-        $cohortCourse->load([
-            'cohort.class.academicYear',
+        $classCourse->load([
+            'class.academicYear',
             'course',
             'employee',
             'institution',
             'enrollments.student',
         ]);
 
-        $cohortCourse->append(['enrolled_count', 'available_seats']);
+        $classCourse->append(['enrolled_count', 'available_seats']);
 
-        return Inertia::render('Admin/CohortCourses/Show', [
-            'cohortCourse' => $cohortCourse,
+        return Inertia::render('Admin/ClassCourses/Show', [
+            'classCourse' => $classCourse,
         ]);
     }
 
-    public function edit(CohortCourse $cohortCourse)
+    public function edit(ClassCourse $classCourse)
     {
-        $classes = ClassModel::with('cohorts')->orderBy('class_number')->get();
+        $classes = ClassModel::orderBy('class_number')->get();
         $courses = Course::active()->orderBy('name')->get();
         $employees = Employee::active()->orderBy('first_name')->get();
         $institutions = EducationalInstitution::orderBy('name')->get();
 
-        return Inertia::render('Admin/CohortCourses/Edit', [
-            'cohortCourse' => $cohortCourse->load(['cohort.class', 'course', 'employee', 'institution']),
+        return Inertia::render('Admin/ClassCourses/Edit', [
+            'classCourse'  => $classCourse->load(['class', 'course', 'employee', 'institution']),
             'classes'      => $classes,
             'courses'      => $courses,
             'employees'    => $employees,
@@ -119,10 +119,10 @@ class CohortCourseController extends Controller
         ]);
     }
 
-    public function update(Request $request, CohortCourse $cohortCourse)
+    public function update(Request $request, ClassCourse $classCourse)
     {
         $validated = $request->validate([
-            'cohort_id'       => ['required', 'exists:cohorts,id'],
+            'class_id'        => ['required', 'exists:classes,id'],
             'course_id'       => ['required', 'exists:courses,id'],
             'instructor_type' => ['required', 'in:staff,technical_college,university'],
             'employee_id'     => ['nullable', 'exists:employees,id'],
@@ -138,29 +138,29 @@ class CohortCourseController extends Controller
 
         $this->validateInstructor($validated);
 
-        $cohortCourse->update($validated);
+        $classCourse->update($validated);
 
-        return redirect()->route('admin.cohort-courses.show', $cohortCourse)
+        return redirect()->route('admin.class-courses.show', $classCourse)
             ->with('success', 'Course assignment updated successfully.');
     }
 
-    public function destroy(Request $request, CohortCourse $cohortCourse)
+    public function destroy(Request $request, ClassCourse $classCourse)
     {
-        if ($cohortCourse->enrollments()->count() > 0) {
+        if ($classCourse->enrollments()->count() > 0) {
             return back()->withErrors([
                 'error' => 'Cannot delete a course assignment with existing enrollments.',
             ]);
         }
 
-        $classId = $cohortCourse->cohort?->class_id;
-        $cohortCourse->delete();
+        $classId = $classCourse->class_id;
+        $classCourse->delete();
 
         if ($request->from === 'class' && $classId) {
             return redirect()->route('admin.classes.show', $classId)
-                ->with('success', 'Course removed from cohort successfully.');
+                ->with('success', 'Course removed from class successfully.');
         }
 
-        return redirect()->route('admin.cohort-courses.index')
+        return redirect()->route('admin.class-courses.index')
             ->with('success', 'Course assignment deleted successfully.');
     }
 

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\CohortCourse;
+use App\Models\ClassCourse;
 use App\Models\Enrollment;
 use App\Models\GradingScale;
 use App\Models\Student;
@@ -65,12 +65,12 @@ class GradeCalculationService
         return round(min(100, max(0, $average)), 2);
     }
 
-    public function calculateCohortGpa(Student $student, int $cohortId): float
+    public function calculateClassGpa(Student $student, int $classId): float
     {
         $enrollments = $student->enrollments()
-            ->whereHas('cohortCourse', fn ($q) => $q->where('cohort_id', $cohortId))
+            ->whereHas('classCourse', fn ($q) => $q->where('class_id', $classId))
             ->whereNotNull('grade_points')
-            ->with('cohortCourse.course')
+            ->with('classCourse.course')
             ->get();
 
         if ($enrollments->isEmpty()) {
@@ -81,7 +81,7 @@ class GradeCalculationService
         $totalCredits = 0.0;
 
         foreach ($enrollments as $enrollment) {
-            $credits = (float) ($enrollment->cohortCourse->course->credits ?? 1);
+            $credits = (float) ($enrollment->classCourse->course->credits ?? 1);
             $totalPoints += (float) $enrollment->grade_points * $credits;
             $totalCredits += $credits;
         }
@@ -97,7 +97,7 @@ class GradeCalculationService
     {
         $enrollments = $student->enrollments()
             ->whereNotNull('grade_points')
-            ->with('cohortCourse.course')
+            ->with('classCourse.course')
             ->get();
 
         if ($enrollments->isEmpty()) {
@@ -108,7 +108,7 @@ class GradeCalculationService
         $totalCredits = 0.0;
 
         foreach ($enrollments as $enrollment) {
-            $credits = (float) ($enrollment->cohortCourse->course->credits ?? 1);
+            $credits = (float) ($enrollment->classCourse->course->credits ?? 1);
             $totalPoints += (float) $enrollment->grade_points * $credits;
             $totalCredits += $credits;
         }
@@ -140,9 +140,9 @@ class GradeCalculationService
         ]);
     }
 
-    public function calculateClassRank(CohortCourse $cohortCourse): Collection
+    public function calculateClassRank(ClassCourse $classCourse): Collection
     {
-        $enrollments = $cohortCourse->enrollments()
+        $enrollments = $classCourse->enrollments()
             ->enrolled()
             ->whereNotNull('weighted_average')
             ->with('student')
@@ -169,9 +169,9 @@ class GradeCalculationService
         });
     }
 
-    public function updateAllCohortCourseGrades(CohortCourse $cohortCourse): void
+    public function updateAllClassCourseGrades(ClassCourse $classCourse): void
     {
-        $enrollments = $cohortCourse->enrollments()->enrolled()->get();
+        $enrollments = $classCourse->enrollments()->enrolled()->get();
 
         foreach ($enrollments as $enrollment) {
             $this->updateEnrollmentGrade($enrollment);

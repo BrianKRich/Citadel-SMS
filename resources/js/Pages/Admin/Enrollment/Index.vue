@@ -47,14 +47,14 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cohort Course</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Course Assignment</label>
                             <select
-                                v-model="selectedCohortCourse"
+                                v-model="selectedClassCourse"
                                 class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
                             >
-                                <option value="">All Cohort Courses</option>
-                                <option v-for="cc in cohortCoursesForFilter" :key="cc.id" :value="cc.id">
-                                    {{ cc.cohort?.name }} / {{ cc.course?.course_code }} — {{ cc.course?.name }}
+                                <option value="">All Course Assignments</option>
+                                <option v-for="cc in classCoursesForFilter" :key="cc.id" :value="cc.id">
+                                    Class {{ cc.class?.class_number }} / {{ cc.course?.course_code }} — {{ cc.course?.name }}
                                 </option>
                             </select>
                         </div>
@@ -92,7 +92,7 @@
                                         Course
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Class / Cohort
+                                        Class
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Status
@@ -123,12 +123,11 @@
                                         {{ enrollment.student?.first_name }} {{ enrollment.student?.last_name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        <span class="font-medium">{{ enrollment.cohortCourse?.course?.course_code }}</span>
-                                        — {{ enrollment.cohortCourse?.course?.name }}
+                                        <span class="font-medium">{{ enrollment.classCourse?.course?.course_code }}</span>
+                                        — {{ enrollment.classCourse?.course?.name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        Class {{ enrollment.cohortCourse?.cohort?.class?.class_number }}
-                                        / {{ enrollment.cohortCourse?.cohort?.name }}
+                                        Class {{ enrollment.classCourse?.class?.class_number ?? '—' }}
                                     </td>
                                     <td class="px-4 py-3 text-sm">
                                         <span
@@ -193,13 +192,12 @@
                                 </span>
                             </div>
                             <p class="text-sm text-gray-700 dark:text-gray-300">
-                                <span class="font-medium">{{ enrollment.cohortCourse?.course?.course_code }}</span>
-                                — {{ enrollment.cohortCourse?.course?.name }}
+                                <span class="font-medium">{{ enrollment.classCourse?.course?.course_code }}</span>
+                                — {{ enrollment.classCourse?.course?.name }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Class {{ enrollment.cohortCourse?.cohort?.class?.class_number }}
-                                / {{ enrollment.cohortCourse?.cohort?.name }}
-                                &bull; {{ enrollment.cohortCourse?.employee?.first_name }} {{ enrollment.cohortCourse?.employee?.last_name }}
+                                Class {{ enrollment.classCourse?.class?.class_number ?? '—' }}
+                                &bull; {{ enrollment.classCourse?.employee?.first_name }} {{ enrollment.classCourse?.employee?.last_name }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
                                 Enrolled: {{ fmtDate(enrollment.enrollment_date) }}
@@ -273,20 +271,18 @@ function fmtDate(dateStr) {
 
 const search = ref(props.filters?.search ?? '');
 const selectedClass = ref(props.filters?.class_id ?? '');
-const selectedCohortCourse = ref(props.filters?.cohort_course_id ?? '');
+const selectedClassCourse = ref(props.filters?.class_course_id ?? '');
 const selectedStatus = ref(props.filters?.status ?? '');
 
-// Build a flat list of cohort courses from all classes for the filter dropdown
-const cohortCoursesForFilter = computed(() => {
+// Build a flat list of class courses from all classes for the filter dropdown
+const classCoursesForFilter = computed(() => {
     const list = [];
     for (const cls of (props.classes ?? [])) {
-        for (const cohort of (cls.cohorts ?? [])) {
-            for (const cc of (cohort.cohort_courses ?? [])) {
-                list.push({
-                    ...cc,
-                    cohort: { ...cohort, class: cls },
-                });
-            }
+        for (const cc of (cls.class_courses ?? [])) {
+            list.push({
+                ...cc,
+                class: cls,
+            });
         }
     }
     return list;
@@ -296,7 +292,7 @@ function applyFilters() {
     router.get(route('admin.enrollment.index'), {
         search: search.value || undefined,
         class_id: selectedClass.value || undefined,
-        cohort_course_id: selectedCohortCourse.value || undefined,
+        class_course_id: selectedClassCourse.value || undefined,
         status: selectedStatus.value || undefined,
     }, { preserveState: true, replace: true });
 }
@@ -306,7 +302,7 @@ watch(search, () => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(applyFilters, 300);
 });
-watch([selectedClass, selectedCohortCourse, selectedStatus], applyFilters);
+watch([selectedClass, selectedClassCourse, selectedStatus], applyFilters);
 
 function getStatusBadgeClass(status) {
     const c = {
@@ -319,7 +315,7 @@ function getStatusBadgeClass(status) {
 }
 
 function drop(enrollment) {
-    if (confirm(`Drop ${enrollment.student?.first_name} from this cohort course?`)) {
+    if (confirm(`Drop ${enrollment.student?.first_name} from this course assignment?`)) {
         router.delete(route('admin.enrollment.drop', enrollment.id));
     }
 }

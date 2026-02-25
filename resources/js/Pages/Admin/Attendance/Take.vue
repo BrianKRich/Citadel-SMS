@@ -9,7 +9,7 @@ import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
 const props = defineProps({
-    cohortCourse: Object,
+    classCourse: Object,
     enrollments: Array,
     existingRecords: Object,
     date: String,
@@ -19,7 +19,7 @@ const selectedDate = ref(props.date);
 
 watch(selectedDate, (newDate) => {
     router.get(
-        route('admin.attendance.take', props.cohortCourse.id),
+        route('admin.attendance.take', props.classCourse.id),
         { date: newDate },
         { preserveScroll: false }
     );
@@ -33,7 +33,7 @@ const statusOptions = [
 ];
 
 const form = useForm({
-    cohort_course_id: props.cohortCourse.id,
+    class_course_id: props.classCourse.id,
     date: props.date,
     records: props.enrollments.map(enrollment => {
         const existing = props.existingRecords?.[enrollment.student_id];
@@ -66,7 +66,7 @@ function getStatusButtonClass(status, selected) {
 </script>
 
 <template>
-    <Head :title="`Take Attendance — ${cohortCourse.course?.name}`" />
+    <Head :title="`Take Attendance — ${classCourse.course?.name}`" />
 
     <AuthenticatedLayout>
         <template #header>
@@ -90,12 +90,12 @@ function getStatusButtonClass(status, selected) {
                     <Alert type="error" :message="$page.props.flash.error" />
                 </div>
 
-                <!-- Cohort Course Info -->
+                <!-- Class Course Info -->
                 <Card class="mb-6">
                     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <PageHeader
-                            :title="cohortCourse.course?.name || 'N/A'"
-                            :description="`Class ${cohortCourse.cohort?.class?.class_number} / ${cohortCourse.cohort?.name}`"
+                            :title="classCourse.course?.name || 'N/A'"
+                            :description="`Class ${classCourse.class?.class_number ?? '—'}`"
                         />
                         <div class="flex-shrink-0">
                             <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
@@ -121,7 +121,7 @@ function getStatusButtonClass(status, selected) {
 
                     <form @submit.prevent="submit">
                         <div v-if="enrollments.length === 0" class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                            No students are enrolled in this cohort course.
+                            No students are enrolled in this course assignment.
                         </div>
 
                         <!-- Desktop Table -->

@@ -3,9 +3,8 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\AcademicYear;
-use App\Models\Cohort;
+use App\Models\ClassCourse;
 use App\Models\ClassModel;
-use App\Models\CohortCourse;
 use App\Models\Enrollment;
 use App\Models\Student;
 use App\Models\User;
@@ -109,16 +108,14 @@ class ClassTest extends TestCase
         $this->assertDatabaseHas('classes', ['class_number' => '42']);
     }
 
-    public function test_store_auto_creates_alpha_and_bravo_cohorts(): void
+    public function test_store_does_not_auto_create_class_courses(): void
     {
         $this->actingAs($this->admin())
             ->post(route('admin.classes.store'), $this->validPayload());
 
         $class = ClassModel::first();
         $this->assertNotNull($class);
-        $this->assertSame(2, $class->cohorts()->count());
-        $this->assertDatabaseHas('cohorts', ['class_id' => $class->id, 'name' => 'alpha']);
-        $this->assertDatabaseHas('cohorts', ['class_id' => $class->id, 'name' => 'bravo']);
+        $this->assertDatabaseMissing('class_courses', ['class_id' => $class->id]);
     }
 
     public function test_store_validates_required_fields(): void
@@ -213,38 +210,6 @@ class ClassTest extends TestCase
             ->assertSessionHasErrors(['academic_year_id', 'class_number', 'ngb_number', 'status']);
     }
 
-    // ── UpdateCohort ──────────────────────────────────────────────────────────
-
-    public function test_update_cohort_sets_dates(): void
-    {
-        $class  = $this->makeClass();
-        $cohort = $class->cohorts()->where('name', 'alpha')->first();
-
-        $this->actingAs($this->admin())
-            ->patch(route('admin.classes.cohorts.update', [$class, $cohort]), [
-                'start_date' => '2025-01-01',
-                'end_date'   => '2025-06-30',
-            ])
-            ->assertRedirect();
-
-        $cohort->refresh();
-        $this->assertSame('2025-01-01', $cohort->start_date->toDateString());
-        $this->assertSame('2025-06-30', $cohort->end_date->toDateString());
-    }
-
-    public function test_update_cohort_validates_end_after_start(): void
-    {
-        $class  = $this->makeClass();
-        $cohort = $class->cohorts()->where('name', 'alpha')->first();
-
-        $this->actingAs($this->admin())
-            ->patch(route('admin.classes.cohorts.update', [$class, $cohort]), [
-                'start_date' => '2025-06-01',
-                'end_date'   => '2025-01-01',
-            ])
-            ->assertSessionHasErrors(['end_date']);
-    }
-
     // ── Destroy ───────────────────────────────────────────────────────────────
 
     public function test_destroy_deletes_empty_class(): void
@@ -258,15 +223,14 @@ class ClassTest extends TestCase
         $this->assertDatabaseMissing('classes', ['id' => $class->id]);
     }
 
-    public function test_destroy_blocked_when_cohort_courses_have_enrollments(): void
+    public function test_destroy_blocked_when_class_courses_have_enrollments(): void
     {
-        $class      = $this->makeClass();
-        $cohort     = $class->cohorts()->first();
-        $cc         = CohortCourse::factory()->create(['cohort_id' => $cohort->id]);
-        $student    = Student::factory()->create();
+        $class   = $this->makeClass();
+        $cc      = ClassCourse::factory()->create(['class_id' => $class->id]);
+        $student = Student::factory()->create();
         Enrollment::factory()->create([
-            'cohort_course_id' => $cc->id,
-            'student_id'       => $student->id,
+            'class_course_id' => $cc->id,
+            'student_id'      => $student->id,
         ]);
 
         $this->actingAs($this->admin())

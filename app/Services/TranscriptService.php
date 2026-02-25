@@ -17,36 +17,36 @@ class TranscriptService
     public function getData(Student $student, bool $official = false): array
     {
         $enrollments = $student->enrollments()
-            ->with(['cohortCourse.course', 'cohortCourse.cohort.class.academicYear'])
+            ->with(['classCourse.course', 'classCourse.class.academicYear'])
             ->get();
 
-        // Group enrollments by cohort, ordered chronologically
-        $cohortGroups = $enrollments
-            ->groupBy(fn ($e) => $e->cohortCourse->cohort_id)
-            ->map(function ($cohortEnrollments) {
-                $cohort = $cohortEnrollments->first()->cohortCourse->cohort;
+        // Group enrollments by class, ordered chronologically
+        $classGroups = $enrollments
+            ->groupBy(fn ($e) => $e->classCourse->class_id)
+            ->map(function ($classEnrollments) {
+                $class = $classEnrollments->first()->classCourse->class;
 
-                $cohortCredits = $cohortEnrollments->sum(
-                    fn ($e) => (float) ($e->cohortCourse->course->credits ?? 1)
+                $classCredits = $classEnrollments->sum(
+                    fn ($e) => (float) ($e->classCourse->course->credits ?? 1)
                 );
 
-                $cohortGpa = $this->gradeService->calculateCohortGpa(
-                    $cohortEnrollments->first()->student,
-                    $cohort->id
+                $classGpa = $this->gradeService->calculateClassGpa(
+                    $classEnrollments->first()->student,
+                    $class->id
                 );
 
                 return [
-                    'cohort'      => $cohort,
-                    'enrollments' => $cohortEnrollments->values(),
-                    'cohortGpa'   => $cohortGpa,
-                    'cohortCredits' => $cohortCredits,
+                    'class'        => $class,
+                    'enrollments'  => $classEnrollments->values(),
+                    'classGpa'     => $classGpa,
+                    'classCredits' => $classCredits,
                 ];
             })
-            ->sortBy(fn ($group) => $group['cohort']->start_date)
+            ->sortBy(fn ($group) => $group['class']->start_date)
             ->values();
 
         $totalCredits = $enrollments->sum(
-            fn ($e) => (float) ($e->cohortCourse->course->credits ?? 1)
+            fn ($e) => (float) ($e->classCourse->course->credits ?? 1)
         );
 
         $cumulativeGpa = $this->gradeService->calculateCumulativeGpa($student);
@@ -54,7 +54,7 @@ class TranscriptService
         return [
             'student'       => $student,
             'official'      => $official,
-            'cohortGroups'  => $cohortGroups,
+            'classGroups'   => $classGroups,
             'totalCredits'  => $totalCredits,
             'cumulativeGpa' => $cumulativeGpa,
             'generatedAt'   => now(),
