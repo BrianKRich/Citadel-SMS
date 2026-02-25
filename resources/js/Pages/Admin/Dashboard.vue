@@ -88,6 +88,7 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
+                            v-if="$page.props.auth.user.role !== 'user'"
                             title="User Management"
                             description="View and manage registered users"
                             icon="👤"
@@ -181,7 +182,7 @@ const props = defineProps({
                         />
 
                         <AdminActionCard
-                            v-if="$page.props.features?.academy_setup_enabled"
+                            v-if="$page.props.features?.academy_setup_enabled && $page.props.auth.user.role !== 'user'"
                             title="Academy Setup"
                             description="Configure academy information and organizational structure."
                             icon="🏫"

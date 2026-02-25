@@ -21,7 +21,6 @@ class TrainingRecordController extends Controller
     public function index(Request $request)
     {
         $this->requireStaffTrainingEnabled();
-        abort_unless(auth()->user()->isAdmin(), 403);
 
         $hasFilters = $request->filled('search')
             || $request->filled('employee_id')
@@ -118,7 +117,6 @@ class TrainingRecordController extends Controller
     public function show(TrainingRecord $trainingRecord)
     {
         $this->requireStaffTrainingEnabled();
-        abort_unless(auth()->user()->isAdmin(), 403);
 
         $trainingRecord->load(['employee', 'trainingCourse']);
 

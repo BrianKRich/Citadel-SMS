@@ -22,7 +22,6 @@ class DocumentController extends Controller
     public function index(Request $request)
     {
         $this->requireDocumentsEnabled();
-        abort_unless(auth()->user()->isAdmin(), 403);
 
         $hasFilter = $request->filled('search') || $request->filled('entity_type') || $request->filled('category');
 
