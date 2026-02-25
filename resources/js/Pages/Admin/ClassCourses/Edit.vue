@@ -95,6 +95,14 @@ function removeScheduleSlot(index) {
 const courseName = computed(() => props.classCourse.course?.name ?? 'Course Assignment');
 
 function submit() {
+    if (form.instructor_type === 'staff' && !form.employee_id) {
+        alert('Please search for and select a staff instructor before saving.');
+        return;
+    }
+    if (['technical_college', 'university'].includes(form.instructor_type) && !form.institution_id) {
+        alert('Please select an institution before saving.');
+        return;
+    }
     form.patch(route('admin.class-courses.update', props.classCourse.id));
 }
 </script>

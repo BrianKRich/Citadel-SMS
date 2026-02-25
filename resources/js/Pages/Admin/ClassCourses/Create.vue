@@ -92,6 +92,14 @@ function removeScheduleSlot(index) {
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 function submit() {
+    if (form.instructor_type === 'staff' && !form.employee_id) {
+        alert('Please search for and select a staff instructor before saving.');
+        return;
+    }
+    if (['technical_college', 'university'].includes(form.instructor_type) && !form.institution_id) {
+        alert('Please select an institution before saving.');
+        return;
+    }
     form.post(route('admin.class-courses.store'));
 }
 </script>
