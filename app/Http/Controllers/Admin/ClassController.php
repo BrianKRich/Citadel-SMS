@@ -106,7 +106,7 @@ class ClassController extends Controller
         $academicYears = AcademicYear::orderBy('start_date', 'desc')->get();
 
         return Inertia::render('Admin/Classes/Edit', [
-            'class'         => $class->load('academicYear'),
+            'class'         => $class->load(['academicYear', 'cohorts']),
             'academicYears' => $academicYears,
         ]);
     }
@@ -118,9 +118,28 @@ class ClassController extends Controller
             'class_number'     => ['required', 'string', 'max:255'],
             'ngb_number'       => ['required', 'string', 'max:255', 'unique:classes,ngb_number,' . $class->id],
             'status'           => ['required', 'in:forming,active,completed'],
+            'alpha_start_date' => ['nullable', 'date'],
+            'alpha_end_date'   => ['nullable', 'date', 'after_or_equal:alpha_start_date'],
+            'bravo_start_date' => ['nullable', 'date'],
+            'bravo_end_date'   => ['nullable', 'date', 'after_or_equal:bravo_start_date'],
         ]);
 
-        $class->update($validated);
+        $class->update([
+            'academic_year_id' => $validated['academic_year_id'],
+            'class_number'     => $validated['class_number'],
+            'ngb_number'       => $validated['ngb_number'],
+            'status'           => $validated['status'],
+        ]);
+
+        $class->cohorts()->where('name', 'alpha')->first()?->update([
+            'start_date' => $validated['alpha_start_date'] ?? null,
+            'end_date'   => $validated['alpha_end_date'] ?? null,
+        ]);
+
+        $class->cohorts()->where('name', 'bravo')->first()?->update([
+            'start_date' => $validated['bravo_start_date'] ?? null,
+            'end_date'   => $validated['bravo_end_date'] ?? null,
+        ]);
 
         return redirect()->route('admin.classes.show', $class)
             ->with('success', 'Class updated successfully.');
