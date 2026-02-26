@@ -23,6 +23,7 @@ class ReportCardController extends Controller
         $classes = ClassModel::with('academicYear')->orderByDesc('start_date')->get();
 
         $students = Student::active()
+            ->whereHas('enrollments')
             ->when($request->input('search'), fn ($q, $s) => $q->search($s))
             ->orderBy('last_name')
             ->orderBy('first_name')
