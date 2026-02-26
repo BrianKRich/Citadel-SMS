@@ -25,7 +25,11 @@ class EmployeeRoleController extends Controller
         $query = EmployeeRole::with('department')->withCount('employees')->orderBy('name');
 
         if ($request->filled('search')) {
-            $query->where('name', 'ilike', '%' . $request->search . '%');
+            $term = '%' . $request->search . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'ilike', $term)
+                  ->orWhereHas('department', fn($d) => $d->where('name', 'ilike', $term));
+            });
         }
 
         if ($request->filled('department_id')) {
