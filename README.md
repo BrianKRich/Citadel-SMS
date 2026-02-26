@@ -248,21 +248,35 @@ composer run test
 | `/` | Landing page |
 | `/admin` | Dashboard |
 | `/admin/students` | Student management |
+| `/admin/students/trashed` | Soft-deleted students (restore / force delete) |
+| `/admin/guardians` | Guardian management |
 | `/admin/employees` | Employee management |
-| `/admin/courses` | Course catalog |
+| `/admin/employees/trashed` | Soft-deleted employees (restore / force delete) |
+| `/admin/users` | User management |
+| `/admin/class-layout` | Class Layout hub (Academic Years, Classes, Courses) |
+| `/admin/academic-years` | Academic year management |
 | `/admin/classes` | Class management |
-| `/admin/cohort-courses` | Course assignments (cohort → course → instructor) |
+| `/admin/class-courses` | Course assignments (class → course → instructor) |
+| `/admin/courses` | Course catalog |
 | `/admin/institutions` | Educational institutions (colleges & universities) |
 | `/admin/enrollment` | Student enrollment |
+| `/admin/assessments` | Assessment management |
+| `/admin/assessment-categories` | Assessment category management |
+| `/admin/grades` | Grade management |
+| `/admin/grading-scales` | Grading scale configuration |
+| `/admin/attendance` | Attendance tracking |
+| `/admin/report-cards` | Student report cards (PDF) |
+| `/admin/transcripts` | Student transcripts (PDF) |
+| `/admin/student-notes` | Student notes (Operations) |
 | `/admin/documents` | Document library |
 | `/admin/training-courses` | Training course catalog |
 | `/admin/training-records` | Staff training completion records |
+| `/admin/custom-fields` | Custom field definitions |
 | `/admin/audit-log` | Audit log viewer |
 | `/admin/academy` | Academy information & setup hub |
 | `/admin/departments` | Departments CRUD |
 | `/admin/employee-roles` | Employee roles CRUD |
-| `/admin/class-layout` | Class Layout hub (Academic Years, Classes, Courses) |
-| `/admin/feature-settings` | Feature flag toggles (site_admin) |
+| `/admin/feature-settings` | Feature flag toggles (site_admin only) |
 | `/admin/theme` | Theme customization |
 
 ---
