@@ -2313,6 +2313,57 @@ Container width changed from `max-w-2xl` to `max-w-5xl` to accommodate the wider
 
 ---
 
+## Bug Fixes & UX Improvements — February 26, 2026 (Session 2)
+
+**Commits:** `54d6a61`, `c566a8a`
+
+### Bug Fixes
+
+#### Student Notes Date Range Filter — Inclusive End Date
+
+**Problem:** The date range filter on `admin/student-notes` did not return notes when only date fields were provided (Search Student field left blank). Additionally, notes created in the evening would not appear when filtered by that calendar day because the server stores timestamps in UTC.
+
+**Root causes:**
+1. `$request->anyFilled()` was replaced with explicit `filled()` OR conditions to ensure any single filter field triggers the query.
+2. `whereDate('created_at', '<=', ...)` compares against the UTC date only. A note created at 8pm EST is stored as the following UTC day, causing it to be excluded from same-day searches.
+3. `preserveState: true` in `applyFilters()` prevented Inertia from updating the `searched` and `notes` props when only date params changed.
+
+**Fixes:**
+- `StudentNoteController.php` — replaced `anyFilled()` with explicit `filled()` OR chain; changed `whereDate` to `Carbon::parse()->startOfDay()` / `endOfDay()` comparisons for inclusive full-day range
+- `StudentNotes/Index.vue` — removed `preserveState: true` from `applyFilters()`
+
+---
+
+#### Application & Database Timezone — Set to Eastern Time
+
+**Problem:** All timestamps were stored and interpreted in UTC. Users in the Eastern time zone saw date mismatches in filters and date displays.
+
+**Fix:**
+- `config/app.php` — `timezone` changed from `UTC` to `America/New_York`
+- `config/database.php` — added `'timezone' => 'America/New_York'` to the `pgsql` connection; Laravel issues `SET TIME ZONE` on every connection so PostgreSQL timestamp functions use Eastern time
+
+---
+
+### UX Improvements
+
+#### Student Show — Add Guardian Button
+
+Added an **"+ Add Guardian"** button to the header of the Guardians card on the Student Show page. The button links to `admin/guardians/create?student_id={id}`, pre-populating the guardian create form with the student already linked.
+
+#### Guardian Create — Student Search & Auto-Population
+
+Replaced the scrollable list of all active students in the "Linked Students" section with a live search:
+
+- **Search input** with 250ms debounce calls the new `GET /api/students/search?q=` endpoint
+- **Dropdown results** show matching students by name or student ID; clicking adds them to the selected list
+- **Selected students list** below the search shows each linked student with a Primary checkbox and Remove button
+- **Auto-population:** when arriving via the "Add Guardian" button from a student record, that student is automatically added to the selected list with their full name displayed
+- **Smart navigation:** breadcrumb and back link return to the originating student record when `student_id` is in the query string; after save, redirects back to the student show page instead of the guardian show page
+
+**New API endpoint:** `GET /api/students/search` — `StudentSearchController` in `App\Http\Controllers\Api\`, searches `first_name`, `last_name`, `student_id`, and full name; returns up to 10 results.
+
+---
+
 ## Future Ideas & Enhancements
 
 The following ideas are captured for long-term consideration. They are not yet assigned to a phase or issue.

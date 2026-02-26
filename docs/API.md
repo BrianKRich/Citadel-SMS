@@ -96,7 +96,7 @@ Student Management System uses **Inertia.js**, which means it does NOT have a tr
 
 ## API Endpoints
 
-Student Management System currently has **one** traditional API endpoint for theme data. All other functionality uses Inertia.js.
+Student Management System has a small set of authenticated JSON API endpoints used internally by Vue components for live search and theme data. All other functionality uses Inertia.js.
 
 ### Theme API
 
@@ -129,7 +129,69 @@ Accept: application/json
 **Status Codes:**
 - `200 OK` - Success
 
+---
+
+### Employee Search API
+
+#### Search Employees
+
+**Endpoint:** `GET /api/employees/search`
+
+**Description:** Live search for employees by name. Used by ClassCourse create/edit forms to look up instructors.
+
+**Authentication:** Required (session)
+
+**Query Parameters:**
+- `q` — Search string (matches first name or last name)
+
+**Response:**
+```json
+[
+  { "id": 1, "first_name": "Jane", "last_name": "Smith", "full_name": "Jane Smith" }
+]
+```
+
+**Route name:** `api.employees.search`
+
+**Controller:** `App\Http\Controllers\Api\EmployeeSearchController`
+
+---
+
+### Student Search API
+
+#### Search Students
+
+**Endpoint:** `GET /api/students/search`
+
+**Description:** Live search for active students by name or student ID. Used by the Guardian create form to link students without loading the full student list.
+
+**Authentication:** Required (session)
+
+**Query Parameters:**
+- `q` — Search string (matches first name, last name, student ID, or full name)
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "student_id": "STU-2026-001",
+    "first_name": "John",
+    "last_name": "Doe",
+    "full_name": "John Doe"
+  }
+]
+```
+
+**Route name:** `api.students.search`
+
+**Controller:** `App\Http\Controllers\Api\StudentSearchController`
+
+---
+
 **Example Usage:**
+
+
 
 ```javascript
 // Frontend (useTheme composable)
@@ -789,13 +851,15 @@ query {
 ## Summary
 
 **Current State:**
-- Inertia.js architecture (no traditional API)
-- One API endpoint: `/api/theme` (GET theme settings)
+- Inertia.js architecture (no traditional REST API)
+- Internal JSON endpoints (auth required):
+  - `GET /api/theme` — theme color settings (public)
+  - `GET /api/employees/search` — live employee search for instructor lookup
+  - `GET /api/students/search` — live student search for guardian linking
 - Session-based authentication
 - CSRF protection automatic
 - Server-side routing with Laravel
 - SPA experience with Vue 3
-- Phase 3A grading routes added (assessment categories, assessments, grading scales, grades — all Inertia, not REST API)
 
 **Future API:**
 - RESTful API for mobile apps (Phase 9)
