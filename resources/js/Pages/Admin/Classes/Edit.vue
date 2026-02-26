@@ -86,7 +86,7 @@ function submit() {
                                 id="name"
                                 v-model="form.name"
                                 type="text"
-                                placeholder="e.g. Cohort Alpha / Bravo"
+                                placeholder="e.g. Morning Session"
                                 :class="inputClass"
                             />
                             <p v-if="form.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.name }}</p>
