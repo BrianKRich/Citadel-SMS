@@ -1,7 +1,7 @@
 # Student Management System - Frontend Architecture
 
-**Version:** 3.0 (Phase 0-3A: Core Grading System)
-**Last Updated:** February 15, 2026
+**Version:** 4.0 (Phases 0–9 Complete)
+**Last Updated:** February 25, 2026
 **Framework:** Vue 3 + Inertia.js
 
 ---
@@ -53,58 +53,69 @@ resources/
 ├── js/
 │   ├── Components/
 │   │   ├── Admin/
-│   │   │   ├── AdminActionCard.vue    # Admin dashboard action cards
-│   │   │   ├── AdminLayout.vue         # Admin-specific layout (deprecated)
-│   │   │   └── StatCard.vue            # Statistics display cards
-│   │   ├── Alert.vue                   # Success/error alerts
-│   │   ├── ApplicationLogo.vue         # App logo component
-│   │   ├── Checkbox.vue                # Checkbox input
-│   │   ├── DangerButton.vue            # Red danger button
-│   │   ├── Dropdown.vue                # Dropdown menu
-│   │   ├── DropdownLink.vue            # Dropdown menu item
-│   │   ├── InputError.vue              # Validation error display
-│   │   ├── InputLabel.vue              # Form input label
-│   │   ├── Modal.vue                   # Modal dialog
-│   │   ├── NavLink.vue                 # Navigation link
-│   │   ├── PrimaryButton.vue           # Primary action button
-│   │   ├── ResponsiveNavLink.vue       # Mobile navigation link
-│   │   ├── SecondaryButton.vue         # Secondary action button
-│   │   └── TextInput.vue               # Text input field
+│   │   │   ├── AdminActionCard.vue        # Dashboard quick-action cards
+│   │   │   └── StatCard.vue               # Statistics display cards
+│   │   ├── UI/
+│   │   │   ├── Alert.vue                  # Success/error flash alerts
+│   │   │   ├── Card.vue                   # Content card wrapper
+│   │   │   ├── Footer.vue                 # Site footer
+│   │   │   └── PageHeader.vue             # Page title + breadcrumb
+│   │   ├── Users/
+│   │   │   └── UserForm.vue               # Reusable user create/edit form
+│   │   ├── CustomFieldsSection.vue        # Phase 3F — reusable custom fields UI
+│   │   ├── ApplicationLogo.vue
+│   │   ├── Checkbox.vue
+│   │   ├── DangerButton.vue
+│   │   ├── DarkModeToggle.vue             # Dark mode toggle button
+│   │   ├── Dropdown.vue
+│   │   ├── DropdownLink.vue
+│   │   ├── InputError.vue
+│   │   ├── InputLabel.vue
+│   │   ├── Modal.vue
+│   │   ├── NavLink.vue
+│   │   ├── PrimaryButton.vue
+│   │   ├── ResponsiveNavLink.vue
+│   │   ├── SecondaryButton.vue
+│   │   └── TextInput.vue
 │   ├── composables/
-│   │   └── useTheme.js                 # Theme management composable
+│   │   ├── useDarkMode.js                 # Dark mode toggle + localStorage
+│   │   └── useTheme.js                    # Theme color loading from /api/theme
 │   ├── Layouts/
-│   │   ├── AuthenticatedLayout.vue     # Main authenticated layout
-│   │   └── GuestLayout.vue             # Guest/public layout
+│   │   ├── AuthenticatedLayout.vue        # Main authenticated layout
+│   │   └── GuestLayout.vue                # Auth pages layout
 │   ├── Pages/
 │   │   ├── Admin/
-│   │   │   ├── Dashboard.vue           # Admin dashboard
-│   │   │   ├── Settings.vue            # System settings
-│   │   │   ├── Users/
-│   │   │   │   ├── Index.vue           # User list
-│   │   │   │   ├── Create.vue          # Create user
-│   │   │   │   └── Edit.vue            # Edit user
-│   │   │   ├── Students/               # Student pages
-│   │   │   ├── Courses/                # Course pages
-│   │   │   ├── Employees/              # Employee pages
-│   │   │   ├── Classes/                # Class pages (Phase 2)
-│   │   │   ├── AssessmentCategories/   # Phase 3A
-│   │   │   │   ├── Index.vue           # Category list with course filter
-│   │   │   │   ├── Create.vue          # Create category
-│   │   │   │   └── Edit.vue            # Edit category
-│   │   │   ├── Assessments/            # Phase 3A
-│   │   │   │   ├── Index.vue           # Assessment list with filters
-│   │   │   │   ├── Create.vue          # Create assessment
-│   │   │   │   ├── Edit.vue            # Edit assessment
-│   │   │   │   └── Show.vue            # Assessment details with grade stats
-│   │   │   ├── GradingScales/          # Phase 3A
-│   │   │   │   ├── Index.vue           # Scale list with default indicator
-│   │   │   │   ├── Create.vue          # Create scale with JSON editor
-│   │   │   │   └── Edit.vue            # Edit scale
-│   │   │   ├── Grades/                 # Phase 3A
-│   │   │   │   ├── Index.vue           # Grade overview with filters
-│   │   │   │   ├── ClassGrades.vue     # Grade book matrix (students x assessments)
-│   │   │   │   ├── Enter.vue           # Bulk grade entry (spreadsheet-style)
-│   │   │   │   └── StudentGrades.vue   # Per-student grades with GPA
+│   │   │   ├── Dashboard.vue              # Admin dashboard (stats + quick actions)
+│   │   │   ├── ClassLayout.vue            # Hub: Academic Years / Classes / Courses
+│   │   │   ├── Theme.vue                  # Theme settings (feature-flagged)
+│   │   │   ├── Academy.vue                # Academy info + configuration hub
+│   │   │   ├── FeatureSettings.vue        # Feature flag toggles (site_admin)
+│   │   │   ├── AcademicYears/             # Index, Create, Edit, Show
+│   │   │   ├── Assessments/               # Index, Create, Edit, Show
+│   │   │   ├── AssessmentCategories/      # Index, Create, Edit
+│   │   │   ├── Attendance/                # Index, Take, ClassSummary, StudentHistory
+│   │   │   ├── AuditLog/                  # Index, Show
+│   │   │   ├── Classes/                   # Index, Create, Edit, Show
+│   │   │   ├── ClassCourses/              # Index, Create, Edit, Show
+│   │   │   ├── Courses/                   # Index, Create, Edit, Show
+│   │   │   ├── CustomFields/              # Index, Create, Edit
+│   │   │   ├── Departments/               # Index, Create, Edit
+│   │   │   ├── Documents/                 # Index
+│   │   │   ├── Employees/                 # Index, Create, Edit, Show, Trashed
+│   │   │   ├── EmployeeRoles/             # Index, Create, Edit
+│   │   │   ├── Enrollment/                # Index, Create, StudentSchedule
+│   │   │   ├── Grades/                    # Index, ClassGrades, StudentGrades, Enter
+│   │   │   ├── GradingScales/             # Index, Create, Edit
+│   │   │   ├── Guardians/                 # Index, Create, Edit, Show
+│   │   │   ├── Institutions/              # Index, Create, Edit
+│   │   │   ├── ReportCards/               # Index, Show
+│   │   │   ├── StudentNotes/              # Index
+│   │   │   ├── Students/                  # Index, Create, Edit, Show, Trashed
+│   │   │   ├── Training/
+│   │   │   │   ├── Courses/               # Index, Create, Edit
+│   │   │   │   └── Records/               # Index, Create, Edit, Show
+│   │   │   ├── Transcripts/               # Index, Show
+│   │   │   └── Users/                     # Index, Create, Edit
 │   │   ├── Auth/
 │   │   │   ├── ConfirmPassword.vue
 │   │   │   ├── ForgotPassword.vue
@@ -113,18 +124,23 @@ resources/
 │   │   │   ├── ResetPassword.vue
 │   │   │   └── VerifyEmail.vue
 │   │   ├── Profile/
-│   │   │   ├── Edit.vue                # User profile edit
+│   │   │   ├── Edit.vue
 │   │   │   └── Partials/
 │   │   │       ├── DeleteUserForm.vue
 │   │   │       ├── UpdatePasswordForm.vue
 │   │   │       └── UpdateProfileInformationForm.vue
-│   │   └── Welcome.vue                 # Landing page
-│   └── app.js                          # Vue app entry point
+│   │   └── Welcome.vue
+│   └── app.js                             # Inertia bootstrap + auto-discovery
 ├── views/
-│   └── app.blade.php                   # Root HTML template
+│   ├── app.blade.php                      # Root HTML (dark mode inline script in head)
+│   └── pdf/
+│       ├── report-card.blade.php          # DomPDF report card template
+│       └── transcript.blade.php           # DomPDF transcript template
 └── css/
-    └── app.css                         # Global styles + Tailwind imports
+    └── app.css                            # Tailwind imports
 ```
+
+**Total Vue pages: 98** (all complete — no stubs)
 
 ---
 

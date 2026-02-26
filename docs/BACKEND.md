@@ -1,7 +1,7 @@
 # Student Management System - Backend Architecture
 
-**Version:** 3.1 (Phase 0-3B Step 2: PDF Templates)
-**Last Updated:** February 16, 2026
+**Version:** 4.0 (Phases 0–9 Complete)
+**Last Updated:** February 25, 2026
 **Framework:** Laravel 12.x
 
 ---
@@ -53,33 +53,56 @@ app/
 │   ├── Controllers/
 │   │   ├── Admin/
 │   │   │   ├── AcademicYearController.php
-│   │   │   ├── AssessmentCategoryController.php  # Phase 3A
-│   │   │   ├── AssessmentController.php           # Phase 3A
-│   │   │   ├── ClassController.php                # Phase 2
+│   │   │   ├── AcademyController.php              # Phase 9 UX
+│   │   │   ├── AssessmentCategoryController.php   # Phase 3A
+│   │   │   ├── AssessmentController.php            # Phase 3A
+│   │   │   ├── AttendanceController.php            # Phase 4
+│   │   │   ├── AuditLogController.php              # Phase 3E
+│   │   │   ├── ClassController.php                 # Phase 2 / Phase 9
+│   │   │   ├── ClassCourseController.php           # Phase 9
+│   │   │   ├── ClassLayoutController.php           # Phase 9 UX
 │   │   │   ├── CourseController.php
+│   │   │   ├── CustomFieldController.php           # Phase 3F
+│   │   │   ├── DepartmentController.php            # Phase 9 UX
+│   │   │   ├── DocumentController.php              # Phase 7
+│   │   │   ├── EducationalInstitutionController.php # Phase 9
 │   │   │   ├── EmployeeController.php
-│   │   │   ├── EnrollmentController.php           # Phase 2
-│   │   │   ├── GradeController.php                # Phase 3A
-│   │   │   ├── GradingScaleController.php         # Phase 3A
+│   │   │   ├── EmployeeRoleController.php          # Phase 9 UX
+│   │   │   ├── EnrollmentController.php            # Phase 2
+│   │   │   ├── GradeController.php                 # Phase 3A
+│   │   │   ├── GradingScaleController.php          # Phase 3A
 │   │   │   ├── GuardianController.php
-│   │   │   └── StudentController.php
+│   │   │   ├── ReportCardController.php            # Phase 3B
+│   │   │   ├── StudentController.php
+│   │   │   ├── StudentNoteController.php           # Phase 5
+│   │   │   ├── TrainingCourseController.php        # Phase 8
+│   │   │   ├── TrainingRecordController.php        # Phase 8
+│   │   │   └── TranscriptController.php            # Phase 3B
 │   │   ├── AdminController.php
 │   │   ├── ProfileController.php
 │   │   ├── ThemeController.php
 │   │   └── UserManagementController.php
+│   ├── Controllers/Concerns/
+│   │   └── SavesCustomFieldValues.php             # Phase 3F trait
 │   ├── Middleware/
-│   │   ├── HandleInertiaRequests.php
-│   │   └── (custom middleware - future)
+│   │   └── HandleInertiaRequests.php
 │   └── Requests/
 │       └── (form requests - future)
 ├── Models/
 │   ├── AcademicYear.php
 │   ├── Assessment.php                        # Phase 3A
 │   ├── AssessmentCategory.php                # Phase 3A
-│   ├── ClassModel.php                        # Phase 2
+│   ├── AttendanceRecord.php                  # Phase 4
+│   ├── AuditLog.php                          # Phase 3E
+│   ├── ClassCourse.php                       # Phase 9
+│   ├── ClassModel.php                        # Phase 2 / Phase 9
 │   ├── County.php
 │   ├── Course.php
+│   ├── CustomField.php                       # Phase 3F
+│   ├── CustomFieldValue.php                  # Phase 3F
 │   ├── Department.php
+│   ├── Document.php                          # Phase 7
+│   ├── EducationalInstitution.php            # Phase 9
 │   ├── Employee.php
 │   ├── EmployeeRole.php
 │   ├── Enrollment.php                        # Phase 2
@@ -87,21 +110,32 @@ app/
 │   ├── GradingScale.php                      # Phase 3A
 │   ├── Guardian.php
 │   ├── PhoneNumber.php
+│   ├── PurgeLog.php                          # Phase 3E
 │   ├── Setting.php
 │   ├── Student.php
-│   ├── Term.php
+│   ├── StudentNote.php                       # Phase 5
+│   ├── TrainingCourse.php                    # Phase 8
+│   ├── TrainingRecord.php                    # Phase 8
 │   └── User.php
+├── Observers/
+│   ├── EnrollmentObserver.php                # Phase 3E
+│   ├── EmployeeObserver.php                  # Phase 3E
+│   ├── GradeObserver.php                     # Phase 3E
+│   ├── StudentNoteObserver.php               # Phase 5
+│   └── StudentObserver.php                   # Phase 3E
 ├── Providers/
-│   └── AppServiceProvider.php
+│   └── AppServiceProvider.php                # registers observers
 └── Services/
-    └── GradeCalculationService.php           # Phase 3A
+    ├── GradeCalculationService.php           # Phase 3A
+    ├── ReportCardService.php                 # Phase 3B
+    └── TranscriptService.php                 # Phase 3B
 
 config/
-└── dompdf.php                                # Phase 3B Step 2
+└── dompdf.php                                # Phase 3B
 
 resources/views/pdf/
-├── report-card.blade.php                     # Phase 3B Step 2
-└── transcript.blade.php                      # Phase 3B Step 2
+├── report-card.blade.php                     # Phase 3B
+└── transcript.blade.php                      # Phase 3B
 ```
 
 ---

@@ -2095,6 +2095,43 @@ No new tests added in this session. All 368 pre-existing tests continue to pass 
 
 ---
 
+## Phase 9 Schema Simplification: Remove Cohorts, Add ClassCourses
+
+**Date:** February 25, 2026
+**Migration:** `2026_02_25_200000_remove_cohorts_add_class_courses.php`
+
+### What Changed
+
+The `cohorts` intermediary table and `CohortCourse` model were renamed and restructured. The final hierarchy is:
+
+```
+AcademicYear → Class → ClassCourse → Enrollment / Assessment / AttendanceRecord
+```
+
+**Database changes:**
+- `cohorts` table dropped
+- `cohort_courses` table renamed to `class_courses`; FK changed from `cohort_id` to `class_id`
+- `enrollments.cohort_course_id` → `enrollments.class_course_id`
+- `assessments.cohort_course_id` → `assessments.class_course_id`
+- `attendance_records.cohort_course_id` → `attendance_records.class_course_id`
+
+**Model changes:**
+- `Cohort` model removed
+- `CohortCourse` model renamed to `ClassCourse`
+- `ClassModel::hasMany(ClassCourse)` replaces the cohort relationship
+
+**Controller / Route changes:**
+- `CohortCourseController` → `ClassCourseController`
+- Routes: `admin.cohort-courses.*` → `admin.class-courses.*`
+- `ClassController`: removed cohort creation from `boot()`, removed `updateCohort` action
+
+**Vue pages:**
+- `Admin/CohortCourses/*` → `Admin/ClassCourses/*`
+
+**Tests:** All 368 pre-existing tests updated to use new FK names and route names — all passing.
+
+---
+
 ## Class Form Reorganization
 
 **Date:** February 25, 2026
@@ -2171,6 +2208,26 @@ No new tests added. All 368 pre-existing tests continue to pass.
 ### Tests
 
 No new tests added. All 368 pre-existing tests continue to pass.
+
+---
+
+## Project Statistics (as of February 25, 2026 — Phases 0–9 Complete)
+
+| Metric | Value |
+|--------|-------|
+| Development period | Feb 8–25, 2026 |
+| Phases completed | 0, 1, 2, 3A, 3B, 3D, 3E, 3F, 4, 5, 7, 8, 9 |
+| Database tables | ~33 |
+| Eloquent models | 28 |
+| Admin controllers | 26 |
+| Vue pages | 98 (all complete) |
+| Vue components | 25+ |
+| Blade PDF templates | 2 (report-card, transcript) |
+| Services | 3 (GradeCalculationService, ReportCardService, TranscriptService) |
+| Observers | 5 (Student, Employee, Grade, Enrollment, StudentNote) |
+| Test files | 34 |
+| Tests passing | 368 (1927 assertions) |
+| Contributors | 1 |
 
 ---
 

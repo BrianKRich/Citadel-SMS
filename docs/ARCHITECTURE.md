@@ -1,8 +1,9 @@
 # Student Management System - System Architecture Overview
 
-**Version:** 1.0
-**Last Updated:** February 2026
-**Organization:** Brian K. Rich
+**Version:** 2.0 (Phases 0–9 Complete)
+**Last Updated:** February 25, 2026
+**Organization:** Georgia Job Challenge Academy
+**Author:** Brian K. Rich
 
 ## Table of Contents
 
@@ -19,18 +20,25 @@
 
 ## Overview
 
-Student Management System is a comprehensive Student Management System. The system manages student records, courses, grades, attendance, and academic operations with a focus on scalability, security, and user experience.
+Student Management System (SMS) v2.0 is a full-featured web application built for the Georgia Job Challenge Academy. The system manages student records, academic structure, grades, attendance, staff training, document storage, and all educational administration operations.
 
-### Key Features
+### Implemented Features (Phases 0–9)
 
-- **Student Management** - Student records, enrollment, demographics
-- **Course Management** - Course catalog, curriculum tracking
-- **Employee Management** - Staff profiles, departments, roles, assignments
-- **Guardian Portal** - Parent/guardian access to student information
-- **Grade Tracking** - Assessment management, grade calculations
-- **Attendance System** - Daily attendance, reporting, alerts
-- **Academic Calendar** - Terms, semesters, events management
-- **Theme Customization** - Dynamic theming with organization branding
+- **Student Management** — Records, demographics, guardians, soft delete/restore, photo uploads
+- **Course Management** — Catalog with credit/pass-fail grading types, departments
+- **Academic Structure** — AcademicYear → Class → ClassCourse → Enrollment hierarchy
+- **Employee Management** — Staff profiles, departments, roles, qualifications
+- **Grade Tracking** — Assessment management, weighted grade calculation, GPA
+- **Report Cards & Transcripts** — PDF generation (DomPDF); official/unofficial transcripts
+- **Attendance System** — Daily tracking, class summaries, student history
+- **Audit Logging** — Polymorphic observers on 5 models; immutable purge log
+- **Custom Fields** — EAV pattern on 5 entity types; 6 field types
+- **Student Notes** — Department-scoped notes with access control
+- **Document Management** — Private local disk storage; Student/Employee/Institution docs
+- **Staff Training** — Training course catalog + completion records; batch logging
+- **Academy Setup** — Academy info, department CRUD, employee role CRUD
+- **Feature Flags** — Runtime toggles for all major features (site_admin only)
+- **Theme Customization** — Dynamic CSS variables; 5 color schemes; dark mode
 
 ---
 

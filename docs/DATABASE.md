@@ -1,6 +1,6 @@
 # Student Management System - Database Architecture
 
-**Version:** 3.3 (Phase 0-3F + 4 + Student Notes + Academic Year Status + Course Grading Type)
+**Version:** 4.0 (Phases 0–9 Complete)
 **Last Updated:** February 25, 2026
 **Database:** PostgreSQL 14+
 
@@ -453,18 +453,69 @@ Class records (redesigned in Phase 9; further updated 2026-02-25).
 | created_at | TIMESTAMP | | Creation timestamp |
 | updated_at | TIMESTAMP | | Last update timestamp |
 
-> **Note:** Alpha/Bravo cohort designation is captured via the `name` field. The `cohorts` table still exists as an intermediary for `cohort_courses`, but cohort-specific dates and UI distinction have been removed from the class management screens.
+> **Note:** Alpha/Bravo cohort UI has been removed (Phase 9 + Feb 25 simplification). The `name` field captures any human-readable label. The `cohorts` intermediary table and `cohort_courses` naming were replaced by `class_courses` directly under `classes`. Course assignments, enrollments, assessments, and attendance records all FK to `class_course_id`.
+
+---
+
+#### **class_courses**
+Course assignments within a class — the bridge between a class and a course, including instructor, schedule, and capacity. Introduced in Phase 9 (replacing the `cohort_courses` intermediary).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Primary key |
+| class_id | BIGINT | FK, NOT NULL | Class reference |
+| course_id | BIGINT | FK, NOT NULL | Course reference |
+| instructor_type | ENUM | NOT NULL | staff, technical_college, university |
+| employee_id | BIGINT | FK, NULLABLE | Staff instructor (when instructor_type = staff) |
+| institution_id | BIGINT | FK, NULLABLE | External institution (when instructor_type ≠ staff) |
+| room | VARCHAR(255) | NULLABLE | Room/location |
+| schedule | JSON | NULLABLE | Schedule JSON (days + time slots) |
+| max_students | INT | NULLABLE | Enrollment capacity |
+| status | VARCHAR(255) | DEFAULT 'open' | open, closed, in_progress, completed |
+| created_at | TIMESTAMP | | Creation timestamp |
+| updated_at | TIMESTAMP | | Last update timestamp |
+
+**Relationships:**
+- Belongs to ClassModel (class_id)
+- Belongs to Course (course_id)
+- Belongs to Employee (employee_id, nullable)
+- Belongs to EducationalInstitution (institution_id, nullable)
+- Has many Enrollments
+- Has many Assessments
+- Has many AttendanceRecords
+
+**Indexes:**
+- INDEX (class_id)
+- INDEX (course_id)
+
+---
+
+#### **educational_institutions**
+External colleges and universities used as course instructors.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Primary key |
+| name | VARCHAR(255) | NOT NULL | Institution name |
+| type | VARCHAR(255) | NULLABLE | technical_college, university |
+| address | TEXT | NULLABLE | Address |
+| contact_name | VARCHAR(255) | NULLABLE | Contact name |
+| contact_email | VARCHAR(255) | NULLABLE | Contact email |
+| contact_phone | VARCHAR(255) | NULLABLE | Contact phone |
+| is_active | BOOLEAN | DEFAULT true | Active status |
+| created_at | TIMESTAMP | | Creation timestamp |
+| updated_at | TIMESTAMP | | Last update timestamp |
 
 ---
 
 #### **enrollments**
-Student enrollment in classes.
+Student enrollment in class courses (FK to `class_courses`, not `classes`).
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGINT | PK, AUTO_INCREMENT | Primary key |
 | student_id | BIGINT | FK, NOT NULL | Student reference |
-| class_id | BIGINT | FK, NOT NULL | Class reference |
+| class_course_id | BIGINT | FK, NOT NULL | ClassCourse reference |
 | enrollment_date | DATE | NOT NULL | Date enrolled |
 | status | ENUM | DEFAULT 'enrolled' | enrolled, dropped, completed, failed |
 | weighted_average | DECIMAL(5,2) | NULLABLE | Calculated weighted average (0-100) |
@@ -474,7 +525,7 @@ Student enrollment in classes.
 | updated_at | TIMESTAMP | | Last update timestamp |
 
 **Indexes:**
-- UNIQUE (student_id, class_id) - prevent duplicate enrollments
+- UNIQUE (student_id, class_course_id) - prevent duplicate enrollments
 
 ---
 
@@ -591,7 +642,7 @@ Individual student grades for assessments with late submission tracking.
 
 ---
 
-### Phase 4 Tables (To Be Implemented)
+### Phase 4 Tables ✅ Implemented
 
 #### **attendance_records**
 Daily attendance tracking.
@@ -613,10 +664,10 @@ Daily attendance tracking.
 
 ---
 
-### Phase 5 Tables (To Be Implemented)
+### Phase 6 Tables 📋 Planned
 
-#### **calendar_events**
-Academic calendar events.
+#### **calendar_events** *(not yet implemented)*
+Academic calendar events — planned for Phase 6.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
