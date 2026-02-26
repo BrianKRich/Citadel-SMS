@@ -20,12 +20,12 @@ class AcademicYearFactory extends Factory
             'name' => "{$startYear}-" . ($startYear + 1),
             'start_date' => "{$startYear}-08-01",
             'end_date' => ($startYear + 1) . '-05-31',
-            'is_current' => false,
+            'status' => 'forming',
         ];
     }
 
     public function current(): static
     {
-        return $this->state(fn () => ['is_current' => true]);
+        return $this->state(fn () => ['status' => 'current']);
     }
 }

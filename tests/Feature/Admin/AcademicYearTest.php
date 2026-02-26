@@ -24,7 +24,7 @@ class AcademicYearTest extends TestCase
             'name'       => '2024-2025',
             'start_date' => '2024-08-01',
             'end_date'   => '2025-05-31',
-            'is_current' => false,
+            'status'     => 'forming',
         ], $overrides);
     }
 
@@ -89,19 +89,19 @@ class AcademicYearTest extends TestCase
 
     public function test_store_setting_as_current_unsets_other_years(): void
     {
-        $other = AcademicYear::factory()->create(['is_current' => true]);
+        $other = AcademicYear::factory()->create(['status' => 'current']);
 
         $this->actingAs($this->admin())
             ->post(route('admin.academic-years.store'), $this->validPayload([
-                'name'       => 'UNIQUE-TEST-YEAR',
-                'is_current' => true,
+                'name'   => 'UNIQUE-TEST-YEAR',
+                'status' => 'current',
             ]));
 
         $other->refresh();
-        $this->assertFalse($other->is_current);
+        $this->assertNotEquals('current', $other->status);
         $newYear = AcademicYear::where('name', 'UNIQUE-TEST-YEAR')->first();
         $this->assertNotNull($newYear);
-        $this->assertTrue($newYear->is_current);
+        $this->assertEquals('current', $newYear->status);
     }
 
     // ── Show ──────────────────────────────────────────────────────────────────
@@ -165,8 +165,8 @@ class AcademicYearTest extends TestCase
 
     public function test_set_current_marks_year_as_current(): void
     {
-        $first  = AcademicYear::factory()->create(['is_current' => true]);
-        $second = AcademicYear::factory()->create(['is_current' => false]);
+        $first  = AcademicYear::factory()->create(['status' => 'current']);
+        $second = AcademicYear::factory()->create(['status' => 'forming']);
 
         $this->actingAs($this->admin())
             ->post(route('admin.academic-years.set-current', $second))
@@ -174,8 +174,8 @@ class AcademicYearTest extends TestCase
 
         $first->refresh();
         $second->refresh();
-        $this->assertFalse($first->is_current);
-        $this->assertTrue($second->is_current);
+        $this->assertNotEquals('current', $first->status);
+        $this->assertEquals('current', $second->status);
     }
 
     // ── Guard: cannot delete when classes exist ────────────────────────────────

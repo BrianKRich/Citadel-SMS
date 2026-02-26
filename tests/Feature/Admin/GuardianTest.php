@@ -75,13 +75,12 @@ class GuardianTest extends TestCase
 
     public function test_create_renders_form_with_students(): void
     {
-        Student::factory()->count(2)->create();
-
         $this->actingAs($this->admin())
             ->get(route('admin.guardians.create'))
             ->assertInertia(fn (Assert $p) => $p
                 ->component('Admin/Guardians/Create')
-                ->has('students')
+                ->has('preselectedStudentId')
+                ->has('preselectedStudent')
             );
     }
 

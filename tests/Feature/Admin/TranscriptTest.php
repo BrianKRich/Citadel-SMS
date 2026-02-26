@@ -6,6 +6,7 @@ use App\Models\ClassModel;
 use App\Models\ClassCourse;
 use App\Models\Enrollment;
 use App\Models\GradingScale;
+use App\Models\Setting;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,6 +16,12 @@ use Tests\TestCase;
 class TranscriptTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Setting::set('feature_transcripts_enabled', '1', 'boolean');
+    }
 
     private function adminUser(): User
     {

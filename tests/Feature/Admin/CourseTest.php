@@ -20,12 +20,13 @@ class CourseTest extends TestCase
     private function validPayload(array $overrides = []): array
     {
         return array_merge([
-            'course_code' => 'MATH-101',
-            'name'        => 'Introduction to Algebra',
-            'credits'     => 3.0,
-            'department'  => 'Mathematics',
-            'level'       => 'Beginner',
-            'is_active'   => true,
+            'course_code'  => 'MATH-101',
+            'name'         => 'Introduction to Algebra',
+            'credits'      => 3.0,
+            'department'   => 'Mathematics',
+            'level'        => 'Beginner',
+            'is_active'    => true,
+            'grading_type' => 'credit_system',
         ], $overrides);
     }
 
