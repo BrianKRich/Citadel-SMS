@@ -2364,6 +2364,54 @@ Replaced the scrollable list of all active students in the "Linked Students" sec
 
 ---
 
+## Bug Fix: System Department Protection
+
+**Date:** February 26, 2026
+**Commit:** `e91d801`
+**GitHub Issue:** #21 (closed)
+
+### Problem
+
+The Departments CRUD UI allowed admins to delete the six foundational departments seeded by `DepartmentSeeder` (Education, Administration, Counseling, Cadre, Health Services, Operations). The existing guard only checked for active employee assignments — soft-deleted employees were not caught — leaving the risk of orphaned `department_id` foreign keys on employee records.
+
+### Solution
+
+**Migration `2026_02_25_212458_add_is_system_to_departments_table.php`:**
+- Adds `is_system boolean default false` to `departments`
+- `DB::statement` marks the six foundational department names as `is_system = true` in-place (safe for live DB)
+
+**`DepartmentController`:**
+- `destroy()` — checks `is_system` first; returns `back()->with('error', ...)` before any other guard. Also upgraded the employee check from `->exists()` to `->withTrashed()->exists()` so soft-deleted employees block deletion too.
+- `update()` — same `is_system` check; system departments cannot be renamed.
+
+**`Department` model:**
+- `is_system` added to `$fillable` and cast as boolean.
+
+**`DepartmentSeeder`:**
+- Operations department `firstOrCreate` now includes `'is_system' => true` so fresh installs also get the flag without relying solely on the migration.
+
+**`Departments/Index.vue`:**
+- System departments show a **System** badge instead of Edit / Delete links.
+- A "Protected" label appears in the actions column.
+
+**`Departments/Edit.vue`:**
+- Warning banner displayed at top of form for system departments.
+- Name field disabled (`readonly`); all other fields (description etc.) remain editable.
+
+### Files Changed
+
+**New (1):**
+- `database/migrations/2026_02_25_212458_add_is_system_to_departments_table.php`
+
+**Modified (5):**
+- `app/Models/Department.php`
+- `app/Http/Controllers/Admin/DepartmentController.php`
+- `database/seeders/DepartmentSeeder.php`
+- `resources/js/Pages/Admin/Departments/Index.vue`
+- `resources/js/Pages/Admin/Departments/Edit.vue`
+
+---
+
 ## Future Ideas & Enhancements
 
 The following ideas are captured for long-term consideration. They are not yet assigned to a phase or issue.

@@ -9,27 +9,6 @@ This file mirrors the current state of the GitHub Issues board for the Student M
 
 ---
 
-### Issue #21 — Academy Setup: Protect Seeded Departments from Deletion
-**Status:** Open
-**Label:** enhancement
-**Opened:** 2026-02-25
-
-The `DepartmentSeeder` populates six core departments (Education, Administration, Counseling, Cadre, Health Services, Operations). The Departments CRUD UI allows admins to delete departments, but the current guard only checks for actively-assigned employees. Soft-deleted employees are not caught, leaving the risk of dangling `department_id` foreign keys.
-
-**Proposed Solution:**
-- Add `is_system` boolean column to `departments` (default `false`; `true` for the six seeded departments)
-- `DepartmentController@destroy` refuses deletion of system departments with a clear error message
-- `DepartmentController@update` prevents renaming system departments
-- UI shows a "System" badge and disables Delete / rename for protected departments
-
-**Acceptance Criteria:**
-- [ ] Seeded departments cannot be deleted via the UI
-- [ ] Seeded departments cannot be renamed via the UI
-- [ ] Non-system departments can still be deleted (with existing employee guard)
-- [ ] UI clearly indicates why deletion is blocked for system departments
-
----
-
 ### Issue #15 — Phase 3G: Custom Report Builder
 **Status:** Next Up
 **Label:** enhancement
@@ -98,6 +77,7 @@ Dashboard-level insights: GPA distribution, enrollment trends, attendance rates,
 
 | # | Title | Closed |
 |---|-------|--------|
+| #21 | Academy Setup: Protect seeded departments from deletion | 2026-02-26 |
 | #20 | Phase 8: Staff Training Management | 2026-02-24 |
 | #19 | User Management: hire date field + Feature Settings restricted to Site Admin | 2026-02-24 |
 | #18 | Feature Settings restricted to Site Admin role | 2026-02-24 |
