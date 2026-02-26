@@ -76,7 +76,7 @@ function getStatusBadgeClass(status) {
                             v-model="termId"
                             class="block rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
                         >
-                            <option :value="null">— Select Term —</option>
+                            <option :value="null">— Select Class —</option>
                             <option v-for="term in terms" :key="term.id" :value="term.id">
                                 {{ term.name }} ({{ term.academic_year?.name }})
                             </option>
