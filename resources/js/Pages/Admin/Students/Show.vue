@@ -342,7 +342,7 @@ function deleteDocument(doc) {
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Course Code</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Course Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Term</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Class</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Grade</th>
                                 </tr>
@@ -350,13 +350,13 @@ function deleteDocument(doc) {
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                 <tr v-for="enrollment in student.enrollments" :key="enrollment.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                     <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ enrollment.class?.course?.course_code || '—' }}
+                                        {{ enrollment.class_course?.course?.course_code || '—' }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ enrollment.class?.course?.name || '—' }}
+                                        {{ enrollment.class_course?.course?.name || '—' }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ enrollment.class?.term?.name || '—' }}
+                                        {{ enrollment.class_course?.class?.class_number ? 'Class ' + enrollment.class_course.class.class_number : '—' }}
                                     </td>
                                     <td class="px-6 py-4">
                                         <span

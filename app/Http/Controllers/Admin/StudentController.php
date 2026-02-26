@@ -116,7 +116,7 @@ class StudentController extends Controller
      */
     public function show(Student $student)
     {
-        $student->load(['guardians', 'user', 'enrollments.class.course', 'phoneNumbers']);
+        $student->load(['guardians', 'user', 'enrollments.classCourse.course', 'enrollments.classCourse.class', 'phoneNumbers']);
 
         $isAdmin  = auth()->user()->isAdmin();
         $employee = Employee::where('user_id', auth()->id())->first();

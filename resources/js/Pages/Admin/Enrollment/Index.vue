@@ -12,16 +12,7 @@
 
             <Card>
                 <div class="p-6">
-                    <PageHeader title="Enrollments">
-                        <template #actions>
-                            <Link
-                                :href="route('admin.enrollment.create')"
-                                class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-md shadow-sm transition"
-                            >
-                                Enroll Student
-                            </Link>
-                        </template>
-                    </PageHeader>
+                    <PageHeader title="Enrollments" />
 
                     <!-- Filters -->
                     <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -101,7 +92,10 @@
                                         Enrolled Date
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Actions
+                                        <Link
+                                            :href="route('admin.enrollment.create')"
+                                            class="inline-flex items-center px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md shadow-sm transition"
+                                        >Enroll Student</Link>
                                     </th>
                                 </tr>
                             </thead>
@@ -123,11 +117,11 @@
                                         {{ enrollment.student?.first_name }} {{ enrollment.student?.last_name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        <span class="font-medium">{{ enrollment.classCourse?.course?.course_code }}</span>
-                                        — {{ enrollment.classCourse?.course?.name }}
+                                        <span class="font-medium">{{ enrollment.class_course?.course?.course_code }}</span>
+                                        — {{ enrollment.class_course?.course?.name }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        Class {{ enrollment.classCourse?.class?.class_number ?? '—' }}
+                                        Class {{ enrollment.class_course?.class?.class_number ?? '—' }}
                                     </td>
                                     <td class="px-4 py-3 text-sm">
                                         <span
@@ -164,6 +158,12 @@
 
                     <!-- Mobile Cards -->
                     <div class="mt-4 block sm:hidden space-y-4">
+                        <div class="flex justify-end">
+                            <Link
+                                :href="route('admin.enrollment.create')"
+                                class="inline-flex items-center px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-md shadow-sm transition"
+                            >Enroll Student</Link>
+                        </div>
                         <div
                             v-if="enrollments.data?.length === 0"
                             class="py-8 text-center text-sm text-gray-500 dark:text-gray-400"
@@ -192,12 +192,12 @@
                                 </span>
                             </div>
                             <p class="text-sm text-gray-700 dark:text-gray-300">
-                                <span class="font-medium">{{ enrollment.classCourse?.course?.course_code }}</span>
-                                — {{ enrollment.classCourse?.course?.name }}
+                                <span class="font-medium">{{ enrollment.class_course?.course?.course_code }}</span>
+                                — {{ enrollment.class_course?.course?.name }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Class {{ enrollment.classCourse?.class?.class_number ?? '—' }}
-                                &bull; {{ enrollment.classCourse?.employee?.first_name }} {{ enrollment.classCourse?.employee?.last_name }}
+                                Class {{ enrollment.class_course?.class?.class_number ?? '—' }}
+                                &bull; {{ enrollment.class_course?.employee?.first_name }} {{ enrollment.class_course?.employee?.last_name }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
                                 Enrolled: {{ fmtDate(enrollment.enrollment_date) }}

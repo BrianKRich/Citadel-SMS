@@ -100,7 +100,9 @@ class CourseController extends Controller
      */
     public function show(Course $course)
     {
-        $course->load(['classCourses.class', 'classCourses.employee', 'classCourses.institution']);
+        $course->load([
+            'classCourses' => fn($q) => $q->withCount('enrollments')->with(['class', 'employee', 'institution']),
+        ]);
 
         return Inertia::render('Admin/Courses/Show', [
             'course' => $course,
