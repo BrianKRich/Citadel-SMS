@@ -382,7 +382,7 @@ function deleteDocument(doc) {
                 <Card>
                     <div class="mb-4 flex items-center justify-between">
                         <div>
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Department Notes</h3>
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Notes</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Staff notes about this student</p>
                         </div>
                         <button
@@ -460,10 +460,6 @@ function deleteDocument(doc) {
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                            <span
-                                                :class="deptBadgeClass(note.department_id)"
-                                                class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
-                                            >{{ note.department?.name || 'Unknown Dept' }}</span>
                                             <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ note.title }}</span>
                                         </div>
                                         <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ note.body }}</p>
@@ -472,6 +468,7 @@ function deleteDocument(doc) {
                                         <p class="text-xs text-gray-500 dark:text-gray-400">
                                             {{ note.employee ? `${note.employee.first_name} ${note.employee.last_name}` : 'Unknown' }}
                                         </p>
+                                        <p class="text-xs text-gray-400 dark:text-gray-500">{{ note.department?.name }}</p>
                                         <p class="text-xs text-gray-400 dark:text-gray-500">{{ formatDate(note.created_at) }}</p>
                                         <div v-if="canManageNote(note)" class="flex gap-2 mt-2 justify-end">
                                             <button
