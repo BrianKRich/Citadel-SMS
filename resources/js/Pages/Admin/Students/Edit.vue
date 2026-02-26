@@ -20,6 +20,7 @@ const form = useForm({
     middle_name: props.student.middle_name ?? '',
     date_of_birth: props.student.date_of_birth ? props.student.date_of_birth.substring(0, 10) : '',
     gender: props.student.gender ?? '',
+    ssn: '',
     email: props.student.email ?? '',
     phone_area_code: '',
     phone: '',
@@ -131,6 +132,16 @@ function submit() {
                                         <option value="other">Other</option>
                                     </select>
                                     <p v-if="form.errors.gender" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.gender }}</p>
+                                </div>
+                                <!-- SSN -->
+                                <div>
+                                    <label for="ssn" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Social Security Number</label>
+                                    <input id="ssn" v-model="form.ssn" type="text" maxlength="11" placeholder="###-##-####"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm font-mono" />
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Leave blank to keep current SSN{{ student.masked_ssn ? ` (${student.masked_ssn})` : '' }}.
+                                    </p>
+                                    <p v-if="form.errors.ssn" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.ssn }}</p>
                                 </div>
                             </div>
                         </div>

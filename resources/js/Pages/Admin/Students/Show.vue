@@ -276,6 +276,12 @@ function deleteDocument(doc) {
                                 <span v-if="!student.emergency_contact_name && !student.emergency_contact_phone">—</span>
                             </dd>
                         </div>
+                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">SSN</dt>
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono tracking-wider">
+                                {{ student.masked_ssn || '—' }}
+                            </dd>
+                        </div>
                         <div v-if="student.notes" class="border-t border-gray-200 dark:border-gray-700 pt-4 sm:col-span-2 lg:col-span-3">
                             <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Notes</dt>
                             <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{{ student.notes }}</dd>

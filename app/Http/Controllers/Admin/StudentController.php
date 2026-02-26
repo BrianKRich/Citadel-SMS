@@ -79,11 +79,17 @@ class StudentController extends Controller
             'emergency_contact_name' => ['nullable', 'string', 'max:255'],
             'emergency_phone_area_code' => ['nullable', 'string', 'digits:3'],
             'emergency_contact_phone' => ['nullable', 'string', 'digits:7'],
+            'ssn' => ['nullable', 'string', 'regex:/^\d{3}-?\d{2}-?\d{4}$/'],
             'enrollment_date' => ['required', 'date'],
             'status' => ['required', Rule::in(['active', 'inactive', 'graduated', 'withdrawn', 'suspended'])],
             'photo' => ['nullable', 'image', 'max:2048'], // 2MB max
             'notes' => ['nullable', 'string'],
         ]);
+
+        // Normalize SSN to digits-only
+        if (!empty($validated['ssn'])) {
+            $validated['ssn'] = preg_replace('/\D/', '', $validated['ssn']);
+        }
 
         $phone = $validated['phone'] ?? null;
         $phoneAreaCode = $validated['phone_area_code'] ?? null;
@@ -181,11 +187,19 @@ class StudentController extends Controller
             'emergency_contact_name' => ['nullable', 'string', 'max:255'],
             'emergency_phone_area_code' => ['nullable', 'string', 'digits:3'],
             'emergency_contact_phone' => ['nullable', 'string', 'digits:7'],
+            'ssn' => ['nullable', 'string', 'regex:/^\d{3}-?\d{2}-?\d{4}$/'],
             'enrollment_date' => ['required', 'date'],
             'status' => ['required', Rule::in(['active', 'inactive', 'graduated', 'withdrawn', 'suspended'])],
             'photo' => ['nullable', 'image', 'max:2048'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        // Normalize SSN to digits-only; if blank, remove from update so existing value is preserved
+        if (!empty($validated['ssn'])) {
+            $validated['ssn'] = preg_replace('/\D/', '', $validated['ssn']);
+        } else {
+            unset($validated['ssn']);
+        }
 
         $phone = $validated['phone'] ?? null;
         $phoneAreaCode = $validated['phone_area_code'] ?? null;

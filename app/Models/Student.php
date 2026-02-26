@@ -27,6 +27,7 @@ class Student extends Model
         'postal_code',
         'country',
         'emergency_contact_name',
+        'ssn',
         'enrollment_date',
         'status',
         'photo',
@@ -34,9 +35,14 @@ class Student extends Model
         'user_id',
     ];
 
+    protected $hidden = ['ssn'];
+
+    protected $appends = ['masked_ssn'];
+
     protected $casts = [
         'date_of_birth' => 'date',
         'enrollment_date' => 'date',
+        'ssn' => 'encrypted',
     ];
 
     /**
@@ -74,6 +80,22 @@ class Student extends Model
     public function getFullNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+    }
+
+    /**
+     * Get the masked SSN (last 4 digits visible, rest obscured)
+     */
+    public function getMaskedSsnAttribute(): ?string
+    {
+        $ssn = $this->ssn;
+        if (!$ssn) {
+            return null;
+        }
+        $digits = preg_replace('/\D/', '', $ssn);
+        if (strlen($digits) !== 9) {
+            return null;
+        }
+        return '***-**-' . substr($digits, -4);
     }
 
     public function phoneNumbers(): MorphMany
