@@ -84,7 +84,7 @@ function submit() {
                             <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
                                 Personal Information
                             </h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <!-- First Name -->
                                 <div>
                                     <label for="first_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -151,7 +151,7 @@ function submit() {
                             <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
                                 Contact Information
                             </h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <!-- Email -->
                                 <div>
                                     <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
@@ -173,7 +173,7 @@ function submit() {
                                     <p v-if="form.errors.phone" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.phone }}</p>
                                 </div>
                                 <!-- Address (full width) -->
-                                <div class="sm:col-span-2">
+                                <div class="sm:col-span-3">
                                     <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
                                     <textarea id="address" v-model="form.address" rows="2"
                                         class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"></textarea>
@@ -186,20 +186,19 @@ function submit() {
                                         class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm" />
                                     <p v-if="form.errors.city" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.city }}</p>
                                 </div>
-                                <!-- State + Postal Code -->
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="state" class="block text-sm font-medium text-gray-700 dark:text-gray-300">State</label>
-                                        <input id="state" v-model="form.state" type="text" maxlength="2" placeholder="GA"
-                                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm" />
-                                        <p v-if="form.errors.state" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.state }}</p>
-                                    </div>
-                                    <div>
-                                        <label for="postal_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Postal Code</label>
-                                        <input id="postal_code" v-model="form.postal_code" type="text" maxlength="10"
-                                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm" />
-                                        <p v-if="form.errors.postal_code" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.postal_code }}</p>
-                                    </div>
+                                <!-- State -->
+                                <div>
+                                    <label for="state" class="block text-sm font-medium text-gray-700 dark:text-gray-300">State</label>
+                                    <input id="state" v-model="form.state" type="text" maxlength="2" placeholder="GA"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm" />
+                                    <p v-if="form.errors.state" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.state }}</p>
+                                </div>
+                                <!-- Postal Code -->
+                                <div>
+                                    <label for="postal_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Postal Code</label>
+                                    <input id="postal_code" v-model="form.postal_code" type="text" maxlength="10"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm" />
+                                    <p v-if="form.errors.postal_code" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.postal_code }}</p>
                                 </div>
                             </div>
                         </div>
@@ -209,7 +208,7 @@ function submit() {
                             <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
                                 Emergency Contact
                             </h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <!-- Emergency Contact Name -->
                                 <div>
                                     <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Name</label>
@@ -238,7 +237,7 @@ function submit() {
                             <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
                                 Academic Information
                             </h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <!-- Enrollment Date -->
                                 <div>
                                     <label for="enrollment_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -265,7 +264,7 @@ function submit() {
                                     <p v-if="form.errors.status" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.status }}</p>
                                 </div>
                                 <!-- Photo -->
-                                <div class="sm:col-span-2">
+                                <div class="sm:col-span-3">
                                     <label for="photo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Photo</label>
                                     <div v-if="student.photo" class="mb-2">
                                         <img :src="'/storage/' + student.photo" class="h-20 w-20 rounded-lg object-cover"
