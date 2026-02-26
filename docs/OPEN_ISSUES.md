@@ -1,71 +1,114 @@
-# Open Issues — Decisions Needed
+# Open Issues & GitHub Tracker
 
-## Issue #1: Course Assignments Navigation
-**Status:** Resolved — February 25, 2026
-
-The Class Show page no longer displays cohort cards or course assignment rows. Course Assignments (`/admin/class-courses`) are accessible directly via the Class Layout hub or the Course Catalog. The cohort Alpha/Bravo distinction has been removed from all class management UI; classes now carry a `name` field, `start_date`, and `end_date` directly.
+This file mirrors the current state of the GitHub Issues board for the Student Management System.
+**Repository:** https://github.com/BrianKRich/Student-Management-System
 
 ---
 
-## Issue #2: Academy Setup — Departments & Roles Pre-Populated
+## Open Issues
+
+---
+
+### Issue #21 — Academy Setup: Protect Seeded Departments from Deletion
 **Status:** Open
-**Date Raised:** 2026-02-24
+**Label:** enhancement
+**Opened:** 2026-02-25
 
-The Departments and Employee Roles tables are seeded by `DepartmentSeeder` at initial setup (Education, Administration, Counseling, Cadre, Health Services, Operations + Trainer role per dept). The new Departments CRUD and Employee Roles CRUD pages allow admins to manage these after the fact.
+The `DepartmentSeeder` populates six core departments (Education, Administration, Counseling, Cadre, Health Services, Operations). The Departments CRUD UI allows admins to delete departments, but the current guard only checks for actively-assigned employees. Soft-deleted employees are not caught, leaving the risk of dangling `department_id` foreign keys.
 
-**Decision needed:** Should the seeded departments/roles be locked (read-only) or fully editable? Currently they are fully editable and deletable (with the guard that no employees are assigned). If the seeded data is considered foundational, deleting a core department could break employee assignments silently if employees are soft-deleted.
+**Proposed Solution:**
+- Add `is_system` boolean column to `departments` (default `false`; `true` for the six seeded departments)
+- `DepartmentController@destroy` refuses deletion of system departments with a clear error message
+- `DepartmentController@update` prevents renaming system departments
+- UI shows a "System" badge and disables Delete / rename for protected departments
 
-**Recommendation:** Add a `is_system` boolean flag to `departments` to mark seeded records as non-deletable, or add a warning in the UI.
-
-**GitHub Issue:** #21
+**Acceptance Criteria:**
+- [ ] Seeded departments cannot be deleted via the UI
+- [ ] Seeded departments cannot be renamed via the UI
+- [ ] Non-system departments can still be deleted (with existing employee guard)
+- [ ] UI clearly indicates why deletion is blocked for system departments
 
 ---
 
-## Issue #3: Phase 3G — Custom Reports
+### Issue #15 — Phase 3G: Custom Report Builder
 **Status:** Next Up
-**GitHub Issue:** #15
+**Label:** enhancement
+**Opened:** 2026-02-22
 
-Admins can define, save, and run reusable reports across all data categories without developer help. Planned features: column picker, baked-in filters, save/share, PDF/CSV export, integration with Phase 3F custom fields via `cf_{id}` prefix.
+Admins can define, save, and run reusable reports across all data categories without developer help.
+
+**Planned Features:**
+- Column picker (select fields from Students, Enrollments, Grades, Attendance, Notes, Custom Fields)
+- Baked-in filters (status, date range, department, class, academic year)
+- Save and share named reports
+- PDF and CSV export
+- Integration with Phase 3F custom fields via `cf_{id}` prefix
 
 ---
 
-## Issue #4: Performance & Infrastructure
+### Issue #14 — Performance & Infrastructure Improvements
 **Status:** Planned
-**GitHub Issue:** #14
+**Label:** enhancement
+**Opened:** 2026-02-18
 
-- Search: `LIKE '%query%'` will degrade at scale; consider PostgreSQL `tsvector`
-- Query caching for reference data (terms, academic years, courses)
+- Search: `LIKE '%query%'` will degrade at scale; consider PostgreSQL `tsvector` full-text search
+- Query caching for reference data (academic years, courses, departments)
 - Staging environment (currently push to main → direct production deploy)
 - Automated database backup strategy for production PostgreSQL
 
 ---
 
-## Issue #5: CSV Import & Bulk Export
+### Issue #11 — Phase 3C: CSV Import & Bulk Data Export
 **Status:** Deferred
-**GitHub Issue:** #11
+**Labels:** enhancement, future
+**Opened:** 2026-02-18
 
 Bulk student import from CSV/Excel, bulk grade import, enrollment import from external systems, and CSV/Excel export from all index pages.
 
 ---
 
-## Issue #6: Parent/Guardian Portal
+### Issue #4 — Phase 5: Parent/Guardian Portal
 **Status:** Planned
-**GitHub Issue:** #4
+**Labels:** enhancement, phase 5
+**Opened:** 2026-02-15
 
 Non-admin read-only portal for guardians: student profile, schedule, grades, report card PDF, attendance summary.
 
 ---
 
-## Issue #7: Academic Calendar
+### Issue #3 — Phase 6: Academic Calendar
 **Status:** Planned
-**GitHub Issue:** #3
+**Labels:** enhancement, phase 6
+**Opened:** 2026-02-15
 
-`calendar_events` table, admin CRUD, monthly grid view, iCal export. Integration with attendance for auto-excused on holidays.
+`calendar_events` table, admin CRUD, monthly grid view, iCal export. Integration with attendance for auto-excused absences on holidays.
 
 ---
 
-## Issue #8: Reporting & Analytics
+### Issue #1 — Phase 9: Reporting & Analytics
 **Status:** Planned
-**GitHub Issue:** #1
+**Labels:** enhancement, phase 8
+**Opened:** 2026-02-15
 
 Dashboard-level insights: GPA distribution, enrollment trends, attendance rates, at-risk student identification, PDF/CSV export.
+
+---
+
+## Closed Issues
+
+| # | Title | Closed |
+|---|-------|--------|
+| #20 | Phase 8: Staff Training Management | 2026-02-24 |
+| #19 | User Management: hire date field + Feature Settings restricted to Site Admin | 2026-02-24 |
+| #18 | Feature Settings restricted to Site Admin role | 2026-02-24 |
+| #17 | Site Admin role with exclusive Audit Log purge access | 2026-02-24 |
+| #16 | Phase 5: Student Notes — Department-Scoped Notes on Student Profiles | 2026-02-24 |
+| #13 | Phase 3E: Audit Logging for Academic Records | 2026-02-22 |
+| #12 | Phase 3D: Soft Delete Restore UI & EnrollmentController Fix | 2026-02-18 |
+| #10 | Phase 1/2 Frontend: Complete CRUD UI for all core modules | 2026-02-18 |
+| #9  | Phase 2: Class Scheduling & Enrollment | 2026-02-16 |
+| #8  | Phase 1: Student & Course Foundation | 2026-02-16 |
+| #7  | Phase 0: Foundation & Theme System | 2026-02-16 |
+| #6  | Phase 3: Grading & Assessments | 2026-02-18 |
+| #5  | Phase 4: Attendance Management | 2026-02-18 |
+| #2  | Phase 7: Document Management | 2026-02-24 |
