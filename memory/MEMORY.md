@@ -14,6 +14,7 @@
 - **Stack:** Laravel 12 + Vue 3 + Inertia.js + PostgreSQL
 - **Tests:** 368 passing (no new tests since Phase 3F)
 - **Vue pages:** 97+
+- **Last commits:** `c676de5` UX: Notes card cleanup | `99d103b` UX: Student Edit multi-column | `dc1181b` Fix: enrollment snake_case
 
 ## Completed Phases
 - Phase 0: Foundation, theme system, dark mode, auth
@@ -85,7 +86,8 @@
 ## Dev Server Workflow
 - **Always use:** `php artisan serve --host=127.0.0.1 --port=8000` in background
 - **Never use:** `composer run dev` — conflicts with background serve on port 8000
-- **After code changes:** run `npm run build` then restart serve
+- **After code changes:** run `npm run build` automatically — do NOT wait to be asked
+- **Rebuild triggers:** any `.vue`, `.js`, or CSS file change requires `npm run build`
 
 ## Key Technical Notes
 - **Vite build required:** After creating new Vue pages, run `npm run build` before tests
@@ -93,6 +95,7 @@
 - **Feature flags:** Stored in `settings` table; shared via `HandleInertiaRequests` as `$page.props.features.*`
 - **CI/CD:** Push to `main` auto-deploys to Lightsail via GitHub Actions. Frontend build runs on GitHub runner. Server never runs Node/npm.
 - **No co-author credits in commits** — CLAUDE.md explicitly forbids this
+- **Eloquent → Inertia serialization:** Relationship method names are snake_cased in JSON. `classCourse()` → `class_course` in Vue props. Always use snake_case in Vue templates (e.g. `enrollment.class_course`, not `enrollment.classCourse`).
 
 ## Key Custom Fields Notes
 - Name generated with `Str::slug($label, '_')`

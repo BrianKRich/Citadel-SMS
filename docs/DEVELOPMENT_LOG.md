@@ -2231,6 +2231,88 @@ No new tests added. All 368 pre-existing tests continue to pass.
 
 ---
 
+## Bug Fixes & UX Improvements — February 26, 2026
+
+**Commits:** `dc1181b`, `99d103b`, `c676de5`
+
+### Bug Fixes
+
+#### Course Show — `enrollments_count` Always Showing `—`
+
+**Problem:** The "Classes Using This Course" table on `Courses/Show.vue` displayed `—` for the Enrolled / Capacity column even after students were enrolled.
+
+**Root cause:** `CourseController::show()` loaded `classCourses` via `->load()` without `withCount('enrollments')`, so `enrollments_count` was never populated on the serialized models.
+
+**Fix:** `CourseController.php` — changed flat `load(['classCourses.class', ...])` to `load(['classCourses' => fn($q) => $q->withCount('enrollments')->with([...])])`.
+
+---
+
+#### Enrollment Pages — `classCourse` Rendered Blank
+
+**Problem:** The Enrollment Index and Student Schedule pages showed blank data for course, class, instructor, and schedule columns despite enrollments existing in the database.
+
+**Root cause:** Laravel serializes Eloquent relationship method names to `snake_case` in JSON. The `classCourse()` relationship becomes `class_course` in the Inertia prop payload. Both Vue templates were referencing `enrollment.classCourse` (camelCase), which resolved to `undefined`.
+
+**Fix:** Updated all `enrollment.classCourse` references to `enrollment.class_course` in:
+- `resources/js/Pages/Admin/Enrollment/Index.vue` (all occurrences)
+- `resources/js/Pages/Admin/Enrollment/StudentSchedule.vue` (desktop table + mobile cards)
+
+Also renamed stale "Class / Cohort" column header to "Class" in `StudentSchedule.vue`.
+
+---
+
+#### Student Show — Broken Eager Load Crashing Page
+
+**Problem:** Navigating to any student's show page (`admin/students/{id}`) threw a fatal exception.
+
+**Root cause:** `StudentController::show()` still contained `$student->load(['enrollments.class.course', ...])` — a relationship chain from the pre-Phase 9 structure. After Phase 9, enrollments belong to `ClassCourse`, not directly to `Class`.
+
+**Fix:**
+- `StudentController.php` — changed `'enrollments.class.course'` to `'enrollments.classCourse.course', 'enrollments.classCourse.class'`
+- `Students/Show.vue` — updated enrollment history table: `enrollment.class?.course?.course_code` → `enrollment.class_course?.course?.course_code`; renamed "Term" column to "Class"; replaced `enrollment.class?.term?.name` with `enrollment.class_course?.class?.class_number`
+
+---
+
+#### Orphan Placeholder Text — Classes Create/Edit
+
+**Problem:** The Name field on Class Create and Edit forms showed the placeholder `"e.g. Cohort Alpha / Bravo"` — a reference to the old cohort naming convention removed in Phase 9.
+
+**Fix:** Updated placeholder to `"e.g. Morning Session"` in both `Classes/Create.vue` and `Classes/Edit.vue`.
+
+---
+
+### UX Improvements
+
+#### Enrollment Index — Button Placement Consistency
+
+Moved the "Enroll Student" action button from the `PageHeader` `#actions` slot (which rendered below the title, top-left) to the `<th>` header cell of the Actions column in the table. On mobile, the button appears right-aligned above the card list. This matches the button placement pattern used on other index pages.
+
+#### Student Schedule — Direct Link to Course Assignment
+
+Added a **View Assignment** link column to the Student Schedule table (desktop) and each mobile card, linking directly to the relevant `ClassCourse` Show page. This allows staff to navigate from a student's schedule directly to a course assignment to edit schedule, capacity, or instructor without navigating through multiple menus.
+
+#### Student Edit — Multi-Column Form Layout
+
+Reorganized the Student Edit form from a single-column stack to a responsive 2-column grid layout using `grid-cols-1 sm:grid-cols-2`. Field groupings:
+
+| Section | Layout |
+|---------|--------|
+| Personal Information | First/Last (row 1), Middle/DOB (row 2), Gender |
+| Contact Information | Email/Phone (row 1), Address (full width), City / State+Postal |
+| Emergency Contact | Contact Name / Contact Phone side by side |
+| Academic Information | Enrollment Date / Status, Photo (full width) |
+| Notes | Full-width textarea |
+
+Container width changed from `max-w-2xl` to `max-w-5xl` to accommodate the wider layout.
+
+#### Student Show — Notes Card Cleanup
+
+- Renamed "Department Notes" card title to **"Notes"**
+- Removed the department color badge that previously appeared before each note title
+- Added department name as small muted text in the note's right-side metadata block (below author name, above date), keeping the department context visible without cluttering the note title
+
+---
+
 ## Future Ideas & Enhancements
 
 The following ideas are captured for long-term consideration. They are not yet assigned to a phase or issue.
