@@ -55,7 +55,7 @@ function deleteAssessment() {
                         <div>
                             <PageHeader
                                 :title="assessment.name"
-                                :description="`${assessment.class_model?.course?.name || 'N/A'} — ${assessment.class_model?.section_name || ''}`"
+                                :description="`${assessment.class_course?.course?.name || 'N/A'} — ${assessment.class_course?.class?.section_name || ''}`"
                             />
                             <div class="mt-2 flex flex-wrap gap-2">
                                 <span

@@ -99,7 +99,7 @@ class AttendanceController extends Controller
     {
         $this->requireAttendanceEnabled();
 
-        $records = AttendanceRecord::with('classCourse.course')
+        $records = AttendanceRecord::with(['classCourse.course', 'classCourse.class'])
             ->where('student_id', $student->id)
             ->orderByDesc('date')
             ->paginate(20)
@@ -125,18 +125,13 @@ class AttendanceController extends Controller
             ->where('status', 'enrolled')
             ->get();
 
-        $summaries = $enrollments->map(function ($enrollment) use ($classCourse, $dateFrom, $dateTo) {
-            $query = AttendanceRecord::where('class_course_id', $classCourse->id)
-                ->where('student_id', $enrollment->student_id);
+        $recordQuery = AttendanceRecord::where('class_course_id', $classCourse->id);
+        if ($dateFrom) { $recordQuery->whereDate('date', '>=', $dateFrom); }
+        if ($dateTo)   { $recordQuery->whereDate('date', '<=', $dateTo); }
+        $allRecords = $recordQuery->get()->groupBy('student_id');
 
-            if ($dateFrom) {
-                $query->whereDate('date', '>=', $dateFrom);
-            }
-            if ($dateTo) {
-                $query->whereDate('date', '<=', $dateTo);
-            }
-
-            $records = $query->get();
+        $summaries = $enrollments->map(function ($enrollment) use ($allRecords) {
+            $records = $allRecords->get($enrollment->student_id, collect());
             $total   = $records->count();
             $present = $records->where('status', 'present')->count();
             $absent  = $records->where('status', 'absent')->count();

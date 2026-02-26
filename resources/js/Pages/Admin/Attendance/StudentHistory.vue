@@ -70,10 +70,10 @@ function formatDate(dateStr) {
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="text-sm text-gray-900 dark:text-gray-100">
-                                            {{ record.class_model?.course?.name || 'N/A' }}
+                                            {{ record.class_course?.course?.name || 'N/A' }}
                                         </div>
                                         <div class="text-xs text-gray-500 dark:text-gray-400">
-                                            {{ record.class_model?.section_name || '' }}
+                                            {{ record.class_course?.class?.section_name || '' }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
@@ -110,7 +110,7 @@ function formatDate(dateStr) {
                                         {{ formatDate(record.date) }}
                                     </p>
                                     <p class="text-sm text-gray-700 dark:text-gray-300">
-                                        {{ record.class_model?.course?.name || 'N/A' }}
+                                        {{ record.class_course?.course?.name || 'N/A' }}
                                     </p>
                                     <p v-if="record.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         {{ record.notes }}

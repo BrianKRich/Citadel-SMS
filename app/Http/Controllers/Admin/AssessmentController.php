@@ -13,7 +13,7 @@ class AssessmentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Assessment::with(['classCourse.course', 'category']);
+        $query = Assessment::with(['classCourse.course', 'classCourse.class', 'category']);
 
         if ($request->filled('search')) {
             $query->search($request->search);

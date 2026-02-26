@@ -146,10 +146,10 @@ function deleteAssessment(id) {
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="text-sm text-gray-900 dark:text-gray-100">
-                                            {{ assessment.class_model?.course?.name || 'N/A' }}
+                                            {{ assessment.class_course?.course?.name || 'N/A' }}
                                         </div>
                                         <div class="text-xs text-gray-500 dark:text-gray-400">
-                                            {{ assessment.class_model?.section_name || '' }}
+                                            {{ assessment.class_course?.class?.section_name || '' }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4">
@@ -224,7 +224,7 @@ function deleteAssessment(id) {
                                         {{ assessment.name }}
                                     </h3>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ assessment.class_model?.course?.name || 'N/A' }} — {{ assessment.class_model?.section_name || '' }}
+                                        {{ assessment.class_course?.course?.name || 'N/A' }} — {{ assessment.class_course?.class?.section_name || '' }}
                                     </p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         {{ assessment.assessment_category?.name || 'No category' }} • Max: {{ assessment.max_score }}

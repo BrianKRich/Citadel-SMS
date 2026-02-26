@@ -117,7 +117,10 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
-        $employee->load(['user', 'department', 'role', 'secondaryRole.department', 'classCourses.course', 'classCourses.class', 'phoneNumbers']);
+        $employee->load([
+            'user', 'department', 'role', 'secondaryRole.department', 'phoneNumbers',
+            'classCourses' => fn($q) => $q->withCount('enrollments')->with(['course', 'class']),
+        ]);
 
         $documentsEnabled      = Setting::get('feature_documents_enabled', '0') === '1';
         $trainingEnabled       = Setting::get('feature_staff_training_enabled', '0') === '1';
