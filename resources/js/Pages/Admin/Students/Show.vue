@@ -285,9 +285,17 @@ function deleteDocument(doc) {
 
                 <!-- Card 2: Guardians -->
                 <Card>
-                    <div class="mb-4">
-                        <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Guardians</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Parent and guardian contact information</p>
+                    <div class="mb-4 flex items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Guardians</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Parent and guardian contact information</p>
+                        </div>
+                        <Link
+                            :href="route('admin.guardians.create', { student_id: student.id })"
+                            class="inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex-shrink-0"
+                        >
+                            + Add Guardian
+                        </Link>
                     </div>
 
                     <div class="overflow-x-auto">

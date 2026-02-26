@@ -44,12 +44,16 @@ class GuardianController extends Controller
     /**
      * Show the form for creating a new guardian
      */
-    public function create()
+    public function create(Request $request)
     {
-        $students = Student::active()->get(['id', 'student_id', 'first_name', 'last_name']);
+        $preselectedStudentId = $request->integer('student_id') ?: null;
+        $preselectedStudent   = $preselectedStudentId
+            ? Student::find($preselectedStudentId, ['id', 'student_id', 'first_name', 'last_name'])
+            : null;
 
         return Inertia::render('Admin/Guardians/Create', [
-            'students' => $students,
+            'preselectedStudentId' => $preselectedStudentId,
+            'preselectedStudent'   => $preselectedStudent,
         ]);
     }
 
@@ -86,6 +90,11 @@ class GuardianController extends Controller
                     'is_primary' => $studentData['is_primary'] ?? false,
                 ]);
             }
+        }
+
+        if ($request->filled('from_student_id')) {
+            return redirect()->route('admin.students.show', $request->integer('from_student_id'))
+                ->with('success', 'Guardian added successfully.');
         }
 
         return redirect()->route('admin.guardians.show', $guardian)

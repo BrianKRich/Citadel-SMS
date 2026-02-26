@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Api\EmployeeSearchController;
+use App\Http\Controllers\Api\StudentSearchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\UserManagementController;
@@ -286,5 +287,8 @@ Route::get('/api/theme', [ThemeController::class, 'getTheme']);
 // API: Employee search (authenticated)
 Route::middleware('auth')->get('/api/employees/search', [EmployeeSearchController::class, 'search'])
     ->name('api.employees.search');
+
+Route::middleware('auth')->get('/api/students/search', [StudentSearchController::class, 'search'])
+    ->name('api.students.search');
 
 require __DIR__.'/auth.php';
