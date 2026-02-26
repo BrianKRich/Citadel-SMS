@@ -101,18 +101,27 @@ const hasFilters = props.filters.search;
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                 <tr v-for="dept in departments?.data ?? []" :key="dept.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{{ dept.name }}</td>
+                                    <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {{ dept.name }}
+                                        <span
+                                            v-if="dept.is_system"
+                                            class="ml-2 inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-500 dark:text-gray-400"
+                                        >System</span>
+                                    </td>
                                     <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ dept.roles_count }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ dept.employees_count }}</td>
                                     <td class="px-4 py-3 text-right whitespace-nowrap">
-                                        <Link
-                                            :href="route('admin.departments.edit', dept.id)"
-                                            class="text-sm text-primary-600 dark:text-primary-400 hover:underline mr-3"
-                                        >Edit</Link>
-                                        <button
-                                            @click="destroy(dept)"
-                                            class="text-sm text-red-600 dark:text-red-400 hover:underline"
-                                        >Delete</button>
+                                        <template v-if="!dept.is_system">
+                                            <Link
+                                                :href="route('admin.departments.edit', dept.id)"
+                                                class="text-sm text-primary-600 dark:text-primary-400 hover:underline mr-3"
+                                            >Edit</Link>
+                                            <button
+                                                @click="destroy(dept)"
+                                                class="text-sm text-red-600 dark:text-red-400 hover:underline"
+                                            >Delete</button>
+                                        </template>
+                                        <span v-else class="text-xs text-gray-400 dark:text-gray-600 italic">Protected</span>
                                     </td>
                                 </tr>
                                 <tr v-if="!departments?.data?.length">

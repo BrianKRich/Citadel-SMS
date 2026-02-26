@@ -9,7 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Department extends Model
 {
     use HasFactory;
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'is_system'];
+
+    protected $casts = [
+        'is_system' => 'boolean',
+    ];
 
     public function roles(): HasMany
     {

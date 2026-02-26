@@ -73,6 +73,10 @@ class DepartmentController extends Controller
         $this->requireEnabled();
         abort_unless(auth()->user()->isAdmin(), 403);
 
+        if ($department->is_system) {
+            return back()->with('error', 'System departments cannot be renamed.');
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('departments', 'name')->ignore($department->id)],
         ]);
@@ -88,7 +92,11 @@ class DepartmentController extends Controller
         $this->requireEnabled();
         abort_unless(auth()->user()->isAdmin(), 403);
 
-        if ($department->employees()->exists()) {
+        if ($department->is_system) {
+            return back()->with('error', 'System departments cannot be deleted.');
+        }
+
+        if ($department->employees()->withTrashed()->exists()) {
             return back()->with('error', 'Cannot delete a department that has employees assigned to it.');
         }
 

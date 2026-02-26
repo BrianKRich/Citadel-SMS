@@ -9,7 +9,10 @@ class DepartmentSeeder extends Seeder
 {
     public function run(): void
     {
-        $department = Department::firstOrCreate(['name' => 'Operations']);
+        $department = Department::firstOrCreate(
+            ['name' => 'Operations'],
+            ['is_system' => true]
+        );
         $department->roles()->firstOrCreate(['name' => 'Site Administrator']);
     }
 }
