@@ -25,18 +25,6 @@ Admins can define, save, and run reusable reports across all data categories wit
 
 ---
 
-### Issue #14 — Performance & Infrastructure Improvements
-**Status:** Planned
-**Label:** enhancement
-**Opened:** 2026-02-18
-
-- Search: `LIKE '%query%'` will degrade at scale; consider PostgreSQL `tsvector` full-text search
-- Query caching for reference data (academic years, courses, departments)
-- Staging environment (currently push to main → direct production deploy)
-- Automated database backup strategy for production PostgreSQL
-
----
-
 ### Issue #11 — Phase 3C: CSV Import & Bulk Data Export
 **Status:** Deferred
 **Labels:** enhancement, future
@@ -78,6 +66,7 @@ Dashboard-level insights: GPA distribution, enrollment trends, attendance rates,
 | # | Title | Closed |
 |---|-------|--------|
 | #21 | Academy Setup: Protect seeded departments from deletion | 2026-02-26 |
+| #14 | Performance & Infrastructure Improvements | 2026-02-26 |
 | #20 | Phase 8: Staff Training Management | 2026-02-24 |
 | #19 | User Management: hire date field + Feature Settings restricted to Site Admin | 2026-02-24 |
 | #18 | Feature Settings restricted to Site Admin role | 2026-02-24 |
