@@ -27,7 +27,7 @@ function applyFilters() {
     if (filterForm.value.department_id) params.department_id = filterForm.value.department_id;
     if (filterForm.value.date_from)     params.date_from     = filterForm.value.date_from;
     if (filterForm.value.date_to)       params.date_to       = filterForm.value.date_to;
-    router.get(route('admin.student-notes.index'), params, { preserveState: true });
+    router.get(route('admin.student-notes.index'), params);
 }
 
 function clearFilters() {

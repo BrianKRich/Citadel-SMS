@@ -25,7 +25,10 @@ class StudentNoteController extends Controller
         $isAdmin  = auth()->user()->isAdmin();
         $employee = $this->resolveEmployee();
 
-        $hasFilter = $request->anyFilled(['search', 'department_id', 'date_from', 'date_to']);
+        $hasFilter = $request->filled('search')
+            || $request->filled('department_id')
+            || $request->filled('date_from')
+            || $request->filled('date_to');
 
         $notes = null;
 
@@ -53,11 +56,11 @@ class StudentNoteController extends Controller
             }
 
             if ($request->filled('date_from')) {
-                $query->whereDate('created_at', '>=', $request->date_from);
+                $query->where('created_at', '>=', \Carbon\Carbon::parse($request->date_from)->startOfDay());
             }
 
             if ($request->filled('date_to')) {
-                $query->whereDate('created_at', '<=', $request->date_to);
+                $query->where('created_at', '<=', \Carbon\Carbon::parse($request->date_to)->endOfDay());
             }
 
             $notes = $query->paginate(20)->withQueryString();
