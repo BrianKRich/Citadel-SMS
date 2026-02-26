@@ -13,7 +13,7 @@ A full-stack web application for managing student information, academic records,
 | Bridge | Inertia.js (no REST API layer) |
 | Database | PostgreSQL |
 | Build | Vite + Tailwind CSS |
-| Testing | PHPUnit (368 tests, 1927 assertions) |
+| Testing | PHPUnit (370 tests, 1957 assertions) |
 | Deploy | AWS Lightsail via GitHub Actions CI/CD |
 
 ---
@@ -134,6 +134,14 @@ A full-stack web application for managing student information, academic records,
 - **Zebra-striped tables**: alternating row shading on Users, Employees, and Students index pages
 - **Hire date optional**: self-registered users get a `joined` date from `created_at`; Employee `hire_date` remains null until manually set
 
+### Query Optimization & Bug Fixes (2026-02-26)
+- **N+1 fix — Attendance class summary**: replaced per-student query loop with a single bulk query grouped in PHP
+- **Employee show — enrollment count**: added `withCount('enrollments')` to `classCourses` eager-load so the capacity display renders correctly
+- **Assessment & Attendance templates**: corrected `class_model` → `class_course` JSON key and `section_name` path in three Vue templates (course column was always "N/A")
+- **Employee role search**: extended to match department name in addition to role name
+- **Report cards index**: filtered to students with at least one graded enrollment (removes students with no grades from the listing)
+- **System department protection**: seeded departments (Education, Administration, etc.) protected from deletion and renaming
+
 ### Cross-Cutting
 - **Breadcrumb navigation** on all admin child pages
 - **Feature Settings** page (site_admin only): toggle Attendance, Theme, Documents, Grade Management, Report Cards, Staff Training, Academy Setup
@@ -229,7 +237,7 @@ php artisan test --filter CohortCourseTest
 composer run test
 ```
 
-**Current status:** 368 tests, 1927 assertions, all passing.
+**Current status:** 370 tests, 1957 assertions, all passing.
 
 ---
 
@@ -351,6 +359,6 @@ The frontend build runs on GitHub's runner (7GB RAM) to avoid memory limits on t
 
 ---
 
-**Version:** 2.3.0
-**Last Updated:** February 25, 2026
+**Version:** 2.3.1
+**Last Updated:** February 26, 2026
 **Status:** Active Development
